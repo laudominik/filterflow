@@ -1,0 +1,6 @@
+
+class simpleFilterStore {
+    constructor() {
+        
+    }
+}
