@@ -29,6 +29,13 @@
   border-style: solid;
 }
 
+.preview {
+  background-color: white;
+  width: 97%;
+  height: 97%;
+  margin: 1%;
+}
+
 .App {
   background-color: #F5F8FA;
 }
@@ -61,4 +68,17 @@
 button {
   border: none;
   background-color: none;
+}
+
+img {
+  margin: 5vh;
+  width: 30vh;
+  height: 30vh;
+}
+
+.centeredImage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }

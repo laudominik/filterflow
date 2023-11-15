@@ -3,10 +3,12 @@ import { faList } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {Button, Card} from 'react-bootstrap';
 import ImportEntry from "./ImportEntry";
+import FilterTransform from '../../engine/transforms/FilterTransform';
+
 
 export default function TransformPipeline(){
     const transformList = <div>
-        <TransformEntry name="Custom kernel"/>
+        <TransformEntry transform={new FilterTransform}/>
     </div>
 
     return <div className="transformPipeline">

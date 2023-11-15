@@ -7,16 +7,17 @@ import {
     faCircle } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Entry from './Entry';
+import Transform from '../../engine/Transform';
 
-export default function TransformEntry({ name }: { name: string }){
+export default function TransformEntry({ transform }: { transform: Transform }){
     const [enabled, setEnabled] = useState(true);
     
     const handleEyeClick = () => setEnabled(!enabled);
 
     return <div style={{opacity: enabled ? '100%' : '60%'}}>
-               <Entry color="#E6F4E2">
-               <Entry.Header>{name}</Entry.Header>
-               <Entry.Body>Placeholder</Entry.Body>
+               <Entry color={transform.getColor()}>
+               <Entry.Header>{transform.getName()}</Entry.Header>
+               <Entry.Body>{transform.paramView()}</Entry.Body>
                <Entry.Icons>{icons(enabled, handleEyeClick)}</Entry.Icons>
             </Entry>
         </div>
