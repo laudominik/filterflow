@@ -4,3 +4,5 @@ class simpleFilterStore {
         
     }
 }
+
+export {}
