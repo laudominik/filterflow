@@ -21,7 +21,7 @@ export default function TransformEntry({ transform }: { transform: Transform }){
                <Entry.Icons>{icons(enabled, handleEyeClick)}</Entry.Icons>
             </Entry>
         </div>
- 
+        
  }
 
  function channels(channels: string[]){

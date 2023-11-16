@@ -1,0 +1,18 @@
+.iconInCard {
+    color: #5D6C87;
+  }
+  
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+}
+  
+.transformCard {
+    margin: 2%;
+}
+  
+.transformPipeline {
+    margin-right: 0%;
+    background-color: white;
+    height: 100%;
+}

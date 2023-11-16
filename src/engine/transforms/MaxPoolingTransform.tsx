@@ -1,9 +1,8 @@
-import KernelComponent from "../../components/transforms/KernelComponent";
 import Transform from "../Transform";
 
-class FilterTransform extends Transform {
-    constructor(name?: string) {
-        super(name ?? 'Custom kernel', '#E6F4E2');
+class MaxPoolingTransform extends Transform {
+    constructor() {
+        super('Max pooling', '#E2E7F4');
     }
 
     paramView() {
@@ -11,7 +10,7 @@ class FilterTransform extends Transform {
         /*
          *  tbd: how could we split the view logic here and keep it nice and tidy
          */
-        return <KernelComponent />
+        return <div>max pool</div>
     }
 
     apply(id: number): number {
@@ -28,4 +27,4 @@ class FilterTransform extends Transform {
     }
 }
 
-export default FilterTransform;
+export default MaxPoolingTransform;

@@ -3,52 +3,17 @@
 }
 
 .resizableStyle {
-  height: 100vh;
-}
-
-.iconInCard {
-  color: #5D6C87;
-}
-
-.cardHeader {
-  display: flex;
-  justify-content: space-between;
-}
-
-.transformCard {
-  margin: 2%;
-}
-
-.transformPipeline {
-  margin: 2%;
-  margin-right: 0%;
-  background-color: white;
   height: 100%;
-  border-width: 0px;
-  border-color: gray;
-  border-style: solid;
-}
-
-.preview {
-  background-color: white;
-  width: 97%;
-  height: 97%;
-  margin: 1%;
 }
 
 .App {
   background-color: #F5F8FA;
+  height: 100vh;
 }
 
 .brandNav {
   background-color: white;
-  height: 3em;
-}
-
-.splitPane {
-  background: transparent !important;
-  border: none !important;
-  overflow: hidden;
+  height: 3%;
 }
 
 .pipelineBar {
@@ -70,15 +35,4 @@ button {
   background-color: none;
 }
 
-img {
-  margin: 5vh;
-  width: 30vh;
-  height: 30vh;
-}
 
-.centeredImage {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}

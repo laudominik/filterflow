@@ -1,0 +1,22 @@
+img {
+  width: 25%;
+  height: 25%;
+}
+
+.centeredImage {
+    align-items: center;
+    justify-content: center;
+    margin-left: 25%;
+}
+
+.previewContainer {
+  height: 100%;
+  display: flex; 
+  flex-direction: column;
+  background-color: #F5F8FA;
+}
+
+.preview {
+  background-color: white;
+  height: 98%;
+}
