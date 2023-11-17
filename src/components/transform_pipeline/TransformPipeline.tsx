@@ -13,7 +13,7 @@ import MaxPoolingTransform from '../../engine/transforms/MaxPoolingTransform';
 import "./Pipeline.css"
 
 export default function TransformPipeline(){
-    const [transforms, setTransforms] = useState([new FilterTransform, new MaxPoolingTransform])
+    const [transforms, setTransforms] = useState([new FilterTransform])
 
     const moveTransform = (dragIndex: number, hoverIndex: number) => {
         const newItems = [...transforms];
