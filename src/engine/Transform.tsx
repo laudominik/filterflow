@@ -6,9 +6,10 @@ abstract class Transform {
         this.name = name;
     }
 
-    abstract apply(id: number): number;
+    abstract apply(from:string): string;
     abstract updateParams(params: { [key: string]: any}): void;
     abstract paramView(): ReactNode;
+    abstract getImageString(): string;
 
     getColor(): string {
         return this.color;

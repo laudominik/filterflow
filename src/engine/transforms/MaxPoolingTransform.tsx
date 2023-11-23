@@ -1,6 +1,9 @@
 import Transform from "../Transform";
 
 class MaxPoolingTransform extends Transform {
+    getImageString(): string {
+        throw new Error("Method not implemented.");
+    }
     constructor() {
         super('Max pooling', '#E2E7F4');
     }
@@ -13,9 +16,10 @@ class MaxPoolingTransform extends Transform {
         return <div>max pool</div>
     }
 
-    apply(id: number): number {
+    apply(from:string): string {
         // TODO: apply transformation
-        return id;
+        // return id;
+        return from;
     }
 
     updateParams(parameters: { [key: string]: any }): void {

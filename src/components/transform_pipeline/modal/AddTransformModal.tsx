@@ -1,7 +1,8 @@
-import React, { useState, ReactNode, KeyboardEvent } from 'react';
+import React, { useContext, ReactNode, KeyboardEvent, useSyncExternalStore, useState } from 'react';
 import { Card, ListGroup, Col, Row, Tab } from 'react-bootstrap';
 import Modal from 'react-bootstrap/Modal';
 import SplitPane from '../../SplitPane';
+import { FilterStoreContext } from '../../../stores/simpleFilterStore';
 
 import "./AddTransformModal.css"
 
@@ -64,16 +65,22 @@ interface TransformsTypeIfc {
 
 function TransformsType(name:string, color:string, transforms: string[] = []): TransformsTypeIfc{
   const id = "#" + name;
-
+  const filterStore = useContext(FilterStoreContext);
   // TODO: call to engine to get all registered transforms of the type 
   // TODO: call to engine to get color assigned to the transform of the type 
+
+  const onClickHandler = () => {
+    // TODO: should check the name of the clicked transformation and add a proper one
+    filterStore.addTransform("custom_kernel")
+  };
+
   return {
     name: name,
     typeCard: <ListGroup.Item action href={id} style={{backgroundColor: color}}> {name} </ListGroup.Item>,
     typeList: <Tab.Pane eventKey={id}>
       <ListGroup>
         {transforms.map(transform => 
-          <ListGroup.Item style={{backgroundColor: color}}>
+          <ListGroup.Item style={{backgroundColor: color}} onClick={onClickHandler}>
             {transform}
           </ListGroup.Item>)}
       </ListGroup>

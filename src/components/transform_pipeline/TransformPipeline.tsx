@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useContext, useState, useSyncExternalStore } from 'react'
 import TransformEntry from "./TransformEntry";
 import { faList } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -12,23 +12,21 @@ import MaxPoolingTransform from '../../engine/transforms/MaxPoolingTransform';
 
 import "./Pipeline.css"
 import AddTransformModal from './modal/AddTransformModal';
+import { FilterStoreContext } from '../../stores/simpleFilterStore';
+import { GUID } from '../../engine/nodeResponse';
 
 export default function TransformPipeline(){
-    const [transforms, setTransforms] = useState([new FilterTransform])
+    const filterStore = useContext(FilterStoreContext);
+    const sequence = useSyncExternalStore(filterStore.subscribeSequence.bind(filterStore), filterStore.getSequence.bind(filterStore));
+    const transforms = filterStore.getTransforms(sequence);
 
     const moveTransform = (dragIndex: number, hoverIndex: number) => {
-        const newItems = [...transforms];
-        const draggedItem = newItems[dragIndex];
-
-        newItems.splice(dragIndex, 1);
-        newItems.splice(hoverIndex, 0, draggedItem);
-        setTransforms(newItems);
+        filterStore.rearrange(dragIndex ,hoverIndex);
     };
-
-    const transformList = transforms.map((transform, index) => (
+    const transformList = sequence.map((_, index) => (
         <TransformEntryDraggable
           key={index}
-          transform={transform}
+          transform={transforms[index]}
           index={index}
           moveTransform={moveTransform}
         />
@@ -50,15 +48,6 @@ export default function TransformPipeline(){
         </div>
         
     </div>
-}
-
-function AddEntry(){
-    // TODO: modal for adding transformations
-    return <Card className="transformCard bg-black">
-        <Card.Header className="cardHeader">
-            <div className="text-center d-inline-block w-100 text-white">+</div>  
-        </Card.Header>
-    </Card>
 }
 
 function TransformEntryDraggable({transform, index, moveTransform} 
