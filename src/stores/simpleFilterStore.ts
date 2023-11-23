@@ -1,4 +1,5 @@
-import { createContext } from "react";
+// @ts-nocheck
+import { createContext, createRef, useEffect, useRef } from "react";
 import Transform  from '../engine/Transform'
 
 type MarkedListener = CallableFunction & { id: Number }
@@ -68,86 +69,138 @@ class simpleFilterStore {
     }
 
     private applyTransforms(imageEncoded: string){
-        const dispatch = async (input: string) => {
-            const image = new Image();
-            image.onload = () => {
+        // the entire logic should be moved to the engine
+        const vertexShaderSource = `
+                attribute vec2 a_position;
+                varying vec2 v_texCoord;
 
+                void main() {
+                    gl_Position = vec4(a_position, 0, 1);
+                    v_texCoord = vec2((a_position.x + 1.0) / 2.0, 1.0 - (a_position.y + 1.0) / 2.0);
+                }
+            `;
+        
 
-            const offscreenCanvas = new OffscreenCanvas(image.width, image.height);
-            //TODO: BUG to fix canvas sometimes get size 0x0
-            const ctx = offscreenCanvas.getContext('2d')!;
-            //@ts-ignore
-            ctx.drawImage(image, 0, 0);
-            //@ts-ignore
-            const imageData = ctx.getImageData(0, 0, image.width, image.height);
-            const imageTransformedData = new ImageData(image.width, image.height);
-            
-            const kernel = this.kernel!;
-            const kernelSize = kernel.length;
-            const kernelRadius = Math.floor(kernel.length / 2);
+        // TODO: should take the fragment from transform object
+        const fragmentShaderSource = `
+                // these params should be for all filters
+                precision mediump float;
+                varying vec2 v_texCoord;
+                uniform vec2 u_image_dims;
+                uniform sampler2D u_image;
 
-            // here we should call the transform pipeline
-            //  (*) before that we could make use of reversing the flattening of the image
-            // also we shouldn't assume that the image has all the channels
-            for(let y = 0; y < image.height; y++){
-                for(let x = 0; x < image.width; x++){
-                    const resultIndex = (y * image.width + x) * 4;
-                    let sumR = 0, sumG = 0, sumB = 0;
+                // these params should be for kernels and pooling
+                uniform mat2 u_kernel2;
+                uniform mat3 u_kernel3;
+                uniform mat4 u_kernel4;
+                uniform int u_kernel_size;
+                
+                void main() {
+                    vec2 d = 1.0/u_image_dims;
+                    float kernelRadius = float(u_kernel_size-1)/2.0;
+                    vec3 sum;
 
-                    if(y < kernelRadius || x < kernelRadius || x + kernelRadius >= image.width || y + kernelRadius >= image.height){
-                        imageTransformedData.data[resultIndex] = 0;
-                        imageTransformedData.data[resultIndex + 1] = 0;
-                        imageTransformedData.data[resultIndex + 2] = 0;
-                        imageTransformedData.data[resultIndex + 3] = 255; 
-                        continue;
-                    }
+                    for(int i = 0; i < 5; i++){
+                        if(i >= u_kernel_size) continue;
+                        for(int j = 0; j < 5; j++){
+                            if(j >= u_kernel_size) continue;
+                            
+                            vec2 pixelCoords = v_texCoord + vec2(float(j) - kernelRadius, float(i) - kernelRadius) * d;
+                            float kernel_weight = 0.0;
+                            if(u_kernel_size == 2){
+                                kernel_weight = u_kernel2[i][j];
+                            } else if(u_kernel_size == 3){
+                                kernel_weight = u_kernel3[i][j];
+                            } else if(u_kernel_size == 4){
+                                kernel_weight = u_kernel4[i][j];
+                            }
 
-                    for(let i = 0; i < kernelSize; i++){
-                        for(let j = 0; j < kernelSize; j++){
-                            const pixelX = x + j - kernelRadius;
-                            const pixelY = y + i - kernelRadius;
-
-                            const dataIndex = (pixelY * image.width + pixelX) * 4;
-                            sumR += imageData.data[dataIndex] * parseInt(kernel[i][j]);
-                            sumG += imageData.data[dataIndex + 1] * parseInt(kernel[i][j]);
-                            sumB += imageData.data[dataIndex + 2] * parseInt(kernel[i][j]);
+                            sum += kernel_weight * texture2D(u_image, pixelCoords).rgb;
                         }
                     }
 
-                    imageTransformedData.data[resultIndex] = sumR;
-                    imageTransformedData.data[resultIndex + 1] = sumG;
-                    imageTransformedData.data[resultIndex + 2] = sumB;
-                    imageTransformedData.data[resultIndex + 3] = 255; 
+                    gl_FragColor = vec4(sum, 1.0);
                 }
-            }
+            `;
 
-            // for (let i = 0; i < imageData.data.length; i += 1){                
+        const dispatch = async (input: string) => {
+            const image = new Image();
+            image.onload = () => {
+                const canvas = new OffscreenCanvas(image.width, image.height);
+                
+                const gl = canvas.getContext('webgl')!;
+                
+                const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
+                    gl.shaderSource(vertexShader, vertexShaderSource);
+                    gl.compileShader(vertexShader);
+    
+                const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)!;
+                    gl.shaderSource(fragmentShader, fragmentShaderSource);
+                    gl.compileShader(fragmentShader);
+    
+                const program = gl.createProgram()!;
+                    gl.attachShader(program, vertexShader);
+                    gl.attachShader(program, fragmentShader);
+                    gl.linkProgram(program);
+                    gl.useProgram(program);
+
+                const positionBuffer = gl.createBuffer()!;
+                    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+                    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+                        -1,    -1, 
+                        1,     -1, 
+                        -1,    1,
+                        1,     1
+                    ]), gl.STATIC_DRAW);
+                
+                const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
+                    gl.enableVertexAttribArray(positionAttributeLocation);
+                    gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);  
+                
+                const texture = gl.createTexture();
+                    gl.bindTexture(gl.TEXTURE_2D, texture);
+
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
             
-            //     imageTransformedData.data[i] = 0; //R
-            //     imageTransformedData.data[i + 1] = 0; //G
-            //     imageTransformedData.data[i + 2] = 0; //B
-            //     imageTransformedData.data[i + 3] = 255; //A
-            // }
-
-            console.log(imageTransformedData)
-            //@ts-ignore
-            ctx.putImageData(imageTransformedData,0,0);
-            //@ts-ignore
-            console.log(offscreenCanvas) // debug
-            //@ts-ignore
-            offscreenCanvas.convertToBlob({type:"image/png",quality:1}).then((blob:Blob) => {
-                // Use FileReader to read the Blob as a Data URL
-                this.destination=URL.createObjectURL(blob);
-                this.emitChange(0);
-                this.emitChange(1);
-            });
+                let kernelF = this.kernel!.map(el => el.map(e => parseFloat(e)));
+                let kernelLocation = gl.getUniformLocation(program, 'u_kernel2');
+                    gl.uniformMatrix2fv(kernelLocation, false, new Float32Array([].concat(...kernelF)));
+                kernelLocation = gl.getUniformLocation(program, 'u_kernel3');
+                    gl.uniformMatrix3fv(kernelLocation, false, new Float32Array([].concat(...kernelF)));
+                kernelLocation = gl.getUniformLocation(program, 'u_kernel4');
+                    gl.uniformMatrix4fv(kernelLocation, false, new Float32Array([].concat(...kernelF)));
+                const imageDimsLocation = gl.getUniformLocation(program, 'u_image_dims');
+                    gl.uniform2fv(imageDimsLocation, [image.width, image.height]);
+                
+                const kernelSizeLocation = gl.getUniformLocation(program, 'u_kernel_size');
+                    gl.uniform1i(kernelSizeLocation, kernelF.length);
+                
+                gl.clearColor(0, 0, 0, 0);
+                gl.clear(gl.COLOR_BUFFER_BIT);
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            
+                gl.deleteShader(vertexShader);
+                gl.deleteShader(fragmentShader);
+                gl.deleteProgram(program);
+                gl.deleteBuffer(positionBuffer);
+                gl.deleteTexture(texture);
+                
+                // back to base64
+                canvas.convertToBlob({type:"image/png",quality:1}).then((blob:Blob) => {
+                    this.destination=URL.createObjectURL(blob);
+                    this.emitChange(0);
+                    this.emitChange(1);
+                });
+               
+            }
+            image.src = input;
         }
-        image.src = input;
-
-        }
-        dispatch(imageEncoded);
+        dispatch(imageEncoded)
     }
-}
+};
 
 const FilterStoreContext = createContext(new simpleFilterStore()) // using it without provider makes it global
 

@@ -8220,6 +8220,16 @@ react-lifecycles-compat@^3.0.4:
   resolved "https://registry.yarnpkg.com/react-lifecycles-compat/-/react-lifecycles-compat-3.0.4.tgz#4f1a273afdfc8f3488a8c516bfda78f872352362"
   integrity sha512-fBASbA6LnOU9dOU2eW7aQ8xmYBSXUIWr+UmF9b1efZBazGNO+rcXT/icdKnYm2pTwcRylVUYwW7H1PHfLekVzA==
 
+react-reconciler@0.19.1:
+  version "0.19.1"
+  resolved "https://registry.yarnpkg.com/react-reconciler/-/react-reconciler-0.19.1.tgz#0735fc290617780a2c9735218a4762e7d77797e6"
+  integrity sha512-zgzY3mLQ2CpQ9hP3tEZi6wlRW628V4WYiRigaSbrgvN013STZn3/N19p8pW4/dn4oCKapRuL7dycbtwRcOzE+w==
+  dependencies:
+    loose-envify "^1.1.0"
+    object-assign "^4.1.1"
+    prop-types "^15.6.2"
+    scheduler "^0.13.1"
+
 react-refresh@^0.11.0:
   version "0.11.0"
   resolved "https://registry.yarnpkg.com/react-refresh/-/react-refresh-0.11.0.tgz#77198b944733f0f1f1a90e791de4541f9f074046"
@@ -8303,6 +8313,15 @@ react-transition-group@^4.4.5:
     dom-helpers "^5.0.1"
     loose-envify "^1.4.0"
     prop-types "^15.6.2"
+
+react-webgl@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/react-webgl/-/react-webgl-0.1.0.tgz#7339a40851f290e6dfa9fcb582ef0c07b33b0a8d"
+  integrity sha512-z2qmCIIPcSLvhm0lmJgKxooi6Pu6X69Szx667QPHGzIcQnZb5WfMlhdV16INiicATu20ci8KOdFgFgkOFEzxyw==
+  dependencies:
+    react-reconciler "0.19.1"
+    webgl-ui "~0.1.2"
+    webgl-ui-system-font "~0.1.0"
 
 react@^16.2.0:
   version "16.14.0"
@@ -8633,6 +8652,14 @@ saxes@^5.0.1:
   integrity sha512-5LBh1Tls8c9xgGjw3QrMwETmTMVk0oFgvrFSvWx62llR2hcEInrKNZ2GZCCuuy2lvWrdl5jhbpeqc5hRYKFOcw==
   dependencies:
     xmlchars "^2.2.0"
+
+scheduler@^0.13.1:
+  version "0.13.6"
+  resolved "https://registry.yarnpkg.com/scheduler/-/scheduler-0.13.6.tgz#466a4ec332467b31a91b9bf74e5347072e4cd889"
+  integrity sha512-IWnObHt413ucAYKsD9J1QShUKkbKLQQHdxRyw73sw4FN26iWr3DY/H34xGPe4nmL1DwXyWmSWmMrA9TfQbE/XQ==
+  dependencies:
+    loose-envify "^1.1.0"
+    object-assign "^4.1.1"
 
 scheduler@^0.19.1:
   version "0.19.1"
@@ -9358,6 +9385,11 @@ thenify-all@^1.0.0:
   dependencies:
     any-promise "^1.0.0"
 
+three@^0.88.0:
+  version "0.88.0"
+  resolved "https://registry.yarnpkg.com/three/-/three-0.88.0.tgz#4256c2fc38e4fb23a0d23eba2b6cce4df8e466d5"
+  integrity sha512-UY02Rrz49GjcnyNR+tXdmKvsJ4txC5WZMGaO+yiJTVy50wmmn6Z3fVc3waYU0czxDK36pNzkZ+38sAA8UmTR6A==
+
 throat@^6.0.1:
   version "6.0.2"
   resolved "https://registry.yarnpkg.com/throat/-/throat-6.0.2.tgz#51a3fbb5e11ae72e2cf74861ed5c8020f89f29fe"
@@ -9758,6 +9790,18 @@ web-vitals@^2.1.0:
   version "2.1.4"
   resolved "https://registry.yarnpkg.com/web-vitals/-/web-vitals-2.1.4.tgz#76563175a475a5e835264d373704f9dde718290c"
   integrity sha512-sVWcwhU5mX6crfI5Vd2dC4qchyTqxV8URinzt25XqVh+bHEPGH4C3NPrNionCP7Obx59wrYEbNlw4Z8sjALzZg==
+
+webgl-ui-system-font@~0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/webgl-ui-system-font/-/webgl-ui-system-font-0.1.0.tgz#dc921a052d5853a74512e1a64df6b2c4afee36ff"
+  integrity sha512-gXJH5I2pDbW0eiZhFN3fjFUOBd2k2DHGDfdeU3h9BBaIuUY3qU4RmVN0TdnlMgYppIF0ioFi49MvVLcWPV6FJw==
+
+webgl-ui@~0.1.2:
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/webgl-ui/-/webgl-ui-0.1.2.tgz#05b0e18ce9e2defd1fb52785f665cda0c1e60e92"
+  integrity sha512-bxXSmjWavMUhRHWwcXcZN08nyBrtTOuNJfg/4TiUdlLTcmr1psrelsamj2sHmMulovtR4IKdTLnxs4BW2f46sQ==
+  dependencies:
+    three "^0.88.0"
 
 webidl-conversions@^4.0.2:
   version "4.0.2"

@@ -25,9 +25,9 @@ export default function KernelComponent(){
         <label>
             Select Kernel Size:
             <FormSelect value={kernelN} onChange={(e) => handleKernelChange(parseInt(e.target.value, 10))}>
+                <option value={2}>2</option>
                 <option value={3}>3</option>
                 <option value={4}>4</option>
-                <option value={5}>5</option>
             </FormSelect>
         </label>
         <div className="container mt-3">
