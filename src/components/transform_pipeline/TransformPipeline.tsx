@@ -11,6 +11,7 @@ import Transform from '../../engine/Transform';
 import MaxPoolingTransform from '../../engine/transforms/MaxPoolingTransform';
 
 import "./Pipeline.css"
+import AddTransformModal from './modal/AddTransformModal';
 
 export default function TransformPipeline(){
     const [transforms, setTransforms] = useState([new FilterTransform])
@@ -45,7 +46,7 @@ export default function TransformPipeline(){
             <DndProvider backend={HTML5Backend}>
             {transformList}
             </DndProvider>
-            <AddEntry />
+            <AddTransformModal/>
         </div>
         
     </div>
