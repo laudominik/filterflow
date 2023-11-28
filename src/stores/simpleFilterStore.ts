@@ -10,40 +10,52 @@ class simpleFilterStore {
     sequenceListener:CallableFunction[]
     engine: Engine
 
+    source: GUID
     sequence:GUID[]
 
     constructor() {
         this.listeners = [];
         this.sequence = [];
-        this.sequenceListener=[];
+        this.sequenceListener = [];
         this.engine = new Engine();
-        this.sequence.push(this.engine.addNode("source",{}))
-        this.sequence.push(this.engine.addNode("custom_kernel",{}))
+        this.source = this.engine.addNode("source",{})
     }
 
     // per item section
     // internal function called to return snapshot of data with id
-    private _getView(id: GUID) {
+    private _getView(id: GUID): string | undefined {
         return this.engine.getNode(id)?.getImageString();
     }
 
+    private _getParams(id: GUID) {
+        return this.engine.getNode(id)?.getParams();
+    }
+
     // internal function register listening on specific id
-    private _subscribeView(id: GUID, listener: MarkedListener) {
+    private _subscribe(id: GUID, listener: MarkedListener) {
         listener.id = id;
         this.listeners = [...this.listeners, listener]
         return () => {
-            this.listeners = this.listeners.filter(l => l !== listener);
+            this.listeners = this.listeners.filter(l => l != listener);
         };
     }
 
     // helper functions
     // due to inability to pass additional args its the best way to add args
-    public subscribeView(id: GUID) {
-        return this._subscribeView.bind(this, id);
+    public subscribe(id: GUID) {
+        return this._subscribe.bind(this, id);
     }
 
     public getView(id: GUID) {
         return this._getView.bind(this, id);
+    }
+
+    public getParams(id: GUID){
+        return this._getParams.bind(this, id);
+    }
+
+    public getTransform(id: GUID): Transform{
+        return this.engine.getNode(id)!
     }
 
     // item sequence
@@ -52,7 +64,7 @@ class simpleFilterStore {
     }
 
     public subscribeSequence(listener: CallableFunction){
-        this.sequenceListener = [...this.listeners, listener]
+        this.sequenceListener = [...this.sequenceListener, listener]
         return () => {
             this.sequenceListener = this.sequenceListener.filter(l => l !== listener);
         };
@@ -80,26 +92,43 @@ class simpleFilterStore {
         this.sequence = [...newSequence];
         // TODO rearange nodes in graph
         this.emitSequenceChange()
+        this.applyTransforms()
     }
 
-    // public setKernel(kernel: string[][]){
-    //     this.kernel = kernel;
-    //     this.emitChange(69);
-    //     if(!this.source) return;
-    //     this.applyTransforms(this.source);
-    // }
+    public removeFromSequence(id: GUID){
+        this.sequence = this.sequence.filter(guid => guid !== id);
+        this.emitSequenceChange()
+    }
 
     // set filter store root mask what is happening with data
     public setSource(imageEncoded: string) {
-        this.engine.getNode(this.sequence[0])?.updateParams({"image":imageEncoded});
+        this.engine.getNode(this.source)?.updateParams({"image":imageEncoded});
+        this.emitChange(this.source)
     }
 
-    private emitChange(id: GUID) {
+    public lastNode(){
+        if(this.sequence.length == 0){
+            return this.source;
+        }
+        return this.sequence[this.sequence.length - 1]
+    }
+
+    public emitChange(id: GUID) {
         this.listeners.filter(f => f.id === id).forEach(f => f())
     }
 
-    private applyTransforms(imageEncoded: string){
+    public applyTransforms(){
+        if(!this.engine.getNode(this.source)) return;
+        const image = this.engine.getNode(this.source)?.getImageString() ?? "";
         
+        const reducer = async(image: Promise<string>, guid: GUID): Promise<string> => {
+            console.log(guid)
+            return this.engine.getNode(guid)?.apply(await image) || "";
+        }
+        this.sequence.reduce(reducer, Promise.resolve(image)).then(_ => {
+            this.emitChange(this.lastNode())
+            console.log("change emitted")
+        });
     }
 };
 

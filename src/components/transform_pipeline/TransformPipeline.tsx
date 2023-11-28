@@ -18,20 +18,21 @@ import { GUID } from '../../engine/nodeResponse';
 export default function TransformPipeline(){
     const filterStore = useContext(FilterStoreContext);
     const sequence = useSyncExternalStore(filterStore.subscribeSequence.bind(filterStore), filterStore.getSequence.bind(filterStore));
-    const transforms = filterStore.getTransforms(sequence);
 
-    const moveTransform = (dragIndex: number, hoverIndex: number) => {
+    const moveInSequence = (dragIndex: number, hoverIndex: number) => {
         filterStore.rearrange(dragIndex ,hoverIndex);
     };
-    const transformList = sequence.map((_, index) => (
+    const transformList = sequence.map((guid, index) => (
         <TransformEntryDraggable
           key={index}
-          transform={transforms[index]}
+          guid={guid}
           index={index}
-          moveTransform={moveTransform}
+          move={moveInSequence}
         />
       ));
 
+
+    
     return <div className="transformPipeline">
         <div className="pipelineBar">
             <div> Pipeline </div>
@@ -46,15 +47,14 @@ export default function TransformPipeline(){
             </DndProvider>
             <AddTransformModal/>
         </div>
-        
     </div>
 }
 
-function TransformEntryDraggable({transform, index, moveTransform} 
+function TransformEntryDraggable({guid, index, move} 
     : { 
-        transform: Transform, 
+        guid: GUID, 
         index: number, 
-        moveTransform: (fromIndex: number, toIndex: number) => void 
+        move: (fromIndex: number, toIndex: number) => void 
     }){
         const [, drag] = useDrag({
             type: 'ITEM',
@@ -64,12 +64,12 @@ function TransformEntryDraggable({transform, index, moveTransform}
             accept: 'ITEM',
             hover: (item: any) => {
                 if (item.index !== index) {
-                  moveTransform(item.index, index);
+                  move(item.index, index);
                   item.index = index;
                 }
               },
         });
         return <div ref={(node) => drag(drop(node))}>
-            <TransformEntry transform={transform}/>
+            <TransformEntry guid={guid}/>
         </div>
     }

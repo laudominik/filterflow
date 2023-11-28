@@ -1,7 +1,5 @@
 import Transform from "./Transform";
-import FilterTransform from "./transforms/FilterTransform";
-import SourceTransform from "./transforms/SourceTransform";
-import SourceTransfrom from "./transforms/SourceTransform";
+import mapToTransform from "./TransformDeclarations";
 
 // weakly typed for time being
 interface IAction{
@@ -87,13 +85,7 @@ export class Engine extends EventTarget{
 
     public addNode(transformation: string, params: any): GUID{
         const guid = crypto.randomUUID();
-        // TODO get from map[name] -> object (builder)
-        if(transformation == "source"){
-            this.nodes.set(guid, new SourceTransform());
-        } else if(transformation == "custom_kernel"){
-            this.nodes.set(guid, new FilterTransform());
-        }
-        
+        this.nodes.set(guid, mapToTransform(transformation)!) 
         return guid
     }
 

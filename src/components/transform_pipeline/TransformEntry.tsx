@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useContext, useSyncExternalStore } from 'react';
 import {Button} from 'react-bootstrap';
 import { 
     faEye, 
@@ -7,18 +7,37 @@ import {
     faCircle } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Entry from './Entry';
+import { FilterStoreContext } from '../../stores/simpleFilterStore';
 import Transform from '../../engine/Transform';
+import { GUID } from '../../engine/engine';
 
-export default function TransformEntry({ transform }: { transform: Transform }){
+export default function TransformEntry({ guid }: { guid: GUID }){
     const [enabled, setEnabled] = useState(true);
     
-    const handleEyeClick = () => setEnabled(!enabled);
+    const filterStore = useContext(FilterStoreContext);
+    const transform = useSyncExternalStore(filterStore.subscribe(guid) as any, filterStore.getTransform.bind(filterStore, guid))
+    
+    const handleEyeClick = () => {
+        const newState = !enabled;
+        setEnabled(newState);
+        transform.setEnabled(newState);
+        filterStore.applyTransforms()
+    }
 
-    return <div style={{opacity: enabled ? '100%' : '60%'}}>
-               <Entry color={transform.getColor()}>
+    const handleTrashClick = () => {
+        filterStore.removeFromSequence(guid)
+        filterStore.applyTransforms()
+    }
+
+    const handleExpansion = (expanded: boolean) => {
+        transform.setExpanded(expanded)
+    }
+
+    return <div key={guid} style={{opacity: enabled ? '100%' : '60%'}}>
+               <Entry color={transform.getColor()} initialOpen={transform.getExpanded()} openHook={handleExpansion}>
                <Entry.Header>{transform.getName()}</Entry.Header>
-               <Entry.Body>{transform.paramView()}</Entry.Body>
-               <Entry.Icons>{icons(enabled, handleEyeClick)}</Entry.Icons>
+               <Entry.Body>{transform.paramView(guid)}</Entry.Body>
+               <Entry.Icons>{icons(enabled, handleEyeClick, handleTrashClick)}</Entry.Icons>
             </Entry>
         </div>
         
@@ -28,13 +47,13 @@ export default function TransformEntry({ transform }: { transform: Transform }){
     return channels.map((item, _) => <FontAwesomeIcon className="iconInCard" icon={faCircle} style={{color:item}} />)
 }
     
-function icons(enabled: Boolean, handleEyeClick: () => void){
+function icons(enabled: Boolean, handleEyeClick: () => void, handleTrashClick: () => void){
     return <div>
         <Button className='border-0 bg-transparent'>
             <FontAwesomeIcon onClick={handleEyeClick} className="iconInCard" icon={enabled ? faEye : faEyeSlash} />
         </Button>
         <Button className='border-0 bg-transparent'>
-            <FontAwesomeIcon className="iconInCard" icon={faTrash} />
+            <FontAwesomeIcon onClick={handleTrashClick} className="iconInCard" icon={faTrash} />
         </Button>
         <Button className='border-0 bg-transparent'>
             {channels(["red", "green", "blue"])}

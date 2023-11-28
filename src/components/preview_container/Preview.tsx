@@ -17,8 +17,9 @@ function Preview({ title, sourceId }: { title: string, sourceId: string }) {
 
     const [isFullscreen, setIsFullscreen] = useState(false);
     const filterStore = useContext(FilterStoreContext);
-    // TODO remove any
-    const imageUrl = useSyncExternalStore(filterStore.subscribeView(sourceId) as any, filterStore.getView(sourceId));
+    console.log("SOURCE" + sourceId)
+    const imageUrl = useSyncExternalStore(filterStore.subscribe(sourceId) as any, filterStore.getView(sourceId));
+    console.log("PREVIEW" + imageUrl)
 
     return <div className="preview" style={componentStyle(isFullscreen)}>
         <div className="pipelineBar">

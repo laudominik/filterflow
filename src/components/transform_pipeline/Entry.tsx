@@ -19,6 +19,8 @@ interface EntryProps {
     children: ReactNode;
     color: string;
     invert?: boolean;
+    initialOpen?: boolean;
+    openHook?: (open: boolean)=>void;
 }
 
 const EntryHeader: React.FC<EntryHeaderProps> = ({ children }) => {
@@ -37,9 +39,18 @@ const Entry: React.FC<EntryProps> & {
     Header: React.FC<EntryHeaderProps>;
     Body: React.FC<EntryBodyProps>;
     Icons: React.FC<EntryIconsProps>;
-} = ({ children, color, invert=false }) => {
-    const [open, setOpen] = useState(false);
+} = ({ children, 
+    color, 
+    invert=false, 
+    initialOpen=false,
+    openHook = (_)=>{}
+}) => {
+    const [open, setOpen] = useState(initialOpen);
 
+    const handleOpenClick = () => {
+        openHook(!open)
+        setOpen(!open)
+    }
 
     const style = {
         backgroundColor: color,
@@ -63,7 +74,7 @@ const Entry: React.FC<EntryProps> & {
         <div>
             <Button 
                 className='border-0 bg-transparent'
-                onClick={() => setOpen(!open)}
+                onClick={handleOpenClick}
                 aria-expanded={open}>
                 <FontAwesomeIcon className="iconInCard" icon={open ? faChevronDown : faChevronUp} />
             </Button>
