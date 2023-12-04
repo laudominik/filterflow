@@ -6,16 +6,13 @@ import {Button, Card} from 'react-bootstrap';
 import { DndProvider, useDrag, useDrop } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import ImportEntry from "./ImportEntry";
-import FilterTransform from '../../engine/transforms/FilterTransform';
-import Transform from '../../engine/Transform';
-import MaxPoolingTransform from '../../engine/transforms/MaxPoolingTransform';
-
-import "./Pipeline.css"
 import AddTransformModal from './modal/AddTransformModal';
 import { FilterStoreContext } from '../../stores/simpleFilterStore';
 import { GUID } from '../../engine/nodeResponse';
 
-export default function TransformPipeline(){
+import "./Pipeline.css"
+
+export default function TransformPipeline({setExpanded}: {setExpanded: (arg0: boolean) => void}){
     const filterStore = useContext(FilterStoreContext);
     const sequence = useSyncExternalStore(filterStore.subscribeSequence.bind(filterStore), filterStore.getSequence.bind(filterStore));
 
@@ -31,13 +28,11 @@ export default function TransformPipeline(){
         />
       ));
 
-
-    
-    return <div className="transformPipeline">
+    return <div className="transformPipeline overflow-auto">
         <div className="pipelineBar">
             <div> Pipeline </div>
             <Button className="border-0 bg-transparent">
-                <FontAwesomeIcon className="iconInCard" icon={faList} />
+                <FontAwesomeIcon className="iconInCard" icon={faList} onClick={() => {setExpanded(false)}}/>
             </Button>
         </div>
         <div>

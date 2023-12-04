@@ -35,4 +35,10 @@ button {
   background-color: none;
 }
 
+.floatingButton {
+  position: absolute;
+  z-index: 9999;
+  top: 12%;
+  left: 1%;
+}
 

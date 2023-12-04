@@ -1,12 +1,13 @@
 img {
-  width: 25%;
-  height: 25%;
+  height: 90%;
+  object-fit: contain;
 }
 
 .centeredImage {
+    display: flex;
     align-items: center;
     justify-content: center;
-    margin-left: 25%;
+    height: 90%;
 }
 
 .previewContainer {
@@ -19,4 +20,5 @@ img {
 .preview {
   background-color: white;
   height: 98%;
+  width: 100%;
 }
