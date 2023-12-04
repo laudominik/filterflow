@@ -13,11 +13,6 @@ class MaxPoolingTransform extends Transform {
         return <div>max pool</div>
     }
 
-    apply(id: number): number {
-        // TODO: apply transformation
-        return id;
-    }
-
     updateParams(parameters: { [key: string]: any }): void {
         // TODO: update mask
         /*

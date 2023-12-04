@@ -3,22 +3,38 @@ import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {Button, FormSelect} from 'react-bootstrap';
 import { FilterStoreContext } from '../../stores/simpleFilterStore';
+import FilterTransform from '../../engine/transforms/FilterTransform';
+import { GUID } from '../../engine/engine';
 
-export default function KernelComponent(){
-    const filterStore = useContext(FilterStoreContext);
+export default function KernelComponent({guid}: {guid: GUID}){
+    const filterContext = useContext(FilterStoreContext)
 
-    const [kernelN, setKernelN] = useState(3);
-    const gridValues = useSyncExternalStore<string[][]>(filterStore.subscribeView(69) as any, filterStore.getView(69) as ()=>string[][])
+    const transform = useSyncExternalStore(filterContext.subscribe(guid) as any, filterContext.getTransform.bind(filterContext, guid))
     
+    const [gridValues, setGridValues] = useState<string[][]>(transform.getParams()["kernel"]);
+    const [kernelN, setKernelN] = useState(gridValues.length);
     const handleKernelChange = (newKernelN: number) => {
         setKernelN(newKernelN);
-        filterStore.setKernel(Array(newKernelN).fill(0).map(() => new Array(newKernelN).fill(0)));
+        const newGridValues = Array(newKernelN).fill(0).map(() => new Array(newKernelN).fill(0))
+        setGridValues(newGridValues)
+        transform.updateParams(
+            {
+                "kernel": newGridValues
+            }
+        );
+        filterContext.applyTransforms()
     };
 
     const handleInputChange = (row: number, col: number, value: string) => {
         const newGridValues = [...gridValues];
         newGridValues[row][col] = value;
-        filterStore.setKernel(newGridValues);
+        setGridValues(newGridValues)
+        transform.updateParams(
+            {
+                "kernel": newGridValues
+            }
+        )
+        filterContext.applyTransforms()
     };
 
     return <div className="grid">
@@ -35,7 +51,7 @@ export default function KernelComponent(){
             <div className="row">
                 {gridValues.map((row, rowIndex) => (
                     <div key={rowIndex} className="row mb-2">
-                        {row.map((col, colIndex) => (
+                        {row.map((_, colIndex) => (
                             <div key={colIndex} className="col">
                                 <input
                                     type="number"

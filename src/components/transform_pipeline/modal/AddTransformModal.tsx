@@ -1,9 +1,11 @@
-import React, { useState, ReactNode, KeyboardEvent } from 'react';
+import React, { useContext, ReactNode, KeyboardEvent, useSyncExternalStore, useState } from 'react';
 import { Card, ListGroup, Col, Row, Tab } from 'react-bootstrap';
 import Modal from 'react-bootstrap/Modal';
 import SplitPane from '../../SplitPane';
+import { FilterStoreContext } from '../../../stores/simpleFilterStore';
 
 import "./AddTransformModal.css"
+import { getLinear, getLogical, getMorphologic, getPoint, getPooling } from '../../../engine/TransformDeclarations';
 
 export default function AddTransformModal() {
   const [show, setShow] = useState(false);
@@ -64,16 +66,23 @@ interface TransformsTypeIfc {
 
 function TransformsType(name:string, color:string, transforms: string[] = []): TransformsTypeIfc{
   const id = "#" + name;
-
+  const filterStore = useContext(FilterStoreContext);
   // TODO: call to engine to get all registered transforms of the type 
   // TODO: call to engine to get color assigned to the transform of the type 
+
+  const onClickHandler = (transform: string) => {
+    // TODO: should check the name of the clicked transformation and add a proper one
+    filterStore.addTransform(transform)
+    filterStore.applyTransforms()
+  };
+
   return {
     name: name,
     typeCard: <ListGroup.Item action href={id} style={{backgroundColor: color}}> {name} </ListGroup.Item>,
     typeList: <Tab.Pane eventKey={id}>
       <ListGroup>
         {transforms.map(transform => 
-          <ListGroup.Item style={{backgroundColor: color}}>
+          <ListGroup.Item style={{backgroundColor: color}} onClick={() => onClickHandler(transform)}>
             {transform}
           </ListGroup.Item>)}
       </ListGroup>
@@ -82,42 +91,21 @@ function TransformsType(name:string, color:string, transforms: string[] = []): T
 }
 
 function LinearTransforms(){
-  return TransformsType("Linear", "#E6F4E2", [
-    "Laplace filter", 
-    "Gaussian blur", 
-    "Sobel filter", 
-    "Custom kernel"
-  ]);
+  return TransformsType("Linear", "#E6F4E2", getLinear());
 }
 
 function PoolingTransforms(){
-  return TransformsType("Pooling", "#E2E7F4", [
-    "Max pooling",
-    "Min pooling",
-    "Avg pooling"
-  ]);
+  return TransformsType("Pooling", "#E2E7F4", getPooling());
 }
 
 function LogicalTransforms(){
-  return TransformsType("Logical", "#E2F0F4", [
-    "And",
-    "Or",
-    "Xor"
-  ]);
+  return TransformsType("Logical", "#E2F0F4", getLogical());
 }
 
 function PointTransforms(){
-  return TransformsType("Point", "#F4E2F4", [
-    "Brightness",
-    "Threshold",
-    "To grayscale",
-    "To YCbCr"
-  ]);
+  return TransformsType("Point", "#F4E2F4", getPoint());
 }
 
 function MorphologicTransforms(){
-  return TransformsType("Morphologic", "#F2F4E2", [
-    "Erosion",
-    "Dilatation"
-  ]);
+  return TransformsType("Morphologic", "#F2F4E2", getMorphologic());
 }
