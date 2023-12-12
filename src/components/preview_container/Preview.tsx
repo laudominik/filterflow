@@ -6,6 +6,7 @@ import ImageMap from '../../util/ImageMap';
 import { FilterStoreContext } from '../../stores/simpleFilterStore';
 
 export function InputPreview({ sourceId }: { sourceId: string }) {
+
     return <Preview sourceId={sourceId} title="Input" />;
 }
 
@@ -18,7 +19,6 @@ function Preview({ title, sourceId }: { title: string, sourceId: string }) {
     const [isFullscreen, setIsFullscreen] = useState(false);
     const filterStore = useContext(FilterStoreContext);
     const imageUrl = useSyncExternalStore(filterStore.subscribe(sourceId) as any, filterStore.getView(sourceId));
-
     return <div className="preview" style={componentStyle(isFullscreen)}>
         <div className="pipelineBar">
             <div>{title}</div>

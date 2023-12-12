@@ -1,6 +1,8 @@
 import { ReactNode } from "react";
 import Transform from "../Transform";
+import { jsonObject } from "typedjson";
 
+@jsonObject
 export default class SourceTransform extends Transform{
     image?: string
 

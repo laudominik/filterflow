@@ -1,5 +1,7 @@
+import { jsonObject } from "typedjson";
 import Transform from "../Transform";
 
+@jsonObject
 class MaxPoolingTransform extends Transform {
     constructor() {
         super('Max pooling', '#E2E7F4');

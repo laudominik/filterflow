@@ -1,15 +1,17 @@
 //@ts-nocheck
+import "reflect-metadata"
+import { jsonArrayMember, jsonMember, jsonObject } from "typedjson";
 import KernelComponent from "../../components/transforms/KernelComponent";
 import Transform from "../Transform";
 
+@jsonObject
 class FilterTransform extends Transform {
 
     image?:string
-    private kernel: string[][]
 
     constructor(name?: string) {
         super(name ?? 'Custom kernel', '#E6F4E2');
-        this.kernel = Array(3).fill(0).map(() => new Array(3).fill(0));
+        this.kernel = Array(3).fill('0').map(() => new Array(3).fill('0'));
         this.params = {"kernel" : this.kernel};
     }
 
@@ -22,7 +24,6 @@ class FilterTransform extends Transform {
 
     async _apply(from:string): Promise<string> {
         this.kernel = this.params["kernel"]
-        console.log("FROM" + from)
         const vertexShaderSource = `
                 attribute vec2 a_position;
                 varying vec2 v_texCoord;
@@ -147,7 +148,6 @@ class FilterTransform extends Transform {
             // back to base64            
             const blob = await canvas.convertToBlob({type:"image/png",quality:1})
             this.image = URL.createObjectURL(blob);
-            console.log("TO" + this.image)
             return this.image;
     }
 }

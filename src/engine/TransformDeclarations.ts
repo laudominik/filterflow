@@ -45,3 +45,7 @@ export function getMorphologic(){
     return registry.getOfType("morphologic")!
 }
 
+export function knownTypes(){
+    return registry.getKnownTypes();
+}
+

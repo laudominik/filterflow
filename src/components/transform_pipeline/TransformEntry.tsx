@@ -12,10 +12,11 @@ import Transform from '../../engine/Transform';
 import { GUID } from '../../engine/engine';
 
 export default function TransformEntry({ guid }: { guid: GUID }){
-    const [enabled, setEnabled] = useState(true);
     
     const filterStore = useContext(FilterStoreContext);
     const transform = useSyncExternalStore(filterStore.subscribe(guid) as any, filterStore.getTransform.bind(filterStore, guid))
+    const [enabled, setEnabled] = useState(transform.getEnabled());
+
     
     const handleEyeClick = () => {
         const newState = !enabled;
@@ -31,9 +32,10 @@ export default function TransformEntry({ guid }: { guid: GUID }){
 
     const handleExpansion = (expanded: boolean) => {
         transform.setExpanded(expanded)
+        filterStore.commitToPersistentStore()
     }
 
-    return <div key={guid} style={{opacity: enabled ? '100%' : '60%'}}>
+    return <div key={guid} id={guid} style={{opacity: enabled ? '100%' : '60%'}}>
                <Entry color={transform.getColor()} initialOpen={transform.getExpanded()} openHook={handleExpansion}>
                <Entry.Header>{transform.getName()}</Entry.Header>
                <Entry.Body>{transform.paramView(guid)}</Entry.Body>
@@ -48,7 +50,7 @@ export default function TransformEntry({ guid }: { guid: GUID }){
 }
     
 function icons(enabled: Boolean, handleEyeClick: () => void, handleTrashClick: () => void){
-    return <div>
+    return <div key={crypto.randomUUID()}>
         <Button className='border-0 bg-transparent'>
             <FontAwesomeIcon onClick={handleEyeClick} className="iconInCard" icon={enabled ? faEye : faEyeSlash} />
         </Button>

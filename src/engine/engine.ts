@@ -1,5 +1,10 @@
+import 'reflect-metadata'
+import { jsonMapMember, jsonObject } from "typedjson";
 import Transform from "./Transform";
-import mapToTransform from "./TransformDeclarations";
+import mapToTransform, {knownTypes} from "./TransformDeclarations";
+import FilterTransform from './transforms/FilterTransform';
+import SourceTransform from './transforms/SourceTransform';
+import MaxPoolingTransform from './transforms/MaxPoolingTransform';
 
 // weakly typed for time being
 interface IAction{
@@ -40,6 +45,7 @@ type NodeResponse = NodeResponseUpdated | NodeResponseError
 
 
 // Engine send events to parent element (logic decupling)
+@jsonObject({knownTypes: Array.from(knownTypes())})
 export class Engine extends EventTarget{
     // internal is comunication from graph components to graph components, with information collection by engine
     // this enable better batching of updates
@@ -51,7 +57,8 @@ export class Engine extends EventTarget{
        response: ExternalEngineResponse
        pendingUpdates: Set<GUID> // basicly open updates, that wait for return
     }
-    
+
+    @jsonMapMember(String, Transform)
     nodes: Map<GUID,Transform>
 
     constructor(){
@@ -63,7 +70,6 @@ export class Engine extends EventTarget{
         }
         this.nodes = new Map()
         this.internal.addEventListener("info",this.handleInternalInfo)
-
     }
 
     // called internaly nodes are the sources of this request
@@ -109,7 +115,6 @@ export class Engine extends EventTarget{
         // TODO mark node update as finished
         // TODO 
     }
-
 }
 
 // this will be send to parent element to inform that some element changed

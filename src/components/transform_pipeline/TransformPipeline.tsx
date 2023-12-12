@@ -64,7 +64,7 @@ function TransformEntryDraggable({guid, index, move}
                 }
               },
         });
-        return <div ref={(node) => drag(drop(node))}>
+        return <div key={guid} ref={(node) => drag(drop(node))}>
             <TransformEntry guid={guid}/>
         </div>
     }
