@@ -5,6 +5,8 @@ import mapToTransform, {knownTypes} from "./TransformDeclarations";
 import FilterTransform from './transforms/FilterTransform';
 import SourceTransform from './transforms/SourceTransform';
 import MaxPoolingTransform from './transforms/MaxPoolingTransform';
+import { connect, disconnect } from './node';
+import { NodeResponse } from './nodeResponse';
 
 export type GUID = string;
 
@@ -32,25 +34,28 @@ export class Engine extends EventTarget{
     batchState: {
        response: ExternalEngineResponse
        pendingUpdates: Set<GUID> // basicly open updates, that wait for return
+       doneUpdates: Set<GUID>,
+       tick: number
     }
+
 
     @jsonMapMember(String, Transform)
     nodes: Map<GUID,Transform>
+
+    source_nodes: GUID[]
 
     constructor(){
         super()
         this.internal = new EventTarget();
         this.batchState = {
+            tick:1,
             response: new ExternalEngineResponse(),
-            pendingUpdates: new Set()
+            pendingUpdates: new Set(),
+            doneUpdates: new Set(),
         }
         this.nodes = new Map()
-        this.internal.addEventListener("info",this.handleInternalInfo)
-    }
-
-    // called internaly nodes are the sources of this request
-    private updateNode(node:GUID, updateSource: "update" | "error" | "self") {
-        // TODO what about input nodes they are not pending when inserting non static image
+        this.source_nodes = []
+        this.internal.addEventListener("info",this.handleInternalInfo as any)
     }
 
     public async updateNodeParams(node:GUID,params:any){
@@ -66,30 +71,75 @@ export class Engine extends EventTarget{
     }
 
     public addNode(transformation: string, params: any): GUID{
-        const guid = crypto.randomUUID();
-        this.nodes.set(guid, mapToTransform(transformation)!) 
+        const node = mapToTransform(transformation)!
+        const guid = node.meta.id;
+        if (node.meta.input_size == 0){
+            this.source_nodes.push(guid)
+        }
+        node.engineChannel = this.internal;
+        this.nodes.set(guid,node) 
         return guid
     }
 
-    public connectNodes(source:GUID,destination:GUID,source_handle: Number,destination_handle:Number): boolean{
-        return false
+    public removeNode(guid:GUID){
+        let node = this.getNode(guid);
+        node?.remove();
+        this.nodes.delete(guid);
+        this.source_nodes = this.source_nodes.filter((v) => v!= guid);
     }
 
-    public disconnectNodes(source:GUID,destination:GUID,source_handle: Number,destination_handle:Number): boolean{
-        return false
+    public connectNodes(source:GUID,destination:GUID,source_handle: number,destination_handle:number): boolean{
+        connect(this.nodes.get(source)!,source_handle,this.nodes.get(destination)!,destination_handle)
+        return true
+    }
+
+    public disconnectNodes(source:GUID,destination:GUID,source_handle: number,destination_handle:number): boolean{
+        disconnect(this.nodes.get(source)!,source_handle,this.nodes.get(destination)!,destination_handle)
+        return true
     }
 
     public getNode(node:GUID): Transform | undefined {
         return this.nodes.get(node)
     }
 
-    private handleInternalInfo(event: Event) {
-        // batch or send direclty
-        // TODO perfect this
-        // EXAMPLE this.updateNode(event) call update on nodes
-        // EXAMPLE this.dispatchEvent(event) send info about update
-        // TODO mark node update as finished
-        // TODO 
+    public update_all(){
+        const tick = this.batchState.tick + 1;
+        this.batchState = {
+            doneUpdates: new Set(),
+            pendingUpdates: new Set(this.source_nodes),
+            response: new ExternalEngineResponse(),
+            tick: tick,
+        }
+
+        this.source_nodes.forEach((id) =>{
+            this.getNode(id)?.update_node(tick);
+        })
+    }
+
+    private handleInternalInfo(event: CustomEvent<NodeResponse>) {
+        
+        if (event.detail.status == "updated"){
+            const msg = event.detail;
+            this.batchState.doneUpdates.add(msg.nodeId);
+            msg.requestUpdates.forEach((id) =>{
+                this.batchState.pendingUpdates.add(id);
+                this.getNode(id)?.update_node(this.batchState.tick);
+            })
+            this.batchState.response.updated.push(msg.nodeId);
+        }else if (event.detail.status == "error"){
+            const msg = event.detail;
+            this.batchState.doneUpdates.add(msg.nodeId);
+            msg.invalidateChildrens.forEach((id) =>{
+                this.batchState.pendingUpdates.add(id);
+                this.getNode(id)?.update_node(this.batchState.tick);
+            })
+            this.batchState.response.errors.push(msg.nodeId);
+
+        }
+        
+        if (this.batchState.pendingUpdates.size == this.batchState.doneUpdates.size){
+            this.dispatchEvent(new CustomEvent<ExternalEngineResponse>("update",{detail:this.batchState.response}))
+        }
     }
 }
 

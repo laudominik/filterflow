@@ -114,13 +114,13 @@ export abstract class node<T extends node<T>>{
      * Update internal state
      * This must return immediately make it async or dispatch function(type annotation prohibit use of async and abstract) 
      */
-    public abstract _update(): void;
+    public abstract _update_node(): void;
 
     /**
      * Update node handle checking connection perquisites
      * Return is if update by connection has started
      */
-    public update(tick: number): boolean {
+    public update_node(tick: number): boolean {
         if (this.dependency.tick != tick) {
             this.dependency.tick = tick;
             this.dependency.inputs = 1;
@@ -128,7 +128,7 @@ export abstract class node<T extends node<T>>{
             this.dependency.inputs += 1;
         }
         if (this.dependency.inputs >= this.inputs.size) { // using this in case some input are optional(if all are needed handle it by returning error to engine)
-            this._update();
+            this._update_node();
             return true;
         }
         return false;
@@ -147,7 +147,7 @@ export abstract class node<T extends node<T>>{
             status: "updated"
         }
 
-        this.engineChannel.dispatchEvent(new CustomEvent<NodeResponse>("update", { detail: msg }))
+        this.engineChannel.dispatchEvent(new CustomEvent<NodeResponse>("info", { detail: msg }))
     }
 
     public dispatch_error(err: string) {
@@ -164,6 +164,6 @@ export abstract class node<T extends node<T>>{
             error: err,
         }
 
-        this.engineChannel.dispatchEvent(new CustomEvent<NodeResponse>("error", { detail: msg }))
+        this.engineChannel.dispatchEvent(new CustomEvent<NodeResponse>("info", { detail: msg }))
     }
 }
