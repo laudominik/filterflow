@@ -6,31 +6,7 @@ import FilterTransform from './transforms/FilterTransform';
 import SourceTransform from './transforms/SourceTransform';
 import MaxPoolingTransform from './transforms/MaxPoolingTransform';
 
-// weakly typed for time being
-interface IAction{
-    INFO_NODE_UPDATED:string, // node was updated info
-    DISPATCH_NODE_UPDATE: string, // dispatch update to next node
-    ERROR_NODE_INPUT: string // send MSG that update is imposible (error on input)
-}
-
 export type GUID = string;
-
-interface NodeResponseUpdated{
-    nodeId: GUID,
-    status: "updated",
-    requestUpdates: GUID[]
-}
-
-
-interface NodeResponseError{
-    nodeId: GUID,
-    status: "error",
-    invalidateChildrens: GUID[] // if error ocure in parent tree all childeren are invalid
-    // children should emit same error TODO add handle to send invalidateNode or we want to handle it difrently
-} // error msg or status avalible on node
-
-// type that will be send to internal
-type NodeResponse = NodeResponseUpdated | NodeResponseError 
 
 // FLOW
 // node get updatedParams
