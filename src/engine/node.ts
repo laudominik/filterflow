@@ -13,6 +13,10 @@ export function disconnect<T extends node<T>>(source: T, source_nr: number, dest
 }
 
 
+export type NodeInit = {
+    id: string, inputs: number, outputs: number, channel: EventTarget
+}
+
 
 export abstract class node<T extends node<T>>{
     meta: {
@@ -28,14 +32,14 @@ export abstract class node<T extends node<T>>{
     inputs: Map<number, [T, number]>
     connected_to_outputs: Map<number, [T, number][]> // two way linked list
 
-    constructor(id: string, inputs: number, outputs: number, channel: EventTarget) {
-        this.engineChannel = channel
+    constructor(params: NodeInit) {
+        this.engineChannel = params.channel
         this.inputs = new Map<number, [T, number]>()
         this.connected_to_outputs = new Map<number, [T, number][]>()
         this.meta = {
-            id,
-            input_size: inputs,
-            output_size: outputs
+            id: params.id,
+            input_size: params.inputs,
+            output_size: params.outputs
         }
         this.dependency = {
             inputs: 0,

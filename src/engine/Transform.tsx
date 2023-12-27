@@ -2,14 +2,16 @@ import 'reflect-metadata'
 import { ReactNode } from 'react'
 import { GUID } from './engine'
 import { AnyT, jsonMember, jsonObject } from 'typedjson';
+import { node } from './node';
 
 interface KVParams {
     [key: string]: any
 }
 
 @jsonObject
-abstract class Transform {
+abstract class Transform extends node<Transform> {
     constructor(name: string, color: string){
+        super({id:crypto.randomUUID(),inputs:1,outputs:1,channel:new EventTarget()});
         this.color = color;
         this.name = name;
         this.params = {};
