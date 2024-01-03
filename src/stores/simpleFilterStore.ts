@@ -40,8 +40,12 @@ class simpleFilterStore {
 
     // per item section
     // internal function called to return snapshot of data with id
-    private _getView(id: GUID): string | undefined {
-        return this.engine.getNode(id)?.getImageString();
+    private _getView(id: GUID) {
+        return this.engine.getNode(id)?.getCanvas()
+    }
+
+    private _getHash(id: GUID){
+        return this.engine.getNode(id)?.getHash()
     }
 
     private _getParams(id: GUID) {
@@ -65,6 +69,10 @@ class simpleFilterStore {
 
     public getView(id: GUID) {
         return this._getView.bind(this, id);
+    }
+
+    public getHash(id: GUID){
+        return this._getHash.bind(this, id);
     }
 
     public getParams(id: GUID){
@@ -121,14 +129,15 @@ class simpleFilterStore {
     }
 
     // set filter store root mask what is happening with data
-    public setSource(imageEncoded: string) {
-        this.engine.getNode(this.source)?.setImageString(imageEncoded);
+    public async setSource(imageEncoded: string) {
+        await this.engine.getNode(this.source)?.setImageString(imageEncoded);
+
         this.emitChange(this.source)
         this.commitToPersistentStore()
     }
 
     public lastNode(){
-        if(this.sequence.length == 0){
+        if(this.sequence.length === 0){
             return this.source;
         }
         return this.sequence[this.sequence.length - 1]
@@ -140,10 +149,11 @@ class simpleFilterStore {
 
     public applyTransforms(){
         if(!this.engine.getNode(this.source)) return;
-        const image = this.engine.getNode(this.source)?.getImageString() ?? "";
+        const image = this.engine.getNode(this.source)?.getCanvas();
+        console.log(image);
         
-        const reducer = async(image: Promise<string>, guid: GUID): Promise<string> => {
-            return this.engine.getNode(guid)?.apply(await image) || "";
+        const reducer = async(image: Promise<OffscreenCanvas | undefined>, guid: GUID): Promise<OffscreenCanvas | undefined> => {
+            return this.engine.getNode(guid)?.apply(await image);
         }
         this.sequence.reduce(reducer, Promise.resolve(image)).then(_ => {
             this.emitChange(this.lastNode())

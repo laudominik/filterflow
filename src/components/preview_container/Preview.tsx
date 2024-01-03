@@ -1,4 +1,4 @@
-import { useState, CSSProperties, useContext, useSyncExternalStore } from 'react'
+import { useState, CSSProperties, useContext, useSyncExternalStore, useRef, useEffect } from 'react'
 import { faMagnifyingGlassPlus, faMagnifyingGlassMinus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button } from 'react-bootstrap';
@@ -18,7 +18,20 @@ function Preview({ title, sourceId }: { title: string, sourceId: string }) {
 
     const [isFullscreen, setIsFullscreen] = useState(false);
     const filterStore = useContext(FilterStoreContext);
-    const imageUrl = useSyncExternalStore(filterStore.subscribe(sourceId) as any, filterStore.getView(sourceId));
+
+    const offscreen_canvas = useSyncExternalStore(filterStore.subscribe(sourceId) as any, filterStore.getView(sourceId));
+    const canvas_hash = useSyncExternalStore(filterStore.subscribe(sourceId) as any, filterStore.getHash(sourceId));
+    
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    useEffect(()=>{
+        if(offscreen_canvas && canvasRef.current){
+            canvasRef.current.width = offscreen_canvas.width;
+            canvasRef.current.height = offscreen_canvas.height;
+            canvasRef.current.getContext("2d")?.drawImage(offscreen_canvas,0,0);
+        }
+    },[offscreen_canvas, canvas_hash])
+
     return <div className="preview" style={componentStyle(isFullscreen)}>
         <div className="pipelineBar">
             <div>{title}</div>
@@ -27,7 +40,7 @@ function Preview({ title, sourceId }: { title: string, sourceId: string }) {
             </Button>
         </div>
         <div className="centeredImage">
-            <img src={String(imageUrl)} alt="empty image" />
+            <canvas ref={canvasRef} />
         </div>
     </div>
 }

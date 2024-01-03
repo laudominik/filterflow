@@ -23,8 +23,10 @@ function ImageUploadForm() {
         const reader = new FileReader();
         reader.onload = (event) => {
             const imageDataUrl = event.target?.result as string;
-            filterContext.setSource(imageDataUrl)
-            filterContext.applyTransforms()
+            
+            filterContext.setSource(imageDataUrl).then(_ =>{
+                filterContext.applyTransforms()
+            })
         }
         
         reader.readAsDataURL(file);

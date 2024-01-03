@@ -22,7 +22,7 @@ class FilterTransform extends Transform {
         return <KernelComponent guid={guid}/>
     }
 
-    async _apply(from:string): Promise<string> {
+    async _apply(input: OffscreenCanvas): Promise<OffscreenCanvas> {
         this.kernel = this.params["kernel"]
         const vertexShaderSource = `
                 attribute vec2 a_position;
@@ -74,18 +74,11 @@ class FilterTransform extends Transform {
                     gl_FragColor = vec4(sum, 1.0);
                 }
             `;
-            const image = new Image()
-            const loadImage = async (img: HTMLImageElement) => {
-                return new Promise((resolve, reject) => {
-                    img.onload = async () => {
-                        resolve(true);
-                    };
-                });
-            };
-            image.src = from;
-            await loadImage(image);
-            const canvas = new OffscreenCanvas(image.width, image.height);
-            const gl = canvas.getContext('webgl')!;
+
+            this.canvas.width = input.width;
+            this.canvas.height = input.height;
+
+            const gl = this.canvas.getContext('webgl')!;
             
             const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
                 gl.shaderSource(vertexShader, vertexShaderSource);
@@ -117,7 +110,7 @@ class FilterTransform extends Transform {
             const texture = gl.createTexture();
                 gl.bindTexture(gl.TEXTURE_2D, texture);
 
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, input);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -130,7 +123,7 @@ class FilterTransform extends Transform {
             kernelLocation = gl.getUniformLocation(program, 'u_kernel4');
                 gl.uniformMatrix4fv(kernelLocation, false, new Float32Array([].concat(...kernelF)));
             const imageDimsLocation = gl.getUniformLocation(program, 'u_image_dims');
-                gl.uniform2fv(imageDimsLocation, [image.width, image.height]);
+                gl.uniform2fv(imageDimsLocation, [input.width, input.height]);
             
             const kernelSizeLocation = gl.getUniformLocation(program, 'u_kernel_size');
                 gl.uniform1i(kernelSizeLocation, kernelF.length);
@@ -145,10 +138,7 @@ class FilterTransform extends Transform {
             gl.deleteBuffer(positionBuffer);
             gl.deleteTexture(texture);
             
-            // back to base64            
-            const blob = await canvas.convertToBlob({type:"image/png",quality:1})
-            this.image = URL.createObjectURL(blob);
-            return this.image;
+            return this.canvas;
     }
 }
 

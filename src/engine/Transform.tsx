@@ -17,27 +17,37 @@ abstract class Transform extends node<Transform> {
         this.params = {};
         this.enabled = true;
         this.expanded = false;
+        this.canvas = new OffscreenCanvas(1,1);
+        this.hash = crypto.randomUUID();
     }
 
     abstract paramView(guid: GUID): ReactNode;
 
-    async apply(from:string): Promise<string>{
-        if(!this.enabled) {
-            this.image = from;
-            return from;
+    async apply(input:OffscreenCanvas|undefined): Promise<OffscreenCanvas|undefined>{
+        if(!this.enabled || input === undefined) {
+            return input;
         }
-        return await this._apply(from);
+        this.hash = crypto.randomUUID();
+        return await this._apply(input);
     }
 
-    async _apply(from:string): Promise<string> {
-        return from;
+    async _apply(input:OffscreenCanvas): Promise<OffscreenCanvas> {
+        return input;
     }
 
     public getImageString(): string {
         return this.image ?? "";
     }
 
-    setImageString(image: string) {
+    public getCanvas(): OffscreenCanvas {
+        return this.canvas
+    }
+
+    public getHash(): GUID{
+        return this.hash
+    }
+
+    async setImageString(image: string) {
         this.image = image;
     }
 
@@ -85,6 +95,8 @@ abstract class Transform extends node<Transform> {
     expanded: boolean;
     @jsonMember(AnyT)
     params: KVParams;
+    hash: GUID;
+    canvas: OffscreenCanvas;
 }
 
 export default Transform

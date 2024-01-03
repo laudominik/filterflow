@@ -3,6 +3,9 @@ import Transform from "../Transform";
 
 @jsonObject
 class MaxPoolingTransform extends Transform {
+    public _update_node(): void {
+        throw new Error("Method not implemented.");
+    }
     constructor() {
         super('Max pooling', '#E2E7F4');
     }
