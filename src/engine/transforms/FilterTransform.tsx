@@ -77,9 +77,10 @@ class FilterTransform extends Transform {
 
             this.canvas.width = input.width;
             this.canvas.height = input.height;
-
-            const gl = this.canvas.getContext('webgl')!;
             
+            const gl = this.canvas.getContext('webgl')!;
+            gl.viewport(0,0, this.canvas.width, this.canvas.height);
+
             const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
                 gl.shaderSource(vertexShader, vertexShaderSource);
                 gl.compileShader(vertexShader);
@@ -137,7 +138,7 @@ class FilterTransform extends Transform {
             gl.deleteProgram(program);
             gl.deleteBuffer(positionBuffer);
             gl.deleteTexture(texture);
-            
+
             return this.canvas;
     }
 }
