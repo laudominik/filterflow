@@ -4,27 +4,41 @@ import { Engine, GUID } from "../engine/engine";
 import { TypedJSON } from "typedjson";
 
 type MarkedListener = CallableFunction & { id: GUID }
+type PreviewType = {start: GUID, end: GUID, distance: Number}
+type CanvasPointer = {source: [number,number],destination:[number,number]}
+
 
 class simpleFilterStore {
     listeners: MarkedListener[]
     sequenceListener:CallableFunction[]
     engine: Engine
+    previewListeners: CallableFunction[]
+    canvasPointersListeners: CallableFunction[]
+
 
     source: GUID
     sequence:GUID[]
+    preview: PreviewType // distance == 1 preview will work
+    canvasPointers: CanvasPointer
 
     constructor() {
         this.listeners = [];
         this.sequenceListener = [];
+        this.previewListeners = [];
+        this.canvasPointersListeners=[];
 
         const storedEngine = sessionStorage.getItem("engine");
         const storedSequence = sessionStorage.getItem("sequence");
         const storedSource = sessionStorage.getItem("source");
+        const storedPreview = sessionStorage.getItem("preview")
+        const storedCanvasPointers = sessionStorage.getItem("canvasPointers")
 
-        if(!storedEngine || !storedSequence || !storedSource) {
+        if(!storedEngine || !storedSequence || !storedSource || !storedPreview || !storedCanvasPointers) {
             this.sequence = [];
             this.engine = new Engine();
             this.source = this.engine.addNode("source", {});
+            this.preview = {start: this.source,end: this.source, distance: 0}
+            this.canvasPointers = {source: [0,0],destination:[0,0]} 
             return;
         }
 
@@ -33,6 +47,8 @@ class simpleFilterStore {
         this.engine = serializer.parse(storedEngine)!;
         this.sequence = JSON.parse(storedSequence!);
         this.source = JSON.parse(storedSource!);
+        this.preview = JSON.parse(storedPreview!);
+        this.canvasPointers = JSON.parse(storedCanvasPointers!);
         console.log(this.engine)
         this.applyTransforms()
         this.emitSequenceChange();
@@ -83,6 +99,38 @@ class simpleFilterStore {
         return this.engine.getNode(id)!
     }
 
+    // preview
+    public getPreview(){
+        return this.preview;
+    }
+
+    public subscribePreview(listener: CallableFunction){
+        this.previewListeners = [...this.previewListeners, listener]
+        return () => {
+            this.previewListeners = this.previewListeners.filter(l => l !== listener);
+        };
+    }
+
+    public emitPreview(){
+        this.previewListeners.forEach(f => f());
+    }
+
+    // canvasPointers
+    public getCanvasPointers(){
+        return this.canvasPointers;
+    }
+
+    public subscribeCanvasPointers(listener: CallableFunction){
+        this.canvasPointersListeners = [...this.canvasPointersListeners, listener]
+        return () => {
+            this.canvasPointersListeners = this.canvasPointersListeners.filter(l => l !== listener);
+        };
+    }
+
+    public emitCanvasPointers(){
+        this.canvasPointersListeners.forEach(f => f());
+    }
+
     // item sequence
     public getSequence(): GUID[]{
         return this.sequence;
@@ -99,8 +147,47 @@ class simpleFilterStore {
         return ids.map(id => this.engine.getNode(id)!);
     }
     
+    private distance(start: GUID, stop: GUID) : Number{
+        if (start == stop){
+            return 0;
+        }
+        let distance = 0;
+        let i = 0;
+        // find start
+        if (start != this.source){
+            while(true){
+                const uuid = this.sequence[i];
+                i+=1;
+                if (uuid == start){
+                    if (!this.engine.getNode(uuid)?.enabled){
+                        return -1;
+                    }
+                    distance+=1;
+                }
+            }
+        }else{
+            distance+=1;
+        }
+
+        while(true){
+            const uuid = this.sequence[i];
+            if (uuid == stop){
+                return distance;
+            }
+            
+            i+=1;
+            if (this.engine.getNode(uuid)?.enabled){
+                distance+=1;
+            }
+        }
+    }
+
     private emitSequenceChange() {
         this.sequenceListener.forEach(f => f())
+        // for time being i will leave this here
+        let last = this.lastNode();
+        this.preview = {start: this.source, distance: this.distance(this.source,last),end: last};
+        this.emitPreview();
     }
 
     public addTransform(name: string){
@@ -137,10 +224,18 @@ class simpleFilterStore {
     }
 
     public lastNode(){
-        if(this.sequence.length === 0){
-            return this.source;
+        let i = this.sequence.length;
+        while (true) {
+            if(i === 0){
+                return this.source;
+            }
+            const uuid = this.sequence[i-1];
+            if (this.engine.getNode(uuid)?.enabled){
+                return uuid
+            }
+            i-=1;
         }
-        return this.sequence[this.sequence.length - 1]
+        
     }
 
     public emitChange(id: GUID) {
@@ -167,6 +262,8 @@ class simpleFilterStore {
         sessionStorage.setItem("engine",  serializer.stringify(this.engine));
         sessionStorage.setItem("source", JSON.stringify(this.source));
         sessionStorage.setItem("sequence", JSON.stringify(this.sequence));
+        sessionStorage.setItem("preview",JSON.stringify(this.preview));
+        sessionStorage.setItem("canvasPointers",JSON.stringify(this.canvasPointers));
     }
 };
 
