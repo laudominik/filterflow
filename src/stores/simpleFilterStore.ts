@@ -5,7 +5,11 @@ import { TypedJSON } from "typedjson";
 
 type MarkedListener = CallableFunction & { id: GUID }
 type PreviewType = {start: GUID, end: GUID, distance: Number}
-type CanvasPointer = {source: [number,number],destination:[number,number]}
+
+// For now we support only rectangles as selection
+type CanvasPosition = [number, number]
+type CanvasPointer = {source: CanvasPosition ,destination: CanvasPosition}
+type CanvasSelection = {source: {start: CanvasPosition, size: CanvasPosition, selected: CanvasPosition}, destination: {start: CanvasPosition, size: CanvasPosition, selected: CanvasPosition}}
 
 
 class simpleFilterStore {
@@ -13,32 +17,35 @@ class simpleFilterStore {
     sequenceListener:CallableFunction[]
     engine: Engine
     previewListeners: CallableFunction[]
-    canvasPointersListeners: CallableFunction[]
+    canvasSelectionsListeners: CallableFunction[]
 
 
     source: GUID
     sequence:GUID[]
     preview: PreviewType // distance == 1 preview will work
     canvasPointers: CanvasPointer
+    canvasSelections: CanvasSelection
 
     constructor() {
         this.listeners = [];
         this.sequenceListener = [];
         this.previewListeners = [];
-        this.canvasPointersListeners=[];
+        this.canvasSelectionsListeners=[];
 
         const storedEngine = sessionStorage.getItem("engine");
         const storedSequence = sessionStorage.getItem("sequence");
         const storedSource = sessionStorage.getItem("source");
         const storedPreview = sessionStorage.getItem("preview")
         const storedCanvasPointers = sessionStorage.getItem("canvasPointers")
+        const storedCanvasSelections = sessionStorage.getItem("canvasSelections")
 
-        if(!storedEngine || !storedSequence || !storedSource || !storedPreview || !storedCanvasPointers) {
+        if(!storedEngine || !storedSequence || !storedSource || !storedPreview || !storedCanvasPointers || !storedCanvasSelections) {
             this.sequence = [];
             this.engine = new Engine();
             this.source = this.engine.addNode("source", {});
             this.preview = {start: this.source,end: this.source, distance: 0}
             this.canvasPointers = {source: [0,0],destination:[0,0]} 
+            this.canvasSelections = {source: {start: [0,0], size: [0,0], selected:[0,0]},destination:{start: [0,0], size: [0,0], selected: [0,0]}} 
             return;
         }
 
@@ -49,6 +56,7 @@ class simpleFilterStore {
         this.source = JSON.parse(storedSource!);
         this.preview = JSON.parse(storedPreview!);
         this.canvasPointers = JSON.parse(storedCanvasPointers!);
+        this.canvasSelections = JSON.parse(storedCanvasSelections!);
         console.log(this.engine)
         this.applyTransforms()
         this.emitSequenceChange();
@@ -68,6 +76,10 @@ class simpleFilterStore {
         return this.engine.getNode(id)?.getParams();
     }
 
+    private _getPixels(id: GUID) {
+        return this.engine.getNode(id)?.getSelectedPixels()
+    }
+
     // internal function register listening on specific id
     private _subscribe(id: GUID, listener: MarkedListener) {
         listener.id = id;
@@ -85,6 +97,10 @@ class simpleFilterStore {
 
     public getView(id: GUID) {
         return this._getView.bind(this, id);
+    }
+
+    public getPixels(id: GUID) {
+        return this._getPixels.bind(this, id);
     }
 
     public getHash(id: GUID){
@@ -120,15 +136,19 @@ class simpleFilterStore {
         return this.canvasPointers;
     }
 
-    public subscribeCanvasPointers(listener: CallableFunction){
-        this.canvasPointersListeners = [...this.canvasPointersListeners, listener]
+    public getCanvasSelections(){
+        return this.canvasSelections;
+    }
+
+    public subscribeCanvasSelections(listener: CallableFunction){
+        this.canvasSelectionsListeners = [...this.canvasSelectionsListeners, listener]
         return () => {
-            this.canvasPointersListeners = this.canvasPointersListeners.filter(l => l !== listener);
+            this.canvasSelectionsListeners = this.canvasSelectionsListeners.filter(l => l !== listener);
         };
     }
 
-    public emitCanvasPointers(){
-        this.canvasPointersListeners.forEach(f => f());
+    public emitCanvasSelections(){
+        this.canvasSelectionsListeners.forEach(f => f());
     }
 
     // item sequence
@@ -190,10 +210,34 @@ class simpleFilterStore {
         this.emitPreview();
     }
 
+    private applyVisualization() {
+        const source = this.engine.getNode(this.preview.start)!.getCanvas()
+        const node = this.engine.getNode(this.preview.end)
+        node!.visualization(source, this.canvasPointers.source)
+        const sourceSelection = node?.sourceSelection
+        const selection = node?.selection
+
+        if(!sourceSelection || !selection) return
+        this.canvasSelections = {source: sourceSelection, destination: selection} 
+    }
+
     public addTransform(name: string){
         this.sequence = [...this.sequence, this.engine.addNode(name, {})];
         this.emitSequenceChange();
-        this.commitToPersistentStore()
+        this.commitToPersistentStore();
+    }
+
+    public setCanvasDestinationPointer(position: [number, number]){
+        this.canvasPointers = {source: position, destination: position};
+        // TODO: add proper calculation of position on source
+        this.applyVisualization();
+        this.emitCanvasSelections();
+    }
+
+    public setCanvasSourcePointer(position: [number, number]){
+        this.canvasPointers = {destination: position, source: position};
+        this.applyVisualization();
+        this.emitCanvasSelections();
     }
 
     public rearrange(dragIndex: number, hoverIndex: number){
@@ -245,7 +289,6 @@ class simpleFilterStore {
     public applyTransforms(){
         if(!this.engine.getNode(this.source)) return;
         const image = this.engine.getNode(this.source)?.getCanvas();
-        console.log(image);
         
         const reducer = async(image: Promise<OffscreenCanvas | undefined>, guid: GUID): Promise<OffscreenCanvas | undefined> => {
             return this.engine.getNode(guid)?.apply(await image);
@@ -264,9 +307,11 @@ class simpleFilterStore {
         sessionStorage.setItem("sequence", JSON.stringify(this.sequence));
         sessionStorage.setItem("preview",JSON.stringify(this.preview));
         sessionStorage.setItem("canvasPointers",JSON.stringify(this.canvasPointers));
+        sessionStorage.setItem("canvasSelections",JSON.stringify(this.canvasSelections));
     }
 };
 
 const FilterStoreContext = createContext(new simpleFilterStore()) // using it without provider makes it global
 
 export { FilterStoreContext }
+export type { CanvasPointer, CanvasSelection }

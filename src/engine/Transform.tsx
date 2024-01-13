@@ -35,6 +35,31 @@ abstract class Transform extends node<Transform> {
         return input;
     }
 
+    public visualization(source: OffscreenCanvas, position: [number, number]){
+    }
+
+    // TODO: better naming?
+    public fromDestinationToSourcePosition(positon: [number, number]): [number, number] {
+        return positon
+    }
+
+    public fromSourceToDestinationPosition(positon: [number, number]): [number, number] {
+        return positon
+    }
+
+    // TODO: single responsibility?
+    public getSourceSelection() {
+        return this.sourceSelection
+    }
+
+    public getSelection(){
+        return this.selection
+    }
+
+    public getSelectedPixels(){
+        return this.pixels
+    }
+
     public getImageString(): string {
         return this.image ?? "";
     }
@@ -95,6 +120,11 @@ abstract class Transform extends node<Transform> {
     expanded: boolean;
     @jsonMember(AnyT)
     params: KVParams;
+    @jsonMember
+    sourceSelection?: {start: [number, number], size: [number, number], selected: [number, number]}
+    @jsonMember
+    selection?: {start: [number, number], size: [number, number], selected: [number, number]}
+    pixels?: Uint8Array
     hash: GUID;
     canvas: OffscreenCanvas;
 }

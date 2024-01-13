@@ -1,4 +1,4 @@
-import { useState, useContext, useSyncExternalStore } from 'react'
+import { useState, useContext, useSyncExternalStore, useEffect } from 'react'
 import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {Button, FormSelect} from 'react-bootstrap';
@@ -10,7 +10,9 @@ export default function KernelComponent({guid}: {guid: GUID}){
     const filterContext = useContext(FilterStoreContext)
 
     const transform = useSyncExternalStore(filterContext.subscribe(guid) as any, filterContext.getTransform.bind(filterContext, guid))
-    
+    // NOTE: this (probably) forces entire component to reload, expertise is needed
+    const selection = useSyncExternalStore(filterContext.subscribeCanvasSelections.bind(filterContext) as any, filterContext.getCanvasSelections.bind(filterContext))
+
     const [gridValues, setGridValues] = useState<string[][]>(transform.getParams()["kernel"]);
     const [kernelN, setKernelN] = useState(gridValues.length);
     const handleKernelChange = (newKernelN: number) => {
@@ -37,6 +39,16 @@ export default function KernelComponent({guid}: {guid: GUID}){
         filterContext.applyTransforms()
     };
 
+    const getColor = (row: number, col: number) =>{
+        if(!transform.pixels) return 'white'
+        // FIXME: after changing position convention
+        row = kernelN-row-1
+        return `rgba(${transform.pixels[(row*kernelN + col)*4]}, 
+            ${transform.pixels[(row*kernelN + col)*4+1]}, 
+            ${transform.pixels[(row*kernelN + col)*4]+2}, 
+            ${transform.pixels[(row*kernelN + col)*4]+3})`
+    }
+
     return <div className="grid">
         <label>
             Select Kernel Size:
@@ -57,6 +69,7 @@ export default function KernelComponent({guid}: {guid: GUID}){
                                     type="number"
                                     className="form-control"
                                     value={gridValues[rowIndex][colIndex]}
+                                    style={{backgroundColor: getColor(rowIndex, colIndex)}}
                                     onChange={(e) => handleInputChange(rowIndex, colIndex, e.target.value)}
                                 />
                             </div>

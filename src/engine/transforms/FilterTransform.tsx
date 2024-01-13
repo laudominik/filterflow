@@ -8,11 +8,30 @@ import Transform from "../Transform";
 class FilterTransform extends Transform {
 
     image?:string
-
+    
     constructor(name?: string) {
         super(name ?? 'Custom kernel', '#E6F4E2');
         this.kernel = Array(3).fill('0').map(() => new Array(3).fill('0'));
         this.params = {"kernel" : this.kernel};
+        this.gl = this.canvas.getContext('webgl', {preserveDrawingBuffer: true})!;
+    }
+
+    public visualization(source: OffscreenCanvas,position: [number, number]): void {
+        const kernelN = this.params["kernel"].length;
+        if(!this.pixels || this.pixels.length !== kernelN * kernelN * 4)
+            this.pixels = new Uint8Array(kernelN * kernelN * 4);
+        
+        const gl: WebGLRenderingContext = this.gl
+
+        const x = position[0] - Math.floor((kernelN-1)/2)
+        const y = position[1] - Math.floor((kernelN-1)/2)
+
+        // TODO: fix position convention to match webgl origin
+        gl?.readPixels(x,gl.drawingBufferHeight-y-kernelN, kernelN, kernelN, gl.RGBA, gl.UNSIGNED_BYTE, this.pixels)
+        console.log(x, y, kernelN, kernelN)
+        console.log(this.pixels)
+        this.sourceSelection = {start: [x,y], size: [kernelN, kernelN], center: position}
+        this.selection = {start: position, size: [1, 1], center: position}
     }
 
     paramView(guid: GUID) {
@@ -77,8 +96,8 @@ class FilterTransform extends Transform {
 
             this.canvas.width = input.width;
             this.canvas.height = input.height;
-            
-            const gl = this.canvas.getContext('webgl')!;
+
+            const gl = this.gl
             gl.viewport(0,0, this.canvas.width, this.canvas.height);
 
             const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
