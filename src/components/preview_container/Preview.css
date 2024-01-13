@@ -1,13 +1,32 @@
-canvas {
+.centeredImage {
   height: 90%;
   object-fit: contain;
+  position: relative;
+
 }
 
-.centeredImage {
+.overlay{
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 1px;
+  height: 1px;
+  z-index: 10;
+  overflow: hidden;
+  border: solid red 1px;
+  pointer-events: none;
+}
+
+.imageContainer {
     display: flex;
     align-items: center;
     justify-content: center;
     height: 90%;
+}
+
+canvas{
+  height: 100%;
+  image-rendering: pixelated;
 }
 
 .previewContainer {
