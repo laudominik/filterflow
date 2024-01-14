@@ -16,7 +16,7 @@ export default function TransformEntry({ guid }: { guid: GUID }){
     const filterStore = useContext(FilterStoreContext);
     const transform = useSyncExternalStore(filterStore.subscribe(guid) as any, filterStore.getTransform.bind(filterStore, guid))
     const [enabled, setEnabled] = useState(transform.getEnabled());
-
+    const name = useSyncExternalStore(filterStore.subscribe(guid) as any, filterStore.getTransform(guid).getName.bind(transform))
     
     const handleEyeClick = () => {
         const newState = !enabled;
@@ -37,7 +37,7 @@ export default function TransformEntry({ guid }: { guid: GUID }){
 
     return <div key={guid} id={guid} style={{opacity: enabled ? '100%' : '60%'}}>
                <Entry color={transform.getColor()} initialOpen={transform.getExpanded()} openHook={handleExpansion}>
-               <Entry.Header>{transform.getName()}</Entry.Header>
+               <Entry.Header>{name}</Entry.Header>
                <Entry.Body>{transform.paramView(guid)}</Entry.Body>
                <Entry.Icons>{icons(enabled, handleEyeClick, handleTrashClick)}</Entry.Icons>
             </Entry>

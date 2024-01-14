@@ -12,7 +12,7 @@ class FilterTransform extends Transform {
     constructor(name?: string) {
         super(name ?? 'Custom kernel', '#E6F4E2');
         this.kernel = Array(3).fill('0').map(() => new Array(3).fill('0'));
-        this.params = {"kernel" : this.kernel};
+        this.params = {...this.params, "kernel" : this.kernel};
         this.gl = this.canvas.getContext('webgl', {preserveDrawingBuffer: true})!;
     }
 
@@ -159,6 +159,12 @@ class FilterTransform extends Transform {
             gl.deleteTexture(texture);
 
             return this.canvas;
+    }
+
+    updateParams(params: KVParams): void {
+        this.params = params;
+        this.name = "Custom kernel";
+        console.log("changed name", this.name)
     }
 }
 

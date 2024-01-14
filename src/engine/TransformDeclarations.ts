@@ -1,23 +1,35 @@
 import TransformRegistry from "./TransformRegistry"
 import FilterTransform from "./transforms/FilterTransform"
 import MaxPoolingTransform from "./transforms/MaxPoolingTransform"
+import {SobelXTransform, SobelYTransform} from "./transforms/SobelTransform"
+import {Conn4LaplaceTransform, Conn8LaplaceTransform} from "./transforms/LaplaceTransform"
+import { BrightnessTransform } from "./transforms/BrightnessTransform"
+import { ThresholdTransform } from "./transforms/ThresholdTransform"
+import { GrayscaleTransform } from "./transforms/GrayscaleTransform"
+import { FromYCbCrTransform, ToYCbCrTransform } from "./transforms/YCbCrTransform"
+import { XorTransform } from "./transforms/XorTransform"
+import { OrTransform } from "./transforms/OrTransform"
+import { AndTransform } from "./transforms/AndTransform"
 
 const registry = new TransformRegistry()
-            .declareLinear("laplace", FilterTransform)
+            .declareLinear("4-connected laplace", Conn4LaplaceTransform)
+            .declareLinear("8-connected laplace", Conn8LaplaceTransform)
             .declareLinear("gaussian", FilterTransform)
-            .declareLinear("sobel", FilterTransform)
+            .declareLinear("sobel X", SobelXTransform)
+            .declareLinear("sobel Y", SobelYTransform)
             .declareLinear("custom_kernel", FilterTransform)
             .declarePooling("max_pooling", MaxPoolingTransform)
             .declarePooling("min_pooling", MaxPoolingTransform)
             .declarePooling("avg_pooling", MaxPoolingTransform)
             .declarePooling("median_pooling", MaxPoolingTransform)
-            .declareLogical("xor", MaxPoolingTransform)
-            .declareLogical("or", MaxPoolingTransform)
-            .declareLogical("and", MaxPoolingTransform)
-            .declarePoint("brightness", MaxPoolingTransform)
-            .declarePoint("threshold", MaxPoolingTransform)
-            .declarePoint("grayscale", MaxPoolingTransform)
-            .declarePoint("ycbcr", MaxPoolingTransform)
+            .declareLogical("xor", XorTransform)
+            .declareLogical("or", OrTransform)
+            .declareLogical("and", AndTransform)
+            .declarePoint("brightness", BrightnessTransform)
+            .declarePoint("threshold", ThresholdTransform)
+            .declarePoint("grayscale", GrayscaleTransform)
+            .declarePoint("to YCbCr", ToYCbCrTransform)
+            .declarePoint("from YCbCr", FromYCbCrTransform)
             .declareMorphologic("erosion", FilterTransform)
             .declareMorphologic("dilatation", FilterTransform)
 
