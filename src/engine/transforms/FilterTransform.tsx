@@ -13,15 +13,14 @@ class FilterTransform extends Transform {
         super(name ?? 'Custom kernel', '#E6F4E2');
         this.kernel = Array(3).fill('0').map(() => new Array(3).fill('0'));
         this.params = {...this.params, "kernel" : this.kernel};
-        this.gl = this.canvas.getContext('webgl', {preserveDrawingBuffer: true})!;
     }
 
-    public visualization(source: OffscreenCanvas,position: [number, number]): void {
+    public visualization(source: WebGLRenderingContext,position: [number, number]): void {
         const kernelN = this.params["kernel"].length;
         if(!this.pixels || this.pixels.length !== kernelN * kernelN * 4)
             this.pixels = new Uint8Array(kernelN * kernelN * 4);
         
-        const gl: WebGLRenderingContext = this.gl
+        const gl: WebGLRenderingContext = source
 
         const x = position[0] - Math.floor((kernelN-1)/2)
         const y = position[1] - Math.floor((kernelN-1)/2)

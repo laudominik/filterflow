@@ -18,6 +18,7 @@ abstract class Transform extends node<Transform> {
         this.enabled = true;
         this.expanded = false;
         this.canvas = new OffscreenCanvas(1,1);
+        this.gl = this.canvas.getContext("webgl", {preserveDrawingBuffer: true})!;
         this.hash = crypto.randomUUID();
     }
 
@@ -35,7 +36,7 @@ abstract class Transform extends node<Transform> {
         return input;
     }
 
-    public visualization(source: OffscreenCanvas, position: [number, number]){
+    public visualization(source: WebGLRenderingContext, position: [number, number]){
     }
 
     // TODO: better naming?
@@ -66,6 +67,10 @@ abstract class Transform extends node<Transform> {
 
     public getCanvas(): OffscreenCanvas {
         return this.canvas
+    }
+
+    public getWebGLContext(): WebGLRenderingContext {
+        return this.gl
     }
 
     public getHash(): GUID{
@@ -127,6 +132,7 @@ abstract class Transform extends node<Transform> {
     pixels?: Uint8Array
     hash: GUID;
     canvas: OffscreenCanvas;
+    gl: WebGLRenderingContext;
 }
 
 export default Transform

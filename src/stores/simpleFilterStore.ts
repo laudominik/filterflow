@@ -211,12 +211,12 @@ class simpleFilterStore {
     }
 
     private applyVisualization() {
-        const source = this.engine.getNode(this.preview.start)!.getCanvas()
+        const source = this.engine.getNode(this.preview.start)!.getWebGLContext()
         const node = this.engine.getNode(this.preview.end)
         node!.visualization(source, this.canvasPointers.source)
         const sourceSelection = node?.sourceSelection
         const selection = node?.selection
-
+        
         if(!sourceSelection || !selection) return
         this.canvasSelections = {source: sourceSelection, destination: selection} 
     }
