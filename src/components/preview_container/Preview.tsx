@@ -33,7 +33,7 @@ function Preview({ title, sourceId }: { title: string, sourceId: string }) {
         let rect = e.currentTarget.getBoundingClientRect();
 
         let x = (e.clientX - rect.x)*canvasRef.current.width/rect.width;
-        let y = (e.clientY - rect.y)*canvasRef.current.height/rect.height;
+        let y = (rect.height - (e.clientY - rect.y))*canvasRef.current.height/rect.height;
 
         // Math.floor() should be good enought for positive numbers
         
@@ -66,7 +66,7 @@ function Preview({ title, sourceId }: { title: string, sourceId: string }) {
         // using css percent to skip container height retrieval
         return {
             left: `${x*100}%`,
-            top: `${y*100}%`,
+            top: `${(1-y-h)*100}%`,
             width: `${w*100}%`,
             height: `${h*100}%`,
         }

@@ -27,9 +27,7 @@ class FilterTransform extends Transform {
         const y = position[1] - Math.floor((kernelN-1)/2)
 
         // TODO: fix position convention to match webgl origin
-        gl?.readPixels(x,gl.drawingBufferHeight-y-kernelN, kernelN, kernelN, gl.RGBA, gl.UNSIGNED_BYTE, this.pixels)
-        console.log(x, y, kernelN, kernelN)
-        console.log(this.pixels)
+        gl?.readPixels(x,y, kernelN, kernelN, gl.RGBA, gl.UNSIGNED_BYTE, this.pixels)
         this.sourceSelection = {start: [x,y], size: [kernelN, kernelN], center: position}
         this.selection = {start: position, size: [1, 1], center: position}
     }
