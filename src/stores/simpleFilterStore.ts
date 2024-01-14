@@ -127,7 +127,7 @@ class simpleFilterStore {
         };
     }
 
-    public emitPreview(){
+    private emitPreview(){
         this.previewListeners.forEach(f => f());
     }
 
@@ -147,7 +147,7 @@ class simpleFilterStore {
         };
     }
 
-    public emitCanvasSelections(){
+    private emitCanvasSelections(){
         this.canvasSelectionsListeners.forEach(f => f());
     }
 
@@ -259,6 +259,15 @@ class simpleFilterStore {
         this.commitToPersistentStore()
     }
 
+    public setEnabled(id: GUID, value: boolean){
+        let node = this.engine.getNode(id)
+        if(node){
+            node.setEnabled(value)
+            this.emitSequenceChange()
+            this.applyTransforms()
+        } 
+    }
+
     // set filter store root mask what is happening with data
     public async setSource(imageEncoded: string) {
         await this.engine.getNode(this.source)?.setImageString(imageEncoded);
@@ -282,7 +291,7 @@ class simpleFilterStore {
         
     }
 
-    public emitChange(id: GUID) {
+    private emitChange(id: GUID) {
         this.listeners.filter(f => f.id === id).forEach(f => f())
     }
 

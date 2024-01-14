@@ -21,8 +21,7 @@ export default function TransformEntry({ guid }: { guid: GUID }){
     const handleEyeClick = () => {
         const newState = !enabled;
         setEnabled(newState);
-        transform.setEnabled(newState);
-        filterStore.applyTransforms()
+        filterStore.setEnabled(guid, newState);
     }
 
     const handleTrashClick = () => {
