@@ -7,21 +7,8 @@ class LaplaceTransform extends ConvolutionTransform {
 
     image?:string
     constructor(conn8: boolean) {
-        
-        let fragment = `
-        precision mediump float;
-        varying vec2 v_texCoord;
-        uniform sampler2D u_image;
 
-        uniform float u_arg;
-        
-        void main() {
-            vec2 pixelCoords = v_texCoord ;
-            vec3 col = texture2D(u_image, pixelCoords).rgb;
-            gl_FragColor = vec4(col * u_arg, 1.0);
-        }
-        `
-        super('Laplace', fragment);
+        super('Laplace');
         this.kernel = conn8 ? 
         [[1,     1,  1   ],
          [1,    -8,  1   ],
