@@ -1,12 +1,10 @@
-//@ts-nocheck
+
 import "reflect-metadata"
-import { jsonArrayMember, jsonMember, jsonObject } from "typedjson";
-import KernelComponent from "../../components/transforms/KernelComponent";
-import FilterTransform from "./FilterTransform";
-import Transform from "../Transform";
+import { jsonObject } from "typedjson";
+import ConvolutionTransform from "../ConvolutionTransform";
 
 @jsonObject
-class SobelTransform extends FilterTransform {
+class SobelTransform extends ConvolutionTransform {
     image?:string
     constructor(dirX: boolean) {
         super('Sobel');

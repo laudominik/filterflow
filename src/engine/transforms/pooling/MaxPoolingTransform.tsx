@@ -1,5 +1,5 @@
 import { jsonObject } from "typedjson";
-import Transform from "../Transform";
+import Transform from "../../Transform";
 
 @jsonObject
 class MaxPoolingTransform extends Transform {
@@ -16,6 +16,10 @@ class MaxPoolingTransform extends Transform {
          *  tbd: how could we split the view logic here and keep it nice and tidy
          */
         return <div>max pool</div>
+    }
+
+    visualizationView(guid: string) {
+        return <></>
     }
 
     updateParams(parameters: { [key: string]: any }): void {

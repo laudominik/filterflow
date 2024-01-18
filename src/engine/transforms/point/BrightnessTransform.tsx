@@ -1,7 +1,7 @@
-//@ts-nocheck
+
 import "reflect-metadata"
-import { jsonArrayMember, jsonMember, jsonObject } from "typedjson";
-import PointTransform from "./PointTransform";
+import { jsonObject } from "typedjson";
+import PointTransform from "../PointTransform";
 
 @jsonObject
 export class BrightnessTransform extends PointTransform {

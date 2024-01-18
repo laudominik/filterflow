@@ -1,7 +1,9 @@
-//@ts-nocheck
+
 import "reflect-metadata"
-import { jsonArrayMember, jsonMember, jsonObject } from "typedjson";
-import PointTransform from "./PointTransform";
+import { jsonObject } from "typedjson";
+import PointTransform from "../PointTransform";
+import { GUID } from "../../engine";
+import TresholdVisualizationComponent from "../../../components/visualizations/TresholdVisualizationComponent";
 
 @jsonObject
 export class ThresholdTransform extends PointTransform {
@@ -40,5 +42,9 @@ export class ThresholdTransform extends PointTransform {
         }
         `)
         this.params = {...this.params, "argument" : 1};
+    }
+
+    visualizationView(guid: GUID) {
+        return <TresholdVisualizationComponent guid={guid} />
     }
 }

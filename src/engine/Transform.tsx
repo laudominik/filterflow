@@ -3,8 +3,9 @@ import { ReactNode } from 'react'
 import { GUID } from './engine'
 import { AnyT, jsonMember, jsonObject } from 'typedjson';
 import { node } from './node';
+import { CanvasSelection } from '../stores/simpleFilterStore';
 
-interface KVParams {
+export interface KVParams {
     [key: string]: any
 }
 
@@ -23,20 +24,24 @@ abstract class Transform extends node<Transform> {
     }
 
     abstract paramView(guid: GUID): ReactNode;
+    
+    visualizationView(guid: GUID) {
+        return <></>
+    };
 
+    // TODO add meta to promise (about color)
     async apply(input:OffscreenCanvas|undefined): Promise<OffscreenCanvas|undefined>{
         if(!this.enabled || input === undefined) {
             return input;
         }
+
+        // TODO: remove setting state in transform?
         this.hash = crypto.randomUUID();
         return await this._apply(input);
     }
 
     async _apply(input:OffscreenCanvas): Promise<OffscreenCanvas> {
         return input;
-    }
-
-    public visualization(source: WebGLRenderingContext, position: [number, number]){
     }
 
     // TODO: better naming?
@@ -48,17 +53,21 @@ abstract class Transform extends node<Transform> {
         return positon
     }
 
-    // TODO: single responsibility?
-    public getSourceSelection() {
-        return this.sourceSelection
+    public getPixels(position: [number, number], size: [number, number], result?: Uint8Array): Uint8Array{
+        const arrayLength = 4 * size[0] * size[1] // 4 for RGBA bits
+        if(!result || result.length < arrayLength)
+            result = new Uint8Array(arrayLength)
+
+        this.gl.readPixels(position[0], position[1], size[0], size[1], this.gl.RGBA, this.gl.UNSIGNED_BYTE, result);
+        return result
     }
 
-    public getSelection(){
-        return this.selection
+    public fromPositionToSelection(position: [number, number]): CanvasSelection{
+        return {start: position, size:[1,1], center: position}
     }
 
-    public getSelectedPixels(){
-        return this.pixels
+    public fromPositionToSourceSelection(position: [number, number]): CanvasSelection {
+        return {start: position, size: [1,1], center: position}
     }
 
     public getImageString(): string {
@@ -125,11 +134,6 @@ abstract class Transform extends node<Transform> {
     expanded: boolean;
     @jsonMember(AnyT)
     params: KVParams;
-    @jsonMember
-    sourceSelection?: {start: [number, number], size: [number, number], selected: [number, number]}
-    @jsonMember
-    selection?: {start: [number, number], size: [number, number], selected: [number, number]}
-    pixels?: Uint8Array
     hash: GUID;
     canvas: OffscreenCanvas;
     gl: WebGLRenderingContext;

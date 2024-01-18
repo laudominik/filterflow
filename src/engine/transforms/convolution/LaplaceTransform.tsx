@@ -1,12 +1,10 @@
-//@ts-nocheck
 import "reflect-metadata"
-import { jsonArrayMember, jsonMember, jsonObject } from "typedjson";
-import KernelComponent from "../../components/transforms/KernelComponent";
-import FilterTransform from "./FilterTransform";
-import Transform from "../Transform";
+import { jsonObject } from "typedjson";
+import ConvolutionTransform from "../ConvolutionTransform";
 
 @jsonObject
-class LaplaceTransform extends FilterTransform {
+class LaplaceTransform extends ConvolutionTransform {
+
     image?:string
     constructor(conn8: boolean) {
         
@@ -38,6 +36,9 @@ class LaplaceTransform extends FilterTransform {
 
 @jsonObject
 export class Conn4LaplaceTransform extends LaplaceTransform {
+    public _update_node(): void {
+        throw new Error("Method not implemented.");
+    }
     constructor() {
         super(true)
     }
@@ -45,6 +46,9 @@ export class Conn4LaplaceTransform extends LaplaceTransform {
 
 @jsonObject
 export class Conn8LaplaceTransform extends LaplaceTransform {
+    public _update_node(): void {
+        throw new Error("Method not implemented.");
+    }
     constructor() {
         super(false)
     }

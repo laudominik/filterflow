@@ -1,9 +1,8 @@
-import { useState, CSSProperties, useContext, useSyncExternalStore, useRef, useEffect, MouseEventHandler } from 'react'
+import { useState, CSSProperties, useContext, useSyncExternalStore, useRef, useEffect } from 'react'
 import { faMagnifyingGlassPlus, faMagnifyingGlassMinus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button } from 'react-bootstrap';
-import ImageMap from '../../util/ImageMap';
-import { CanvasPointer, CanvasSelection, FilterStoreContext } from '../../stores/simpleFilterStore';
+import { Channel, FilterStoreContext, PreviewSelections } from '../../stores/simpleFilterStore';
 
 export function InputPreview({ sourceId }: { sourceId: string }) {
 
@@ -14,6 +13,8 @@ export function OutputPreview({ sourceId }: { sourceId: string }) {
     return <Preview sourceId={sourceId} title="Output" />;
 }
 
+type ColorMask = {red: boolean, green: boolean, blue: boolean};
+
 function Preview({ title, sourceId }: { title: string, sourceId: string }) {
 
     const [isFullscreen, setIsFullscreen] = useState(false);
@@ -23,7 +24,7 @@ function Preview({ title, sourceId }: { title: string, sourceId: string }) {
     const canvas_hash = useSyncExternalStore(filterStore.subscribe(sourceId) as any, filterStore.getHash(sourceId));
     
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const canvasSelections = useSyncExternalStore(filterStore.subscribeCanvasSelections.bind(filterStore) as any, filterStore.getCanvasSelections.bind(filterStore))
+    const previewSelections = useSyncExternalStore(filterStore.subscribeCanvasSelections.bind(filterStore) as any, filterStore.getPreviewSelections.bind(filterStore))
 
     const preview = useSyncExternalStore(filterStore.subscribePreview.bind(filterStore), filterStore.getPreview.bind(filterStore))
     // TODO: decide whenever to visualize or not
@@ -45,7 +46,7 @@ function Preview({ title, sourceId }: { title: string, sourceId: string }) {
             filterStore.setCanvasDestinationPointer(pos)
     }
 
-    const overlayPos = (pos: CanvasSelection):CSSProperties => {
+    const overlayPos = (pos: PreviewSelections):CSSProperties => {
         if (!canvasRef.current)
         return {}
         let res
@@ -75,11 +76,97 @@ function Preview({ title, sourceId }: { title: string, sourceId: string }) {
 
     useEffect(()=>{
         if(offscreen_canvas && canvasRef.current){
-            canvasRef.current.width = offscreen_canvas.width;
-            canvasRef.current.height = offscreen_canvas.height;
-            canvasRef.current.getContext("2d")?.drawImage(offscreen_canvas,0,0);
+            let mask: ColorMask = {red: true, green: true, blue: true};
+            switch(preview.channel){
+                case Channel.RED:
+                    mask = {...mask, green: false, blue:false}
+                    break;
+                case Channel.GREEN:
+                    mask = {...mask, red: false, blue:false}
+                    break;
+                case Channel.BLUE:
+                    mask = {...mask, red: false, green:false}
+                    break;
+            }
+            drawImage(offscreen_canvas, canvasRef.current, mask)
         }
-    },[offscreen_canvas, canvas_hash])
+    },[offscreen_canvas, canvas_hash, preview])
+
+    const drawImage = (input: OffscreenCanvas, destination: HTMLCanvasElement, mask: ColorMask) => {
+        const vertexShaderSource = `
+                attribute vec2 a_position;
+                varying vec2 v_texCoord;
+
+                void main() {
+                    gl_Position = vec4(a_position, 0, 1);
+                    v_texCoord = vec2((a_position.x + 1.0) / 2.0, 1.0 - (a_position.y + 1.0) / 2.0);
+                }
+            `;
+
+        const fragmentShaderSource = `
+                // these params should be for all filters
+                precision mediump float;
+                varying vec2 v_texCoord;
+                uniform sampler2D u_image;
+                
+                void main() {
+                    gl_FragColor = texture2D(u_image, v_texCoord);
+                }
+            `;
+
+            destination.width = input.width;
+            destination.height = input.height;
+            
+            const gl = destination.getContext("webgl")!
+            gl.viewport(0,0, destination.width, destination.height);
+
+            const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
+                gl.shaderSource(vertexShader, vertexShaderSource);
+                gl.compileShader(vertexShader);
+
+            const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)!;
+                gl.shaderSource(fragmentShader, fragmentShaderSource);
+                gl.compileShader(fragmentShader);
+
+            const program = gl.createProgram()!;
+                gl.attachShader(program, vertexShader);
+                gl.attachShader(program, fragmentShader);
+                gl.linkProgram(program);
+                gl.useProgram(program);
+
+            const positionBuffer = gl.createBuffer()!;
+                gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+                    -1,    -1, 
+                    1,     -1, 
+                    -1,    1,
+                    1,     1
+                ]), gl.STATIC_DRAW);
+            
+            const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
+                gl.enableVertexAttribArray(positionAttributeLocation);
+                gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);  
+            
+            const texture = gl.createTexture();
+                gl.bindTexture(gl.TEXTURE_2D, texture);
+
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, input);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        
+            gl.clearColor(0, 0, 0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.colorMask(mask.red, mask.green, mask.blue, true);
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        
+            gl.deleteShader(vertexShader);
+            gl.deleteShader(fragmentShader);
+            gl.deleteProgram(program);
+            gl.deleteBuffer(positionBuffer);
+            gl.deleteTexture(texture);
+    }
+
 
     return <div className="preview" style={componentStyle(isFullscreen)}>
         <div className="pipelineBar">
@@ -92,7 +179,7 @@ function Preview({ title, sourceId }: { title: string, sourceId: string }) {
             <div className='centeredImage' onMouseMove={handleMouse}>
                 {/* somehow onMouseMove on canvas don't works */}
                 <canvas ref={canvasRef}/>
-                <div className='overlay' style={overlayPos(canvasSelections)}>
+                <div className='overlay' style={overlayPos(previewSelections)}>
                 </div>
             </div>
         </div>

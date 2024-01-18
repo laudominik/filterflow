@@ -11,7 +11,6 @@ export default class SourceTransform extends Transform{
 
     constructor(){
         super("source","#HEX");
-
     }
 
     async apply(input: OffscreenCanvas | undefined): Promise<OffscreenCanvas | undefined> {
@@ -24,7 +23,12 @@ export default class SourceTransform extends Transform{
     }
 
     async setImageString(imageString: string) {
-        this.image = imageString;
+        this.params["image"] = imageString
+        await this.loadImage()
+    }
+
+    async loadImage(){
+        if(!this.params["image"]) return
 
         const image = new Image()
         const loadImage = async (img: HTMLImageElement) => {
@@ -34,7 +38,7 @@ export default class SourceTransform extends Transform{
                 };
             });
         };
-        image.src = this.image;
+        image.src = this.params["image"];
         await loadImage(image);
         
         this.canvas.width = image.width;
@@ -121,7 +125,11 @@ export default class SourceTransform extends Transform{
     updateParams(params: { [key: string]: any; }): void {
         this.image = params["image"];
     }
-    paramView(): ReactNode {
+    paramView() {
+        return <></>
+    }
+
+    visualizationView(guid: string) {
         return <></>
     }
 }

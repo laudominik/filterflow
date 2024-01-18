@@ -1,23 +1,23 @@
 import TransformRegistry from "./TransformRegistry"
-import FilterTransform from "./transforms/FilterTransform"
-import MaxPoolingTransform from "./transforms/MaxPoolingTransform"
-import {SobelXTransform, SobelYTransform} from "./transforms/SobelTransform"
-import {Conn4LaplaceTransform, Conn8LaplaceTransform} from "./transforms/LaplaceTransform"
-import { BrightnessTransform } from "./transforms/BrightnessTransform"
-import { ThresholdTransform } from "./transforms/ThresholdTransform"
-import { GrayscaleTransform } from "./transforms/GrayscaleTransform"
-import { FromYCbCrTransform, ToYCbCrTransform } from "./transforms/YCbCrTransform"
-import { XorTransform } from "./transforms/XorTransform"
-import { OrTransform } from "./transforms/OrTransform"
-import { AndTransform } from "./transforms/AndTransform"
+import ConvolutionTransform from "./transforms/ConvolutionTransform"
+import { Conn4LaplaceTransform, Conn8LaplaceTransform } from "./transforms/convolution/LaplaceTransform"
+import { SobelXTransform, SobelYTransform } from "./transforms/convolution/SobelTransform"
+import { AndTransform } from "./transforms/point/AndTransform"
+import { BrightnessTransform } from "./transforms/point/BrightnessTransform"
+import { GrayscaleTransform } from "./transforms/point/GrayscaleTransform"
+import { OrTransform } from "./transforms/point/OrTransform"
+import { ThresholdTransform } from "./transforms/point/ThresholdTransform"
+import { XorTransform } from "./transforms/point/XorTransform"
+import { ToYCbCrTransform, FromYCbCrTransform } from "./transforms/point/YCbCrTransform"
+import MaxPoolingTransform from "./transforms/pooling/MaxPoolingTransform"
 
 const registry = new TransformRegistry()
             .declareLinear("4-connected laplace", Conn4LaplaceTransform)
             .declareLinear("8-connected laplace", Conn8LaplaceTransform)
-            .declareLinear("gaussian", FilterTransform)
+            .declareLinear("gaussian", ConvolutionTransform)
             .declareLinear("sobel X", SobelXTransform)
             .declareLinear("sobel Y", SobelYTransform)
-            .declareLinear("custom_kernel", FilterTransform)
+            .declareLinear("custom_kernel", ConvolutionTransform)
             .declarePooling("max_pooling", MaxPoolingTransform)
             .declarePooling("min_pooling", MaxPoolingTransform)
             .declarePooling("avg_pooling", MaxPoolingTransform)
@@ -30,8 +30,8 @@ const registry = new TransformRegistry()
             .declarePoint("grayscale", GrayscaleTransform)
             .declarePoint("to YCbCr", ToYCbCrTransform)
             .declarePoint("from YCbCr", FromYCbCrTransform)
-            .declareMorphologic("erosion", FilterTransform)
-            .declareMorphologic("dilatation", FilterTransform)
+            .declareMorphologic("erosion", ConvolutionTransform)
+            .declareMorphologic("dilatation", ConvolutionTransform)
 
 export default function mapToTransform(name: string){
     return registry.build(name)

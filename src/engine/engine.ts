@@ -2,9 +2,6 @@ import 'reflect-metadata'
 import { jsonMapMember, jsonObject } from "typedjson";
 import Transform from "./Transform";
 import mapToTransform, {knownTypes} from "./TransformDeclarations";
-import FilterTransform from './transforms/FilterTransform';
-import SourceTransform from './transforms/SourceTransform';
-import MaxPoolingTransform from './transforms/MaxPoolingTransform';
 import { connect, disconnect } from './node';
 import { NodeResponse } from './nodeResponse';
 

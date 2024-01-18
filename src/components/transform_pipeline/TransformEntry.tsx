@@ -1,4 +1,4 @@
-import { useState, useContext, useSyncExternalStore } from 'react';
+import { useState, useContext, useSyncExternalStore, useMemo, useEffect } from 'react';
 import {Button} from 'react-bootstrap';
 import { 
     faEye, 
@@ -7,16 +7,28 @@ import {
     faCircle } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Entry from './Entry';
-import { FilterStoreContext } from '../../stores/simpleFilterStore';
-import Transform from '../../engine/Transform';
+import { Channel, FilterStoreContext } from '../../stores/simpleFilterStore';
 import { GUID } from '../../engine/engine';
 
 export default function TransformEntry({ guid }: { guid: GUID }){
     
     const filterStore = useContext(FilterStoreContext);
     const transform = useSyncExternalStore(filterStore.subscribe(guid) as any, filterStore.getTransform.bind(filterStore, guid))
+    const preview = useSyncExternalStore(filterStore.subscribePreview.bind(filterStore) as any, filterStore.getPreview.bind(filterStore))
     const [enabled, setEnabled] = useState(transform.getEnabled());
-    const name = useSyncExternalStore(filterStore.subscribe(guid) as any, filterStore.getTransform(guid).getName.bind(transform))
+    // const name = useSyncExternalStore(filterStore.subscribe(guid) as any, filterStore.getTransform(guid).getName.bind(transform))
+    
+
+    let [visualiation,setVisualisation] = useState(<>0</>);
+
+    useEffect(()=>{
+        if (preview.distance === 1 && preview.end === guid) {
+            setVisualisation(transform.visualizationView(guid))
+        }else{
+            setVisualisation(<></>)
+        }
+    },[preview])
+    
     
     const handleEyeClick = () => {
         const newState = !enabled;
@@ -29,6 +41,10 @@ export default function TransformEntry({ guid }: { guid: GUID }){
         filterStore.applyTransforms()
     }
 
+    const handleChannelClick = (channel: Channel) => {
+        filterStore.setPreview(guid, channel);
+    }
+
     const handleExpansion = (expanded: boolean) => {
         transform.setExpanded(expanded)
         filterStore.commitToPersistentStore()
@@ -36,19 +52,22 @@ export default function TransformEntry({ guid }: { guid: GUID }){
 
     return <div key={guid} id={guid} style={{opacity: enabled ? '100%' : '60%'}}>
                <Entry color={transform.getColor()} initialOpen={transform.getExpanded()} openHook={handleExpansion}>
-               <Entry.Header>{name}</Entry.Header>
-               <Entry.Body>{transform.paramView(guid)}</Entry.Body>
-               <Entry.Icons>{icons(enabled, handleEyeClick, handleTrashClick)}</Entry.Icons>
+               <Entry.Header>{transform.name}</Entry.Header>
+               <Entry.Body>
+                    {transform.paramView(guid)}
+                    {visualiation}
+                </Entry.Body>
+               <Entry.Icons>{icons(enabled, handleEyeClick, handleTrashClick, handleChannelClick)}</Entry.Icons>
             </Entry>
         </div>
         
  }
 
- function channels(channels: string[]){
-    return channels.map((item, _) => <FontAwesomeIcon className="iconInCard" icon={faCircle} style={{color:item}} />)
+ function channels(channels: Channel[], colors: string[], handleChannelClick: (channel: Channel) => void){
+    return channels.map((item, i) => <FontAwesomeIcon className="iconInCard" icon={faCircle} style={{color:colors[i]}} onClick={handleChannelClick.bind(i, item)}/>)
 }
     
-function icons(enabled: Boolean, handleEyeClick: () => void, handleTrashClick: () => void){
+function icons(enabled: Boolean, handleEyeClick: () => void, handleTrashClick: () => void, handleChannelClick: (channel: Channel) => void){
     return <div key={crypto.randomUUID()}>
         <Button className='border-0 bg-transparent'>
             <FontAwesomeIcon onClick={handleEyeClick} className="iconInCard" icon={enabled ? faEye : faEyeSlash} />
@@ -57,7 +76,7 @@ function icons(enabled: Boolean, handleEyeClick: () => void, handleTrashClick: (
             <FontAwesomeIcon onClick={handleTrashClick} className="iconInCard" icon={faTrash} />
         </Button>
         <Button className='border-0 bg-transparent'>
-            {channels(["red", "green", "blue"])}
+            {channels([Channel.RED, Channel.GREEN, Channel.BLUE],["red", "green", "blue"], handleChannelClick)}
         </Button>
     </div>
 }

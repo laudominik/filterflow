@@ -3,7 +3,7 @@ import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {Button, FormSelect} from 'react-bootstrap';
 import { FilterStoreContext } from '../../stores/simpleFilterStore';
-import FilterTransform from '../../engine/transforms/FilterTransform';
+import ConvolutionTransform from '../../engine/transforms/ConvolutionTransform';
 import { GUID } from '../../engine/engine';
 
 export default function KernelComponent({guid}: {guid: GUID}){
@@ -11,9 +11,9 @@ export default function KernelComponent({guid}: {guid: GUID}){
 
     const transform = useSyncExternalStore(filterContext.subscribe(guid) as any, filterContext.getTransform.bind(filterContext, guid))
     // NOTE: this (probably) forces entire component to reload, expertise is needed
-    const selection = useSyncExternalStore(filterContext.subscribeCanvasSelections.bind(filterContext) as any, filterContext.getCanvasSelections.bind(filterContext))
+    const selection = useSyncExternalStore(filterContext.subscribeCanvasSelections.bind(filterContext) as any, filterContext.getPreviewSelections.bind(filterContext))
 
-    const [gridValues, setGridValues] = useState<string[][]>(transform.getParams()["kernel"]);
+    const [gridValues, setGridValues] = useState<number[][]>(transform.getParams()["kernel"]);
     const [kernelN, setKernelN] = useState(gridValues.length);
     const handleKernelChange = (newKernelN: number) => {
         setKernelN(newKernelN);
@@ -29,7 +29,7 @@ export default function KernelComponent({guid}: {guid: GUID}){
 
     const handleInputChange = (row: number, col: number, value: string) => {
         const newGridValues = [...gridValues];
-        newGridValues[row][col] = value;
+        newGridValues[row][col] = parseInt(value);
         setGridValues(newGridValues)
         transform.updateParams(
             {
@@ -39,15 +39,16 @@ export default function KernelComponent({guid}: {guid: GUID}){
         filterContext.applyTransforms()
     };
 
-    const getColor = (row: number, col: number) =>{
-        if(!transform.pixels) return 'white'
-        // FIXME: after changing position convention
-        row = kernelN-row-1
-        return `rgba(${transform.pixels[(row*kernelN + col)*4]}, 
-            ${transform.pixels[(row*kernelN + col)*4+1]}, 
-            ${transform.pixels[(row*kernelN + col)*4]+2}, 
-            ${transform.pixels[(row*kernelN + col)*4]+3})`
-    }
+    // Saved, for future visualization reference
+    // const getColor = (row: number, col: number) =>{
+    //     if(!transform.pixels) return 'white'
+    //     // FIXME: after changing position convention
+    //     row = kernelN-row-1
+    //     return `rgba(${transform.pixels[(row*kernelN + col)*4]}, 
+    //         ${transform.pixels[(row*kernelN + col)*4+1]}, 
+    //         ${transform.pixels[(row*kernelN + col)*4]+2}, 
+    //         ${transform.pixels[(row*kernelN + col)*4]+3})`
+    // }
 
     return <div className="grid">
         <label>
@@ -69,7 +70,6 @@ export default function KernelComponent({guid}: {guid: GUID}){
                                     type="number"
                                     className="form-control"
                                     value={gridValues[rowIndex][colIndex]}
-                                    style={{backgroundColor: getColor(rowIndex, colIndex)}}
                                     onChange={(e) => handleInputChange(rowIndex, colIndex, e.target.value)}
                                 />
                             </div>

@@ -4,13 +4,14 @@ import { Engine, GUID } from "../engine/engine";
 import { TypedJSON } from "typedjson";
 
 type MarkedListener = CallableFunction & { id: GUID }
-type PreviewType = {start: GUID, end: GUID, distance: Number}
+type PreviewType = {start: GUID, end: GUID, distance: Number, channel: Channel}
 
 // For now we support only rectangles as selection
 type CanvasPosition = [number, number]
 type CanvasPointer = {source: CanvasPosition ,destination: CanvasPosition}
-type CanvasSelection = {source: {start: CanvasPosition, size: CanvasPosition, selected: CanvasPosition}, destination: {start: CanvasPosition, size: CanvasPosition, selected: CanvasPosition}}
-
+type CanvasSelection = {start: CanvasPosition, size: CanvasPosition, center: CanvasPosition}
+type PreviewSelections = {source: CanvasSelection, destination: CanvasSelection}
+enum Channel {NONE, RED, GREEN, BLUE, GRAY};
 
 class simpleFilterStore {
     listeners: MarkedListener[]
@@ -23,29 +24,30 @@ class simpleFilterStore {
     source: GUID
     sequence:GUID[]
     preview: PreviewType // distance == 1 preview will work
+    pixels?: Uint8Array
     canvasPointers: CanvasPointer
-    canvasSelections: CanvasSelection
+    previewSelections: PreviewSelections
 
     constructor() {
-        this.listeners = [];
-        this.sequenceListener = [];
-        this.previewListeners = [];
-        this.canvasSelectionsListeners=[];
+        this.listeners = []; // 
+        this.sequenceListener = []; // order change
+        this.previewListeners = []; // what is selected to visualize
+        this.canvasSelectionsListeners=[]; // what cordinates are selected (update frequent)
 
         const storedEngine = sessionStorage.getItem("engine");
         const storedSequence = sessionStorage.getItem("sequence");
         const storedSource = sessionStorage.getItem("source");
         const storedPreview = sessionStorage.getItem("preview")
         const storedCanvasPointers = sessionStorage.getItem("canvasPointers")
-        const storedCanvasSelections = sessionStorage.getItem("canvasSelections")
+        const storedPreviewSelections = sessionStorage.getItem("previewSelections")
 
-        if(!storedEngine || !storedSequence || !storedSource || !storedPreview || !storedCanvasPointers || !storedCanvasSelections) {
+        if(!storedEngine || !storedSequence || !storedSource || !storedPreview || !storedCanvasPointers || !storedPreviewSelections) {
             this.sequence = [];
             this.engine = new Engine();
             this.source = this.engine.addNode("source", {});
-            this.preview = {start: this.source,end: this.source, distance: 0}
+            this.preview = {start: this.source,end: this.source, distance: 0, channel: Channel.NONE}
             this.canvasPointers = {source: [0,0],destination:[0,0]} 
-            this.canvasSelections = {source: {start: [0,0], size: [0,0], selected:[0,0]},destination:{start: [0,0], size: [0,0], selected: [0,0]}} 
+            this.previewSelections = {source: {start: [0,0], size: [0,0], center:[0,0]},destination:{start: [0,0], size: [0,0], center: [0,0]}} 
             return;
         }
 
@@ -56,7 +58,7 @@ class simpleFilterStore {
         this.source = JSON.parse(storedSource!);
         this.preview = JSON.parse(storedPreview!);
         this.canvasPointers = JSON.parse(storedCanvasPointers!);
-        this.canvasSelections = JSON.parse(storedCanvasSelections!);
+        this.previewSelections = JSON.parse(storedPreviewSelections!);
         console.log(this.engine)
         this.applyTransforms()
         this.emitSequenceChange();
@@ -74,10 +76,6 @@ class simpleFilterStore {
 
     private _getParams(id: GUID) {
         return this.engine.getNode(id)?.getParams();
-    }
-
-    private _getPixels(id: GUID) {
-        return this.engine.getNode(id)?.getSelectedPixels()
     }
 
     // internal function register listening on specific id
@@ -99,10 +97,6 @@ class simpleFilterStore {
         return this._getView.bind(this, id);
     }
 
-    public getPixels(id: GUID) {
-        return this._getPixels.bind(this, id);
-    }
-
     public getHash(id: GUID){
         return this._getHash.bind(this, id);
     }
@@ -116,6 +110,23 @@ class simpleFilterStore {
     }
 
     // preview
+    public setPreview(id: GUID, channel: Channel){
+        // get previous
+        let previous: GUID = this.source
+
+        for (let index = 0; index < this.sequence.length; index++) {
+            const element_id = this.sequence[index];
+            if(element_id === id) break;
+            if(!this.engine.getNode(element_id)?.enabled) continue;
+
+            previous = element_id;
+        }
+
+        // somehow the `this.distance(previous, id)` for this case goes into infinity loop
+        this.preview = {start:previous, end:id, distance: 1, channel: channel}
+        this.emitPreview()
+    }
+
     public getPreview(){
         return this.preview;
     }
@@ -136,8 +147,8 @@ class simpleFilterStore {
         return this.canvasPointers;
     }
 
-    public getCanvasSelections(){
-        return this.canvasSelections;
+    public getPreviewSelections(){
+        return this.previewSelections;
     }
 
     public subscribeCanvasSelections(listener: CallableFunction){
@@ -206,19 +217,18 @@ class simpleFilterStore {
         this.sequenceListener.forEach(f => f())
         // for time being i will leave this here
         let last = this.lastNode();
-        this.preview = {start: this.source, distance: this.distance(this.source,last),end: last};
+        this.preview = {start: this.source, distance: this.distance(this.source,last),end: last, channel: Channel.NONE};
         this.emitPreview();
     }
 
     private applyVisualization() {
-        const source = this.engine.getNode(this.preview.start)!.getWebGLContext()
-        const node = this.engine.getNode(this.preview.end)
-        node!.visualization(source, this.canvasPointers.source)
-        const sourceSelection = node?.sourceSelection
-        const selection = node?.selection
+        const node = this.engine.getNode(this.preview.end)!
         
-        if(!sourceSelection || !selection) return
-        this.canvasSelections = {source: sourceSelection, destination: selection} 
+        const sourceSelection = node.fromPositionToSourceSelection(this.canvasPointers.source)
+        const destinationSelection = node.fromPositionToSelection(this.canvasPointers.destination)
+
+        this.previewSelections = {source: sourceSelection, destination: destinationSelection}
+        
     }
 
     public addTransform(name: string){
@@ -316,11 +326,11 @@ class simpleFilterStore {
         sessionStorage.setItem("sequence", JSON.stringify(this.sequence));
         sessionStorage.setItem("preview",JSON.stringify(this.preview));
         sessionStorage.setItem("canvasPointers",JSON.stringify(this.canvasPointers));
-        sessionStorage.setItem("canvasSelections",JSON.stringify(this.canvasSelections));
+        sessionStorage.setItem("previewSelections",JSON.stringify(this.previewSelections));
     }
 };
 
 const FilterStoreContext = createContext(new simpleFilterStore()) // using it without provider makes it global
 
-export { FilterStoreContext }
-export type { CanvasPointer, CanvasSelection }
+export { FilterStoreContext, Channel }
+export type { CanvasPointer, PreviewSelections, CanvasSelection }

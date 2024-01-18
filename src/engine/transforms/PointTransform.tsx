@@ -1,13 +1,19 @@
-//@ts-nocheck
 import "reflect-metadata"
-import { jsonArrayMember, jsonMember, jsonObject } from "typedjson";
+import { jsonObject } from "typedjson";
 import PointComponent from "../../components/transforms/PointComponent";
 import Transform from "../Transform";
+import { GUID } from "../engine";
 
 @jsonObject
 class PointTransform extends Transform {
+    public _update_node(): void {
+        throw new Error("Method not implemented.");
+    }
 
     image?:string
+    fragmentShader: string;
+    argument: number;
+    parametrized: boolean;
     
     constructor(name?: string, parametrized?: boolean, fragmentShader? : string) {
         super(name ?? 'Point transform', '#F4E2F4');
@@ -33,6 +39,10 @@ class PointTransform extends Transform {
     paramView(guid: GUID) {
 
         return <PointComponent guid={guid} parametrized={this.parametrized}/>
+    }
+
+    visualizationView(guid: string) {
+        return <></>
     }
 
     async _apply(input: OffscreenCanvas): Promise<OffscreenCanvas> {
