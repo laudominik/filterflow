@@ -11,7 +11,14 @@ type CanvasPosition = [number, number]
 type CanvasPointer = {source: CanvasPosition ,destination: CanvasPosition}
 type CanvasSelection = {start: CanvasPosition, size: CanvasPosition, center: CanvasPosition}
 type PreviewSelections = {source: CanvasSelection, destination: CanvasSelection}
-enum Channel {NONE, RED, GREEN, BLUE, GRAY};
+enum Channel {NONE = "NONE", RED = "RED", GREEN = "GREEN", BLUE = "BLUE", GRAY = "GRAY"};
+const ChannelValue: Record<keyof typeof Channel, number> = {
+    NONE: 0,
+    RED: 0,
+    GREEN: 1,
+    BLUE: 2,
+    GRAY: 0
+};
 
 class simpleFilterStore {
     listeners: MarkedListener[]
@@ -332,5 +339,5 @@ class simpleFilterStore {
 
 const FilterStoreContext = createContext(new simpleFilterStore()) // using it without provider makes it global
 
-export { FilterStoreContext, Channel }
+export { FilterStoreContext, Channel, ChannelValue }
 export type { CanvasPointer, PreviewSelections, CanvasSelection }

@@ -6,6 +6,7 @@ import Transform, { KVParams } from "../Transform";
 import { ReactNode } from "react";
 import { CanvasSelection } from "../../stores/simpleFilterStore";
 import { GUID } from "../engine";
+import ConvolutionVisualizationComponent from "../../components/visualizations/ConvolutionVisualizationComponent";
 
 const linearConvolutionShader = `
                 // these params should be for all filters
@@ -62,7 +63,7 @@ class ConvolutionTransform extends Transform {
     
     constructor(name?: string, fragmentShader?: string) {
         super(name ?? 'Custom kernel', '#E6F4E2');
-        this.kernel = Array(3).fill('0').map(() => new Array(3).fill('0'));
+        this.kernel = Array(3).fill(0).map(() => new Array(3).fill(0));
         this.params = {...this.params, "kernel" : this.kernel};
         this.fragment = fragmentShader ?? linearConvolutionShader
     }
@@ -83,7 +84,7 @@ class ConvolutionTransform extends Transform {
     }
 
     visualizationView(guid: string) {
-        return <></>
+        return <ConvolutionVisualizationComponent guid={guid}/>
     }
 
     async _apply(input: OffscreenCanvas): Promise<OffscreenCanvas> {

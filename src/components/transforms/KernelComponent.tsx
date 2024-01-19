@@ -29,6 +29,7 @@ export default function KernelComponent({guid}: {guid: GUID}){
 
     const handleInputChange = (row: number, col: number, value: string) => {
         const newGridValues = [...gridValues];
+        console.log(newGridValues)
         newGridValues[row][col] = parseInt(value);
         setGridValues(newGridValues)
         transform.updateParams(
@@ -38,17 +39,6 @@ export default function KernelComponent({guid}: {guid: GUID}){
         )
         filterContext.applyTransforms()
     };
-
-    // Saved, for future visualization reference
-    // const getColor = (row: number, col: number) =>{
-    //     if(!transform.pixels) return 'white'
-    //     // FIXME: after changing position convention
-    //     row = kernelN-row-1
-    //     return `rgba(${transform.pixels[(row*kernelN + col)*4]}, 
-    //         ${transform.pixels[(row*kernelN + col)*4+1]}, 
-    //         ${transform.pixels[(row*kernelN + col)*4]+2}, 
-    //         ${transform.pixels[(row*kernelN + col)*4]+3})`
-    // }
 
     return <div className="grid">
         <label>
