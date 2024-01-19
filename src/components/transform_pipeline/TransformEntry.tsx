@@ -60,11 +60,41 @@ export default function TransformEntry({ guid }: { guid: GUID }){
                <Entry.Icons>{icons(enabled, handleEyeClick, handleTrashClick, handleChannelClick)}</Entry.Icons>
             </Entry>
         </div>
-        
- }
+}
 
- function channels(channels: Channel[], colors: string[], handleChannelClick: (channel: Channel) => void){
-    return channels.map((item, i) => <FontAwesomeIcon className="iconInCard" icon={faCircle} style={{color:colors[i]}} onClick={handleChannelClick.bind(i, item)}/>)
+export function CircleSwitch({color,state,toggleState}: {color:string,state: boolean,toggleState: Function}){
+
+    return <div className={`iconInCard switch-container ${state? "active": ""}`} onClick={(event) => {toggleState()}}>
+    <div className="switch-circle" style={{backgroundColor: color}}></div>
+    <div className="switch-circle-center" style={{backgroundColor: color}}></div>
+  
+  </div>
+}
+
+function Channels(channels: Channel[], colors: string[], handleChannelClick: (channel: Channel) => void){
+    
+    let [state,setState] = useState([true,true,true])
+    
+    let func = (i:number,item:Channel) => {
+        return () =>{
+            if (state[i] == true && !state.reduce((prev,value)=>prev && value,true)){
+                let newState = [...state.map(() => true)];
+                setState(newState);
+                // TODO: unbind
+            }else{
+                let newState= [...state.map(() => false)];
+                newState[i]=true;
+                setState(newState)
+                handleChannelClick(item)
+            }
+        }
+    }
+
+    return <>
+    {
+    channels.map((item, i) => 
+        <CircleSwitch key={i} color={colors[i]} state={state[i]} toggleState={func(i,item)}/>)
+    }</>
 }
     
 function icons(enabled: Boolean, handleEyeClick: () => void, handleTrashClick: () => void, handleChannelClick: (channel: Channel) => void){
@@ -75,8 +105,8 @@ function icons(enabled: Boolean, handleEyeClick: () => void, handleTrashClick: (
         <Button className='border-0 bg-transparent'>
             <FontAwesomeIcon onClick={handleTrashClick} className="iconInCard" icon={faTrash} />
         </Button>
-        <Button className='border-0 bg-transparent'>
-            {channels([Channel.RED, Channel.GREEN, Channel.BLUE],["red", "green", "blue"], handleChannelClick)}
-        </Button>
+        <div className='border-0 bg-transparent'>
+            {Channels([Channel.RED, Channel.GREEN, Channel.BLUE],["red", "green", "blue"], handleChannelClick)}
+        </div>
     </div>
 }
