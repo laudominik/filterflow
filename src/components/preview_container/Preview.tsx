@@ -77,16 +77,21 @@ function Preview({ title, sourceId }: { title: string, sourceId: string }) {
     useEffect(()=>{
         if(offscreen_canvas && canvasRef.current){
             let mask: ColorMask = {red: true, green: true, blue: true};
-            switch(preview.channel){
-                case Channel.RED:
-                    mask = {...mask, green: false, blue:false}
-                    break;
-                case Channel.GREEN:
-                    mask = {...mask, red: false, blue:false}
-                    break;
-                case Channel.BLUE:
-                    mask = {...mask, red: false, green:false}
-                    break;
+            if (preview.previewChannels[0] != Channel.NONE && preview.previewChannels[0] != Channel.GRAY){
+                mask = {red: false,green: false, blue: false};
+                preview.previewChannels.forEach((value) =>{
+                    switch(value){
+                        case Channel.RED:
+                            mask.red = true;
+                            break;
+                        case Channel.GREEN:
+                            mask.green = true;
+                            break;
+                        case Channel.BLUE:
+                            mask.blue = true;
+                            break;
+                    }
+                })
             }
             drawImage(offscreen_canvas, canvasRef.current, mask)
         }

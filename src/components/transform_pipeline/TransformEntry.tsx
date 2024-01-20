@@ -10,6 +10,8 @@ import Entry from './Entry';
 import { Channel, FilterStoreContext } from '../../stores/simpleFilterStore';
 import { GUID } from '../../engine/engine';
 
+const SwitchModeSingle = true;
+
 export default function TransformEntry({ guid }: { guid: GUID }){
     
     const filterStore = useContext(FilterStoreContext);
@@ -18,9 +20,11 @@ export default function TransformEntry({ guid }: { guid: GUID }){
     const [enabled, setEnabled] = useState(transform.getEnabled());
     // const name = useSyncExternalStore(filterStore.subscribe(guid) as any, filterStore.getTransform(guid).getName.bind(transform))
     
-
     let [visualiation,setVisualisation] = useState(<>0</>);
-
+    
+    let [selectedColors,setSelectedColors] = useState([true,true,true])
+    const colorsChannels = [Channel.RED, Channel.GREEN, Channel.BLUE]; // TODO: get this info from meta
+    
     useEffect(()=>{
         if (preview.distance === 1 && preview.end === guid) {
             setVisualisation(transform.visualizationView(guid))
@@ -41,13 +45,32 @@ export default function TransformEntry({ guid }: { guid: GUID }){
         filterStore.applyTransforms()
     }
 
-    const handleChannelClick = (channel: Channel) => {
-        filterStore.setPreview(guid, channel);
-    }
-
     const handleExpansion = (expanded: boolean) => {
         transform.setExpanded(expanded)
         filterStore.commitToPersistentStore()
+    }
+
+    let handlePreviewColorChange = (i:number,item:Channel) => {
+        return () =>{
+            if ( SwitchModeSingle ){
+                if (selectedColors[i] == true && !selectedColors.reduce((prev,value)=>prev && value,true)){
+                        let newState = [...selectedColors.map(() => true)];
+                        setSelectedColors(newState);
+                        filterStore.setPreview(guid, colorsChannels.filter((_,i) => newState[i]));
+                    }else{
+                            let newState= [...selectedColors.map(() => false)];
+                            newState[i]=true;
+                            setSelectedColors(newState)
+                            filterStore.setPreview(guid, colorsChannels.filter((_,i) => newState[i]));
+                        }
+            }else{
+                let newState= [...selectedColors];
+                newState[i] = !newState[i];
+                setSelectedColors(newState)
+                filterStore.setPreview(guid, colorsChannels.filter((_,i) => newState[i]));
+            }
+
+        }
     }
 
     return <div key={guid} id={guid} style={{opacity: enabled ? '100%' : '60%'}}>
@@ -57,7 +80,23 @@ export default function TransformEntry({ guid }: { guid: GUID }){
                     {transform.paramView(guid)}
                     {visualiation}
                 </Entry.Body>
-               <Entry.Icons>{icons(enabled, handleEyeClick, handleTrashClick, handleChannelClick)}</Entry.Icons>
+               <Entry.Icons>
+                    <div key={crypto.randomUUID()}>
+                        <Button className='border-0 bg-transparent'>
+                            <FontAwesomeIcon onClick={handleEyeClick} className="iconInCard" icon={enabled ? faEye : faEyeSlash} />
+                        </Button>
+                        <Button className='border-0 bg-transparent'>
+                            <FontAwesomeIcon onClick={handleTrashClick} className="iconInCard" icon={faTrash} />
+                        </Button>
+                        <div className='border-0 bg-transparent'>
+                        {
+                            colorsChannels.map((item, i) => 
+                                <CircleSwitch key={i} color={colorsChannels[i]} state={selectedColors[i]} toggleState={handlePreviewColorChange(i,item)}/>
+                                )
+                        }
+                        </div>
+                    </div>
+                </Entry.Icons>
             </Entry>
         </div>
 }
@@ -69,44 +108,4 @@ export function CircleSwitch({color,state,toggleState}: {color:string,state: boo
     <div className="switch-circle-center" style={{backgroundColor: color}}></div>
   
   </div>
-}
-
-function Channels(channels: Channel[], colors: string[], handleChannelClick: (channel: Channel) => void){
-    
-    let [state,setState] = useState([true,true,true])
-    
-    let func = (i:number,item:Channel) => {
-        return () =>{
-            if (state[i] == true && !state.reduce((prev,value)=>prev && value,true)){
-                let newState = [...state.map(() => true)];
-                setState(newState);
-                // TODO: unbind
-            }else{
-                let newState= [...state.map(() => false)];
-                newState[i]=true;
-                setState(newState)
-                handleChannelClick(item)
-            }
-        }
-    }
-
-    return <>
-    {
-    channels.map((item, i) => 
-        <CircleSwitch key={i} color={colors[i]} state={state[i]} toggleState={func(i,item)}/>)
-    }</>
-}
-    
-function icons(enabled: Boolean, handleEyeClick: () => void, handleTrashClick: () => void, handleChannelClick: (channel: Channel) => void){
-    return <div key={crypto.randomUUID()}>
-        <Button className='border-0 bg-transparent'>
-            <FontAwesomeIcon onClick={handleEyeClick} className="iconInCard" icon={enabled ? faEye : faEyeSlash} />
-        </Button>
-        <Button className='border-0 bg-transparent'>
-            <FontAwesomeIcon onClick={handleTrashClick} className="iconInCard" icon={faTrash} />
-        </Button>
-        <div className='border-0 bg-transparent'>
-            {Channels([Channel.RED, Channel.GREEN, Channel.BLUE],["red", "green", "blue"], handleChannelClick)}
-        </div>
-    </div>
 }

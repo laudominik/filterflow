@@ -4,7 +4,7 @@ import { Engine, GUID } from "../engine/engine";
 import { TypedJSON } from "typedjson";
 
 type MarkedListener = CallableFunction & { id: GUID }
-type PreviewType = {start: GUID, end: GUID, distance: Number, channel: Channel}
+type PreviewType = {start: GUID, end: GUID, distance: Number, visualizationChannel: Channel, previewChannels: Channel[]}
 
 // For now we support only rectangles as selection
 type CanvasPosition = [number, number]
@@ -52,7 +52,7 @@ class simpleFilterStore {
             this.sequence = [];
             this.engine = new Engine();
             this.source = this.engine.addNode("source", {});
-            this.preview = {start: this.source,end: this.source, distance: 0, channel: Channel.NONE}
+            this.preview = {start: this.source,end: this.source, distance: 0, visualizationChannel: Channel.NONE,previewChannels:[Channel.NONE]}
             this.canvasPointers = {source: [0,0],destination:[0,0]} 
             this.previewSelections = {source: {start: [0,0], size: [0,0], center:[0,0]},destination:{start: [0,0], size: [0,0], center: [0,0]}} 
             return;
@@ -117,7 +117,7 @@ class simpleFilterStore {
     }
 
     // preview
-    public setPreview(id: GUID, channel: Channel){
+    public setPreview(id: GUID, channels: Channel[]){
         // get previous
         let previous: GUID = this.source
 
@@ -130,7 +130,11 @@ class simpleFilterStore {
         }
 
         // somehow the `this.distance(previous, id)` for this case goes into infinity loop
-        this.preview = {start:previous, end:id, distance: 1, channel: channel}
+        if (channels.length == 1){
+            this.preview = {start:previous, end:id, distance: 1, visualizationChannel: channels[0],previewChannels:channels}
+        }else{
+            this.preview = {start:previous, end:id, distance: 1, visualizationChannel: Channel.NONE,previewChannels:channels}
+        }
         this.emitPreview()
     }
 
@@ -224,7 +228,7 @@ class simpleFilterStore {
         this.sequenceListener.forEach(f => f())
         // for time being i will leave this here
         let last = this.lastNode();
-        this.preview = {start: this.source, distance: this.distance(this.source,last),end: last, channel: Channel.NONE};
+        this.preview = {start: this.source, distance: this.distance(this.source,last),end: last, visualizationChannel: Channel.NONE,previewChannels:[Channel.NONE]};
         this.emitPreview();
     }
 

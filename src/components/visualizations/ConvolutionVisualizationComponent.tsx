@@ -14,7 +14,7 @@ export default function ConvolutionVisualizationComponent({guid}: {guid: GUID}) 
     // TODO: optimalize pixels, remove boilerplate
     const pixels = filterContext.getTransform(preview.start).getPixels(selection.source.start, selection.source.size)
     const res_pixel = transform.getPixels(selection.destination.start, selection.destination.size)
-    const channelOffset = ChannelValue[preview.channel]
+    const channelOffset = ChannelValue[preview.visualizationChannel]
 
     const kernel: number[][] = transform.params["kernel"]
     const kernelWeight = transform.params["weigth"] ?? 1
@@ -31,10 +31,10 @@ export default function ConvolutionVisualizationComponent({guid}: {guid: GUID}) 
 
     return <>
         <hr/>
-        {drawPixelValues(pixels, kernel, preview.channel)}
+        {drawPixelValues(pixels, kernel, preview.visualizationChannel)}
         = {AdnotateText(`${sum}`, "sum", "under")}
         <br/>
-        {AdnotateText(`${sum}`, "sum", "under")} / {AdnotateText(`${kernelWeight}`, "kernel weight", "under")} = {Math.trunc(sum/kernelWeight)} → {AdnotateElement(ColorComponent(res_pixel[channelOffset], preview.channel), "result", "under")}
+        {AdnotateText(`${sum}`, "sum", "under")} / {AdnotateText(`${kernelWeight}`, "kernel weight", "under")} = {Math.trunc(sum/kernelWeight)} → {AdnotateElement(ColorComponent(res_pixel[channelOffset], preview.visualizationChannel), "result", "under")}
     </>    
 }
 
