@@ -2,6 +2,7 @@ import { createContext, createRef, useEffect, useRef } from "react";
 import Transform  from '../engine/Transform'
 import { Engine, GUID } from "../engine/engine";
 import { TypedJSON } from "typedjson";
+import SourceTransform from "../engine/transforms/SourceTransform";
 
 type MarkedListener = CallableFunction & { id: GUID }
 type PreviewType = {start: GUID, end: GUID, distance: Number, visualizationChannel: Channel, previewChannels: Channel[]}
@@ -69,9 +70,13 @@ class simpleFilterStore {
         this.preview = JSON.parse(storedPreview!);
         this.canvasPointers = JSON.parse(storedCanvasPointers!);
         this.previewSelections = JSON.parse(storedPreviewSelections!);
-        console.log(this.engine)
-        this.applyTransforms()
-        this.emitSequenceChange();
+        let source = this.engine.nodes.get(this.source)! as SourceTransform;
+        source.loadImage().then(()=>{ // this is easier than async constructor 
+            console.log(this.engine)
+            this.applyTransforms()
+            this.emitSequenceChange();
+        });
+        
     }
 
     // per item section
