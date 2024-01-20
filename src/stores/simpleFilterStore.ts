@@ -35,7 +35,10 @@ class simpleFilterStore {
     canvasPointers: CanvasPointer
     previewSelections: PreviewSelections
 
+    previewMouseLocked: boolean
+
     constructor() {
+        this.previewMouseLocked = false;
         this.listeners = []; // 
         this.sequenceListener = []; // order change
         this.previewListeners = []; // what is selected to visualize

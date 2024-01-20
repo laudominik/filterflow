@@ -31,6 +31,7 @@ function Preview({ title, sourceId }: { title: string, sourceId: string }) {
     
     const handleMouse = (e : React.MouseEvent) => {
         if (!canvasRef.current) return;
+        if (filterStore.previewMouseLocked) return;
         let rect = e.currentTarget.getBoundingClientRect();
 
         let x = (e.clientX - rect.x)*canvasRef.current.width/rect.width;
@@ -181,7 +182,7 @@ function Preview({ title, sourceId }: { title: string, sourceId: string }) {
             </Button>
         </div>
         <div className="imageContainer">
-            <div className='centeredImage' onMouseMove={handleMouse}>
+            <div className='centeredImage' onMouseMove={handleMouse} onClick={() => filterStore.previewMouseLocked = !filterStore.previewMouseLocked}>
                 {/* somehow onMouseMove on canvas don't works */}
                 <canvas ref={canvasRef}/>
                 <div className='overlay' style={overlayPos(previewSelections)}>
