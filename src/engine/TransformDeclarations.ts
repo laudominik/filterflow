@@ -9,7 +9,10 @@ import { OrTransform } from "./transforms/point/OrTransform"
 import { ThresholdTransform } from "./transforms/point/ThresholdTransform"
 import { XorTransform } from "./transforms/point/XorTransform"
 import { ToYCbCrTransform, FromYCbCrTransform } from "./transforms/point/YCbCrTransform"
+import AvgPoolingTransform from "./transforms/pooling/AvgPoolingTransform"
+import AvgPooling from "./transforms/pooling/AvgPoolingTransform"
 import MaxPoolingTransform from "./transforms/pooling/MaxPoolingTransform"
+import MinPoolingTransform from "./transforms/pooling/MinPoolingTransform"
 
 const registry = new TransformRegistry()
             .declareLinear("4-connected laplace", Conn4LaplaceTransform)
@@ -19,9 +22,8 @@ const registry = new TransformRegistry()
             .declareLinear("sobel Y", SobelYTransform)
             .declareLinear("custom_kernel", ConvolutionTransform)
             .declarePooling("max_pooling", MaxPoolingTransform)
-            .declarePooling("min_pooling", MaxPoolingTransform)
-            .declarePooling("avg_pooling", MaxPoolingTransform)
-            .declarePooling("median_pooling", MaxPoolingTransform)
+            .declarePooling("min_pooling", MinPoolingTransform)
+            .declarePooling("avg_pooling", AvgPoolingTransform)
             .declareLogical("xor", XorTransform)
             .declareLogical("or", OrTransform)
             .declareLogical("and", AndTransform)

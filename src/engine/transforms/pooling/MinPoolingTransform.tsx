@@ -3,25 +3,26 @@ import Transform from "../../Transform";
 import PoolingTransform from "../PoolingTransform";
 
 @jsonObject
-class MaxPoolingTransform extends PoolingTransform {
+class MinPoolingTransform extends PoolingTransform {
     public _update_node(): void {
         throw new Error("Method not implemented.");
     }
     constructor() {
-        super('Max pooling', 
+        super('Min pooling', 
         `
-            if(pixelColor.r >= outVal.r){
+            if(pixelColor.r <= outVal.r){
                 outVal.r = pixelColor.r;
             }
-            if(pixelColor.g >= outVal.g){
+            if(pixelColor.g <= outVal.g){
                 outVal.g = pixelColor.g;
             }
-            if(pixelColor.b >= outVal.b){
+            if(pixelColor.b <= outVal.b){
                 outVal.b = pixelColor.b;
             }
-        `
-       );
+        `, 
+        'vec3(1.0,1.0,1.0)'
+       )
     }
 }
 
-export default MaxPoolingTransform;
+export default MinPoolingTransform;
