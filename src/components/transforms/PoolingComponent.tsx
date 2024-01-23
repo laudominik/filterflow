@@ -14,7 +14,7 @@ export default function PoolingComponent({guid}: {guid: GUID}){
     const [poolingStep, setPoolingStep] = useState<number>(transform.getParams()["pooling_step"])
     const handleSizeChange = (newSize: number) => {
         setPoolingSize(newSize);
-        transform.updateParams(
+        filterContext.updateParams(guid,
             {
                 "pooling_size": newSize,
                 "pooling_step": poolingStep
@@ -24,7 +24,7 @@ export default function PoolingComponent({guid}: {guid: GUID}){
     };
     const handleStepChange = (newStep: number) => {
         setPoolingStep(newStep);
-        transform.updateParams(
+        filterContext.updateParams(guid,
             {
                 "pooling_size": poolingSize,
                 "pooling_step": newStep

@@ -1,5 +1,5 @@
 import { createContext, createRef, useEffect, useRef } from "react";
-import Transform  from '../engine/Transform'
+import Transform, { KVParams }  from '../engine/Transform'
 import { Engine, GUID } from "../engine/engine";
 import { TypedJSON } from "typedjson";
 import SourceTransform from "../engine/transforms/SourceTransform";
@@ -37,6 +37,8 @@ class simpleFilterStore {
     previewSelections: PreviewSelections
 
     previewMouseLocked: boolean
+    watchedTransform: Map<GUID,{value: Transform,hash: string}>
+
 
     constructor() {
         this.previewMouseLocked = false;
@@ -44,6 +46,7 @@ class simpleFilterStore {
         this.sequenceListener = []; // order change
         this.previewListeners = []; // what is selected to visualize
         this.canvasSelectionsListeners=[]; // what cordinates are selected (update frequent)
+        this.watchedTransform = new Map();
 
         const storedEngine = sessionStorage.getItem("engine");
         const storedSequence = sessionStorage.getItem("sequence");
@@ -122,6 +125,27 @@ class simpleFilterStore {
 
     public getTransform(id: GUID): Transform{
         return this.engine.getNode(id)!
+    }
+
+    public getTransformWatch(id: GUID): {value: Transform,hash: string}{
+        let transformWatch = this.watchedTransform.get(id);
+        if (transformWatch){
+
+            if (transformWatch.hash != transformWatch.value.hash){
+                transformWatch = {...transformWatch,hash: transformWatch.value.hash};
+                this.watchedTransform.set(id,transformWatch);
+            }
+        }else{
+            const transform = this.getTransform(id);
+            transformWatch = {value:transform,hash: transform.hash};
+            this.watchedTransform.set(id,transformWatch);
+        }
+        return transformWatch
+    }
+
+    public updateParams(id:GUID,params: KVParams): void{
+        this.engine.getNode(id)?.updateParams(params);
+        this.emitChange(id);
     }
 
     // preview

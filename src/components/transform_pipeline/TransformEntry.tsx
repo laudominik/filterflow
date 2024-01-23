@@ -16,12 +16,14 @@ const SwitchModeSingle = true;
 export default function TransformEntry({ guid }: { guid: GUID }){
     
     const filterStore = useContext(FilterStoreContext);
-    const transform = useSyncExternalStore(filterStore.subscribe(guid) as any, filterStore.getTransform.bind(filterStore, guid))
+
+    const transformWatch = useSyncExternalStore(filterStore.subscribe(guid) as any, filterStore.getTransformWatch.bind(filterStore, guid))
+    const transform = transformWatch.value;
     const preview = useSyncExternalStore(filterStore.subscribePreview.bind(filterStore) as any, filterStore.getPreview.bind(filterStore))
     const [enabled, setEnabled] = useState(transform.getEnabled());
     const in_focus = guid == preview.end && ( preview.distance == 1 || preview.distance == 0);
-    const name = useSyncExternalStore(filterStore.subscribe(guid) as any, filterStore.getTransform(guid).getName.bind(transform))
-    
+    const [name,setName] = useState(transform.getName());
+    // TODO create map in store with hash to hash pare value
     let [visualiation,setVisualisation] = useState(<>0</>);
     
     let [selectedColors,setSelectedColors] = useState([true,true,true])
@@ -34,6 +36,12 @@ export default function TransformEntry({ guid }: { guid: GUID }){
             setVisualisation(<></>)
         }
     },[preview])
+
+    useEffect(()=>{
+        setName(transform.getName());
+    },[transformWatch])
+
+
     
     
     const handleEyeClick = () => {
@@ -85,7 +93,7 @@ export default function TransformEntry({ guid }: { guid: GUID }){
 
     return <div key={guid} id={guid} style={{opacity: enabled ? '100%' : '60%'}}>
                <Entry color={transform.getColor()} initialOpen={transform.getExpanded()} openHook={handleExpansion}>
-               <Entry.Header>{transform.name}</Entry.Header>
+               <Entry.Header>{name}</Entry.Header>
                <Entry.Body>
                     {transform.paramView(guid)}
                     {visualiation}

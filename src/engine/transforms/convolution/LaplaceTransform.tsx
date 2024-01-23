@@ -18,6 +18,7 @@ class LaplaceTransform extends ConvolutionTransform {
          [0,    1,  0   ]] 
 
         this.params = {...this.params, "kernel" : this.kernel};
+        this.edited = false;
     }
 }
 

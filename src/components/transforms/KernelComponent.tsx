@@ -19,7 +19,7 @@ export default function KernelComponent({guid}: {guid: GUID}){
         setKernelN(newKernelN);
         const newGridValues = Array(newKernelN).fill(0).map(() => new Array(newKernelN).fill(0))
         setGridValues(newGridValues)
-        transform.updateParams(
+        filterContext.updateParams(guid,
             {
                 "kernel": newGridValues
             }
@@ -32,7 +32,7 @@ export default function KernelComponent({guid}: {guid: GUID}){
         console.log(newGridValues)
         newGridValues[row][col] = parseInt(value);
         setGridValues(newGridValues)
-        transform.updateParams(
+        filterContext.updateParams(guid,
             {
                 "kernel": newGridValues
             }

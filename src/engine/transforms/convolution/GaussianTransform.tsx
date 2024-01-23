@@ -12,6 +12,7 @@ class GaussianTransform extends ConvolutionTransform {
                        [1/16,  1/8,  1/16   ]]; 
 
         this.params = {...this.params, "kernel" : this.kernel};
+        this.edited = false;
     }
 }
 

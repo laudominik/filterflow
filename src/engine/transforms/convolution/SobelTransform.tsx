@@ -17,6 +17,7 @@ class SobelTransform extends ConvolutionTransform {
          [0,     0,  0   ]] 
 
         this.params = {...this.params, "kernel" : this.kernel};
+        this.edited = false;
     }
 }
 

@@ -13,7 +13,7 @@ export default function PointComponent({guid, parametrized}: {guid: GUID, parame
 
     const handleInputChange = (value: string) => {
         setArgument(value)
-        transform.updateParams({
+        filterContext.updateParams(guid,{
             "argument": value
         })
 

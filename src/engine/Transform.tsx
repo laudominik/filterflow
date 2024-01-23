@@ -1,5 +1,5 @@
 import 'reflect-metadata'
-import { ReactNode } from 'react'
+import { ReactElement, ReactNode } from 'react'
 import { GUID } from './engine'
 import { AnyT, jsonMember, jsonObject } from 'typedjson';
 import { node } from './node';
@@ -18,13 +18,13 @@ abstract class Transform extends node<Transform> {
         this.params = {};
         this.enabled = true;
         this.expanded = false;
-        this.edited = false;
+        this.edited = true;
         this.canvas = new OffscreenCanvas(1,1);
         this.gl = this.canvas.getContext("webgl", {preserveDrawingBuffer: true})!;
         this.hash = crypto.randomUUID();
     }
 
-    abstract paramView(guid: GUID): ReactNode;
+    abstract paramView(guid: GUID): ReactElement;
     
     visualizationView(guid: GUID) {
         return <></>
@@ -111,6 +111,7 @@ abstract class Transform extends node<Transform> {
         this.params = params;
         if (this.edited == false){
             this.name =  `${this.name}[edited]`
+            this.hash = crypto.randomUUID();
         }
         this.edited = true;
     }
