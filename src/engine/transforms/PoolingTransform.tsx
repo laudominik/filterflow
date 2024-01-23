@@ -5,6 +5,8 @@ import Transform, { KVParams } from "../Transform";
 import { ReactNode } from "react";
 import { GUID } from "../nodeResponse";
 import PoolingComponent from "../../components/transforms/PoolingComponent";
+import { CanvasSelection } from "../../stores/simpleFilterStore";
+import PoolingVisualizationComponent from "../../components/visualizations/PoolingVisualizationComponent";
 
 
 @jsonObject
@@ -57,8 +59,39 @@ class PoolingTransform extends Transform {
             this.fragment = poolingShader;
     }
 
+    public fromPositionToSourceSelection(position: [number, number]): CanvasSelection {
+        const poolingSize = this.params["pooling_size"];
     
+        const posNormalizedX = Math.floor(position[0] / poolingSize) * poolingSize 
+        const posNormalizedY = Math.floor(position[1] / poolingSize) * poolingSize 
 
+        const x = (posNormalizedX - Math.floor((poolingSize-1)/2))
+        const y = (posNormalizedY - Math.floor((poolingSize-1)/2))
+
+        return {start: [x,y], size: [poolingSize, poolingSize], center: [posNormalizedX, posNormalizedY]}
+    }
+    public fromDestinationToSourcePosition(positon: [number, number]): [number, number] {
+        const step = this.params["pooling_step"];
+        return [positon[0] * step, positon[1] * step];
+    }
+
+    public fromSourceToDestinationPosition(positon: [number, number]): [number, number] {
+        const step = this.params["pooling_step"];
+        return [Math.floor(positon[0] / step), Math.floor(positon[1] / step)];
+    }
+
+    // public fromPositionToSelection(position: [number, number]): CanvasSelection {
+    //     const poolingSize = this.params["pooling_size"];
+    
+    //     const posNormalizedX = Math.floor(position[0] / poolingSize) 
+    //     const posNormalizedY = Math.floor(position[1] / poolingSize)
+
+    //     return {start: [posNormalizedX, posNormalizedY], size: [1, 1], center: [posNormalizedX, posNormalizedY]}
+    // }
+
+    // public fromPositionToSelection(position: [number, number]): CanvasSelection{
+    //     //return {start: [0, 0], size:[1,1], center: [0,0]}
+    // }
 
     paramView(guid: GUID) {
         return <PoolingComponent guid={guid}/>

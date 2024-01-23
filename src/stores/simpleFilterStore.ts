@@ -5,7 +5,7 @@ import { TypedJSON } from "typedjson";
 import SourceTransform from "../engine/transforms/SourceTransform";
 
 type MarkedListener = CallableFunction & { id: GUID }
-type PreviewType = {start: GUID, end: GUID, distance: Number, visualizationChannel: Channel, previewChannels: Channel[]}
+type PreviewType = {start: GUID, end: GUID, distance: number, visualizationChannel: Channel, previewChannels: Channel[]}
 
 // For now we support only rectangles as selection
 type CanvasPosition = [number, number]
@@ -227,7 +227,7 @@ class simpleFilterStore {
         return ids.map(id => this.engine.getNode(id)!);
     }
     
-    private distance(start: GUID, stop: GUID) : Number{
+    private distance(start: GUID, stop: GUID) : number {
         if (start == stop){
             return 0;
         }
@@ -286,15 +286,17 @@ class simpleFilterStore {
         this.commitToPersistentStore();
     }
 
-    public setCanvasDestinationPointer(position: [number, number]){
-        this.canvasPointers = {source: position, destination: position};
-        // TODO: add proper calculation of position on source
+    public setCanvasDestinationPointer(destinationPosition: [number, number]){
+        const node = this.engine.getNode(this.preview.end)!
+        this.canvasPointers = {source: node.fromDestinationToSourcePosition(destinationPosition), destination: destinationPosition};
         this.applyVisualization();
         this.emitCanvasSelections();
     }
 
-    public setCanvasSourcePointer(position: [number, number]){
-        this.canvasPointers = {destination: position, source: position};
+    public setCanvasSourcePointer(sourcePosition: [number, number]){
+        const node = this.engine.getNode(this.preview.end)!
+
+        this.canvasPointers = {source: sourcePosition, destination: node.fromSourceToDestinationPosition(sourcePosition)};
         this.applyVisualization();
         this.emitCanvasSelections();
     }

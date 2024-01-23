@@ -185,8 +185,7 @@ function Preview({ title, sourceId }: { title: string, sourceId: string }) {
             <div className='centeredImage' onMouseMove={handleMouse} onClick={() => filterStore.previewMouseLocked = !filterStore.previewMouseLocked}>
                 {/* somehow onMouseMove on canvas don't works */}
                 <canvas ref={canvasRef}/>
-                <div className='overlay' style={overlayPos(previewSelections)}>
-                </div>
+                {(preview.distance == 1 || preview.distance == 0) ? <div className='overlay' style={overlayPos(previewSelections)}></div> : <></>}
             </div>
         </div>
     </div>

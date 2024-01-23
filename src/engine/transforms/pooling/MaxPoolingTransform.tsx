@@ -1,6 +1,7 @@
 import { jsonObject } from "typedjson";
 import Transform from "../../Transform";
 import PoolingTransform from "../PoolingTransform";
+import PoolingVisualizationComponent from "../../../components/visualizations/PoolingVisualizationComponent";
 
 @jsonObject
 class MaxPoolingTransform extends PoolingTransform {
@@ -21,6 +22,10 @@ class MaxPoolingTransform extends PoolingTransform {
             }
         `
        );
+    }
+
+    visualizationView(guid: string) {
+        return <PoolingVisualizationComponent guid={guid} type="max" reduction={Math.max}/>
     }
 }
 

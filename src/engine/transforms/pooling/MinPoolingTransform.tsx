@@ -1,6 +1,7 @@
 import { jsonObject } from "typedjson";
 import Transform from "../../Transform";
 import PoolingTransform from "../PoolingTransform";
+import PoolingVisualizationComponent from "../../../components/visualizations/PoolingVisualizationComponent";
 
 @jsonObject
 class MinPoolingTransform extends PoolingTransform {
@@ -22,6 +23,10 @@ class MinPoolingTransform extends PoolingTransform {
         `, 
         'vec3(1.0,1.0,1.0)'
        )
+    }
+
+    visualizationView(guid: string) {
+        return <PoolingVisualizationComponent guid={guid} type="min" reduction={Math.min}/>
     }
 }
 

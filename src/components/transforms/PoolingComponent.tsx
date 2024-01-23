@@ -50,6 +50,7 @@ export default function PoolingComponent({guid}: {guid: GUID}){
                 Select pooling stride:
             </label>
             <FormSelect value={poolingStep} onChange={(e) => handleStepChange(parseInt(e.target.value, 10))}>
+                <option value={1}>1</option>
                 <option value={2}>2</option>
                 <option value={3}>3</option>
                 <option value={4}>4</option>

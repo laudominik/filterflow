@@ -49,7 +49,7 @@ function drawPixelValues(pixels: Uint8Array, kernel:number[][], channel: Channel
         [...Array(rowsN)].map((_,i)=>{
             return <tr>{[...Array(colsN)].map((_,ii)=>{
                 let pos = ((rowsN-i-1)*colsN + ii)*4
-                return <ruby>({ColorComponent(pixels[pos+channelOffset], channel)} * {kernel[i][ii]}) <rt>{pixels[pos+channelOffset] * kernel[i][ii]}</rt>{ii+1 === colsN ? "" : "+ "}</ruby>
+                return <td><ruby>({ColorComponent(pixels[pos+channelOffset], channel)} * {kernel[i][ii]}) <rt>{pixels[pos+channelOffset] * kernel[i][ii]}</rt>{ii+1 === colsN ? "" : "+ "}</ruby></td>
             })}</tr>
         })
     }</table>
