@@ -1,23 +1,25 @@
-import { useState, useContext, useSyncExternalStore } from 'react'
+import { useState, useContext, useSyncExternalStore, useEffect } from 'react'
 import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {Button, FormSelect} from 'react-bootstrap';
 import { FilterStoreContext } from '../../stores/simpleFilterStore';
-import FilterTransform from '../../engine/transforms/FilterTransform';
+import ConvolutionTransform from '../../engine/transforms/ConvolutionTransform';
 import { GUID } from '../../engine/engine';
 
 export default function KernelComponent({guid}: {guid: GUID}){
     const filterContext = useContext(FilterStoreContext)
 
     const transform = useSyncExternalStore(filterContext.subscribe(guid) as any, filterContext.getTransform.bind(filterContext, guid))
-    
-    const [gridValues, setGridValues] = useState<string[][]>(transform.getParams()["kernel"]);
+    // NOTE: this (probably) forces entire component to reload, expertise is needed
+    const selection = useSyncExternalStore(filterContext.subscribeCanvasSelections.bind(filterContext) as any, filterContext.getPreviewSelections.bind(filterContext))
+
+    const [gridValues, setGridValues] = useState<number[][]>(transform.getParams()["kernel"]);
     const [kernelN, setKernelN] = useState(gridValues.length);
     const handleKernelChange = (newKernelN: number) => {
         setKernelN(newKernelN);
         const newGridValues = Array(newKernelN).fill(0).map(() => new Array(newKernelN).fill(0))
         setGridValues(newGridValues)
-        transform.updateParams(
+        filterContext.updateParams(guid,
             {
                 "kernel": newGridValues
             }
@@ -27,9 +29,10 @@ export default function KernelComponent({guid}: {guid: GUID}){
 
     const handleInputChange = (row: number, col: number, value: string) => {
         const newGridValues = [...gridValues];
-        newGridValues[row][col] = value;
+        console.log(newGridValues)
+        newGridValues[row][col] = parseInt(value);
         setGridValues(newGridValues)
-        transform.updateParams(
+        filterContext.updateParams(guid,
             {
                 "kernel": newGridValues
             }

@@ -1,54 +1,51 @@
-import { ReactNode } from "react";
-import Transform from "../Transform";
+import "reflect-metadata"
 import { jsonObject } from "typedjson";
+import PointComponent from "../../components/transforms/PointComponent";
+import Transform from "../Transform";
+import { GUID } from "../engine";
 
 @jsonObject
-export default class SourceTransform extends Transform{
+class PointTransform extends Transform {
     public _update_node(): void {
         throw new Error("Method not implemented.");
     }
-    image?: string
 
-    constructor(){
-        super("source","#HEX");
-    }
+    image?:string
+    fragmentShader: string;
+    argument: number;
+    parametrized: boolean;
+    
+    constructor(name?: string, parametrized?: boolean, fragmentShader? : string) {
+        super(name ?? 'Point transform', '#F4E2F4');
+        this.argument = 0;
+        this.params = {...this.params, "argument" : this.argument};
+        this.gl = this.canvas.getContext('webgl', {preserveDrawingBuffer: true})!;
+        this.parametrized = parametrized ?? false
+        this.fragmentShader = fragmentShader ?? `
+        precision mediump float;
+        varying vec2 v_texCoord;
+        uniform sampler2D u_image;
 
-    async apply(input: OffscreenCanvas | undefined): Promise<OffscreenCanvas | undefined> {
-        // for the source node we ignore inputs
-
-        if(this.image === undefined || this.image === null || this.image === "") return undefined;
+        uniform float u_arg;
         
-
-        return this.canvas;
+        void main() {
+            vec2 pixelCoords = v_texCoord ;
+            vec3 col = texture2D(u_image, pixelCoords).rgb;
+            gl_FragColor = vec4(col, 1.0);
+        }
+    `
     }
 
-    async setImageString(imageString: string) {
-        this.params["image"] = imageString
-        await this.loadImage()
+    paramView(guid: GUID) {
+
+        return <PointComponent guid={guid} parametrized={this.parametrized}/>
     }
 
-    async loadImage(){
-        if(!this.params["image"]) return
-
-        const image = new Image()
-        const loadImage = async (img: HTMLImageElement) => {
-            return new Promise((resolve, reject) => {
-                img.onload = async () => {
-                    resolve(true);
-                };
-            });
-        };
-        image.src = this.params["image"];
-        await loadImage(image);
-        
-        this.canvas.width = image.width;
-        this.canvas.height = image.height;
-        this.drawImage(image)
-
-        this.hash = crypto.randomUUID();
+    visualizationView(guid: string) {
+        return <></>
     }
 
-    drawImage(input: HTMLImageElement) {
+    async _apply(input: OffscreenCanvas): Promise<OffscreenCanvas> {
         const vertexShaderSource = `
                 attribute vec2 a_position;
                 varying vec2 v_texCoord;
@@ -59,17 +56,7 @@ export default class SourceTransform extends Transform{
                 }
             `;
 
-        const fragmentShaderSource = `
-                // these params should be for all filters
-                precision mediump float;
-                varying vec2 v_texCoord;
-                uniform sampler2D u_image;
-                
-                void main() {
-                    gl_FragColor = texture2D(u_image, v_texCoord);
-                }
-            `;
-
+            // for now copy-paste, will change later
             this.canvas.width = input.width;
             this.canvas.height = input.height;
 
@@ -81,7 +68,7 @@ export default class SourceTransform extends Transform{
                 gl.compileShader(vertexShader);
 
             const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)!;
-                gl.shaderSource(fragmentShader, fragmentShaderSource);
+                gl.shaderSource(fragmentShader, this.fragmentShader);
                 gl.compileShader(fragmentShader);
 
             const program = gl.createProgram()!;
@@ -110,7 +97,10 @@ export default class SourceTransform extends Transform{
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        
+         
+            const argumentLocation = gl.getUniformLocation(program, 'u_arg');
+                gl.uniform1f(argumentLocation, this.params["argument"]);
+            
             gl.clearColor(0, 0, 0, 0);
             gl.clear(gl.COLOR_BUFFER_BIT);
             gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -120,16 +110,9 @@ export default class SourceTransform extends Transform{
             gl.deleteProgram(program);
             gl.deleteBuffer(positionBuffer);
             gl.deleteTexture(texture);
-    }
 
-    updateParams(params: { [key: string]: any; }): void {
-        this.image = params["image"];
-    }
-    paramView() {
-        return <></>
-    }
-
-    visualizationView(guid: string) {
-        return <></>
+            return this.canvas;
     }
 }
+
+export default PointTransform;

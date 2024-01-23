@@ -99,7 +99,7 @@ function PoolingTransforms(){
 }
 
 function LogicalTransforms(){
-  return TransformsType("Logical", "#E2F0F4", getLogical());
+  return TransformsType("Bitwise", "#E2F0F4", getLogical());
 }
 
 function PointTransforms(){

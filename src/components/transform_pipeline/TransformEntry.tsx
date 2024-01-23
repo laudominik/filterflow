@@ -1,28 +1,53 @@
-import { useState, useContext, useSyncExternalStore } from 'react';
+import { useState, useContext, useSyncExternalStore, useMemo, useEffect } from 'react';
 import {Button} from 'react-bootstrap';
 import { 
     faEye, 
     faEyeSlash, 
     faTrash,
-    faCircle } from '@fortawesome/free-solid-svg-icons';
+    faCommentDots,
+    faComment} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Entry from './Entry';
-import { FilterStoreContext } from '../../stores/simpleFilterStore';
-import Transform from '../../engine/Transform';
+import { Channel, FilterStoreContext } from '../../stores/simpleFilterStore';
 import { GUID } from '../../engine/engine';
+
+const SwitchModeSingle = true;
 
 export default function TransformEntry({ guid }: { guid: GUID }){
     
     const filterStore = useContext(FilterStoreContext);
-    const transform = useSyncExternalStore(filterStore.subscribe(guid) as any, filterStore.getTransform.bind(filterStore, guid))
-    const [enabled, setEnabled] = useState(transform.getEnabled());
 
+    const transformWatch = useSyncExternalStore(filterStore.subscribe(guid) as any, filterStore.getTransformWatch.bind(filterStore, guid))
+    const transform = transformWatch.value;
+    const preview = useSyncExternalStore(filterStore.subscribePreview.bind(filterStore) as any, filterStore.getPreview.bind(filterStore))
+    const [enabled, setEnabled] = useState(transform.getEnabled());
+    const in_focus = guid == preview.end && ( preview.distance == 1 || preview.distance == 0);
+    const [name,setName] = useState(transform.getName());
+    // TODO create map in store with hash to hash pare value
+    let [visualiation,setVisualisation] = useState(<>0</>);
+    
+    let [selectedColors,setSelectedColors] = useState([true,true,true])
+    const colorsChannels = [Channel.RED, Channel.GREEN, Channel.BLUE]; // TODO: get this info from meta
+
+    useEffect(()=>{
+        if (preview.distance === 1 && preview.end === guid) {
+            setVisualisation(transform.visualizationView(guid))
+        }else{
+            setVisualisation(<></>)
+        }
+    },[preview])
+
+    useEffect(()=>{
+        setName(transform.getName());
+    },[transformWatch])
+
+
+    
     
     const handleEyeClick = () => {
         const newState = !enabled;
         setEnabled(newState);
-        transform.setEnabled(newState);
-        filterStore.applyTransforms()
+        filterStore.setEnabled(guid, newState);
     }
 
     const handleTrashClick = () => {
@@ -35,30 +60,73 @@ export default function TransformEntry({ guid }: { guid: GUID }){
         filterStore.commitToPersistentStore()
     }
 
+    const handleToggleFocus = () => {
+        if (in_focus){
+            filterStore.resetPreview();
+        }else{
+            filterStore.setPreview(guid,colorsChannels.filter((_,i) => selectedColors[i]));
+        }
+    }
+
+    let handlePreviewColorChange = (i:number,item:Channel) => {
+        return () =>{
+            if ( SwitchModeSingle ){
+                if (selectedColors[i] == true && !selectedColors.reduce((prev,value)=>prev && value,true)){
+                        let newState = [...selectedColors.map(() => true)];
+                        setSelectedColors(newState);
+                        filterStore.setPreview(guid, colorsChannels.filter((_,i) => newState[i]));
+                    }else{
+                            let newState= [...selectedColors.map(() => false)];
+                            newState[i]=true;
+                            setSelectedColors(newState)
+                            filterStore.setPreview(guid, colorsChannels.filter((_,i) => newState[i]));
+                        }
+            }else{
+                let newState= [...selectedColors];
+                newState[i] = !newState[i];
+                setSelectedColors(newState)
+                filterStore.setPreview(guid, colorsChannels.filter((_,i) => newState[i]));
+            }
+
+        }
+    }
+
     return <div key={guid} id={guid} style={{opacity: enabled ? '100%' : '60%'}}>
                <Entry color={transform.getColor()} initialOpen={transform.getExpanded()} openHook={handleExpansion}>
-               <Entry.Header>{transform.getName()}</Entry.Header>
-               <Entry.Body>{transform.paramView(guid)}</Entry.Body>
-               <Entry.Icons>{icons(enabled, handleEyeClick, handleTrashClick)}</Entry.Icons>
+               <Entry.Header>{name}</Entry.Header>
+               <Entry.Body>
+                    {transform.paramView(guid)}
+                    {visualiation}
+                </Entry.Body>
+               <Entry.Icons>
+                    <div key={crypto.randomUUID()}>
+                        <Button className='border-0 bg-transparent'>
+                            <FontAwesomeIcon onClick={handleEyeClick} className="iconInCard" icon={enabled ? faEye : faEyeSlash} />
+                        </Button>
+                        <Button className='border-0 bg-transparent'>
+                            <FontAwesomeIcon onClick={handleTrashClick} className="iconInCard" icon={faTrash} />
+                        </Button>
+                        <Button className='border-0 bg-transparent'>
+                            <FontAwesomeIcon onClick={handleToggleFocus} className="iconInCard" icon={in_focus ? faCommentDots : faComment} />
+                        </Button>
+                        <div className='border-0 bg-transparent'>
+                        {
+                            colorsChannels.map((item, i) => 
+                                <CircleSwitch key={i} color={colorsChannels[i]} state={selectedColors[i]} toggleState={handlePreviewColorChange(i,item)}/>
+                                )
+                        }
+                        </div>
+                    </div>
+                </Entry.Icons>
             </Entry>
         </div>
-        
- }
-
- function channels(channels: string[]){
-    return channels.map((item, _) => <FontAwesomeIcon className="iconInCard" icon={faCircle} style={{color:item}} />)
 }
-    
-function icons(enabled: Boolean, handleEyeClick: () => void, handleTrashClick: () => void){
-    return <div key={crypto.randomUUID()}>
-        <Button className='border-0 bg-transparent'>
-            <FontAwesomeIcon onClick={handleEyeClick} className="iconInCard" icon={enabled ? faEye : faEyeSlash} />
-        </Button>
-        <Button className='border-0 bg-transparent'>
-            <FontAwesomeIcon onClick={handleTrashClick} className="iconInCard" icon={faTrash} />
-        </Button>
-        <Button className='border-0 bg-transparent'>
-            {channels(["red", "green", "blue"])}
-        </Button>
-    </div>
+
+export function CircleSwitch({color,state,toggleState}: {color:string,state: boolean,toggleState: Function}){
+
+    return <div className={`iconInCard switch-container ${state? "active": ""}`} onClick={(event) => {toggleState()}}>
+    <div className="switch-circle" style={{backgroundColor: color}}></div>
+    <div className="switch-circle-center" style={{backgroundColor: color}}></div>
+  
+  </div>
 }

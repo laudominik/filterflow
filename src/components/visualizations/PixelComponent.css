@@ -1,0 +1,25 @@
+.pixelComponent{
+    width: min-content;
+    text-align: center;
+    min-width: 3ch;
+    border-radius: 10%;
+    display: inline-block;
+}
+
+.adnotationContent {
+    display: inline-block;
+    position: absolute;
+    text-align: center;
+    left: 0;
+    top: 100%;
+}
+
+.adnotatedContent {
+    display: inline-block;
+}
+
+.adnotationWraper {
+    display: inline;
+    position: relative;
+
+}

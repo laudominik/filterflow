@@ -1,40 +1,14 @@
-//@ts-nocheck
+
 import "reflect-metadata"
-import { jsonArrayMember, jsonMember, jsonObject } from "typedjson";
+import { jsonObject } from "typedjson";
 import KernelComponent from "../../components/transforms/KernelComponent";
-import Transform from "../Transform";
+import Transform, { KVParams } from "../Transform";
+import { ReactNode } from "react";
+import { CanvasSelection } from "../../stores/simpleFilterStore";
+import { GUID } from "../engine";
+import ConvolutionVisualizationComponent from "../../components/visualizations/ConvolutionVisualizationComponent";
 
-@jsonObject
-class FilterTransform extends Transform {
-
-    image?:string
-
-    constructor(name?: string) {
-        super(name ?? 'Custom kernel', '#E6F4E2');
-        this.kernel = Array(3).fill('0').map(() => new Array(3).fill('0'));
-        this.params = {"kernel" : this.kernel};
-    }
-
-    paramView(guid: GUID) {
-        /*
-         *  tbd: how could we split the view logic here and keep it nice and tidy
-         */
-        return <KernelComponent guid={guid}/>
-    }
-
-    async _apply(from:string): Promise<string> {
-        this.kernel = this.params["kernel"]
-        const vertexShaderSource = `
-                attribute vec2 a_position;
-                varying vec2 v_texCoord;
-
-                void main() {
-                    gl_Position = vec4(a_position, 0, 1);
-                    v_texCoord = vec2((a_position.x + 1.0) / 2.0, 1.0 - (a_position.y + 1.0) / 2.0);
-                }
-            `;
-
-        const fragmentShaderSource = `
+const linearConvolutionShader = `
                 // these params should be for all filters
                 precision mediump float;
                 varying vec2 v_texCoord;
@@ -74,25 +48,71 @@ class FilterTransform extends Transform {
                     gl_FragColor = vec4(sum, 1.0);
                 }
             `;
-            const image = new Image()
-            const loadImage = async (img: HTMLImageElement) => {
-                return new Promise((resolve, reject) => {
-                    img.onload = async () => {
-                        resolve(true);
-                    };
-                });
-            };
-            image.src = from;
-            await loadImage(image);
-            const canvas = new OffscreenCanvas(image.width, image.height);
-            const gl = canvas.getContext('webgl')!;
-            
+
+
+@jsonObject
+class ConvolutionTransform extends Transform {
+    public _update_node(): void {
+        throw new Error("Method not implemented.");
+    }
+    
+    image?:string
+    kernel: Array<Array<number>>
+    fragment: string;
+    
+    
+    constructor(name?: string, fragmentShader?: string) {
+        super(name ?? 'Custom kernel', '#E6F4E2');
+
+        this.kernel = Array(3).fill(0).map(() => new Array(3).fill(0));
+        this.params = {...this.params, "kernel" : this.kernel};
+        this.fragment = fragmentShader ?? linearConvolutionShader
+    }
+
+    public fromPositionToSourceSelection(position: [number, number]): CanvasSelection {
+        const kernelN = this.params["kernel"].length;
+        const x = position[0] - Math.floor((kernelN-1)/2)
+        const y = position[1] - Math.floor((kernelN-1)/2)
+
+        return {start: [x,y], size: [kernelN, kernelN], center: position}
+    }
+
+    paramView(guid: GUID) {
+        /*
+         *  tbd: how could we split the view logic here and keep it nice and tidy
+         */
+        return <KernelComponent guid={guid}/>
+    }
+
+    visualizationView(guid: string) {
+        return <ConvolutionVisualizationComponent guid={guid}/>
+    }
+
+    async _apply(input: OffscreenCanvas): Promise<OffscreenCanvas> {
+        this.kernel = this.params["kernel"]
+        const vertexShaderSource = `
+                attribute vec2 a_position;
+                varying vec2 v_texCoord;
+
+                void main() {
+                    gl_Position = vec4(a_position, 0, 1);
+                    v_texCoord = vec2((a_position.x + 1.0) / 2.0, 1.0 - (a_position.y + 1.0) / 2.0);
+                }
+            `;
+
+
+            this.canvas.width = input.width;
+            this.canvas.height = input.height;
+
+            const gl = this.gl
+            gl.viewport(0,0, this.canvas.width, this.canvas.height);
+
             const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
                 gl.shaderSource(vertexShader, vertexShaderSource);
                 gl.compileShader(vertexShader);
 
             const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)!;
-                gl.shaderSource(fragmentShader, fragmentShaderSource);
+                gl.shaderSource(fragmentShader, this.fragment);
                 gl.compileShader(fragmentShader);
 
             const program = gl.createProgram()!;
@@ -117,23 +137,24 @@ class FilterTransform extends Transform {
             const texture = gl.createTexture();
                 gl.bindTexture(gl.TEXTURE_2D, texture);
 
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, input);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         
-            let kernelF = this.kernel!.map(el => el.map(e => parseFloat(e)));
+            const kernelF = new Float32Array(this.kernel!.flat());
+            const kernelN = this.kernel.length
             let kernelLocation = gl.getUniformLocation(program, 'u_kernel2');
-                gl.uniformMatrix2fv(kernelLocation, false, new Float32Array([].concat(...kernelF)));
+                gl.uniformMatrix2fv(kernelLocation, false, kernelF);
             kernelLocation = gl.getUniformLocation(program, 'u_kernel3');
-                gl.uniformMatrix3fv(kernelLocation, false, new Float32Array([].concat(...kernelF)));
+                gl.uniformMatrix3fv(kernelLocation, false, kernelF);
             kernelLocation = gl.getUniformLocation(program, 'u_kernel4');
-                gl.uniformMatrix4fv(kernelLocation, false, new Float32Array([].concat(...kernelF)));
+                gl.uniformMatrix4fv(kernelLocation, false, kernelF);
             const imageDimsLocation = gl.getUniformLocation(program, 'u_image_dims');
-                gl.uniform2fv(imageDimsLocation, [image.width, image.height]);
+                gl.uniform2fv(imageDimsLocation, [input.width, input.height]);
             
             const kernelSizeLocation = gl.getUniformLocation(program, 'u_kernel_size');
-                gl.uniform1i(kernelSizeLocation, kernelF.length);
+                gl.uniform1i(kernelSizeLocation, kernelN);
             
             gl.clearColor(0, 0, 0, 0);
             gl.clear(gl.COLOR_BUFFER_BIT);
@@ -144,12 +165,15 @@ class FilterTransform extends Transform {
             gl.deleteProgram(program);
             gl.deleteBuffer(positionBuffer);
             gl.deleteTexture(texture);
-            
-            // back to base64            
-            const blob = await canvas.convertToBlob({type:"image/png",quality:1})
-            this.image = URL.createObjectURL(blob);
-            return this.image;
+
+            return this.canvas;
     }
+
+    // updateParams(params: KVParams): void {
+    //     this.params = params;
+    //     // this.name = "Custom kernel";
+    //     // console.log("changed name", this.name)
+    // }
 }
 
-export default FilterTransform;
+export default ConvolutionTransform;
