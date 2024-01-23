@@ -146,6 +146,12 @@ class simpleFilterStore {
         this.emitPreview()
     }
 
+    public resetPreview(){
+        const id = this.lastNode();
+        this.preview = {start:this.source, end:id, distance: 100, visualizationChannel: Channel.NONE,previewChannels:[Channel.NONE]}
+        this.emitPreview()
+    }
+
     public getPreview(){
         return this.preview;
     }

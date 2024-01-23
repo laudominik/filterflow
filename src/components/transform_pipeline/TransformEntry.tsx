@@ -4,7 +4,8 @@ import {
     faEye, 
     faEyeSlash, 
     faTrash,
-    faCircle } from '@fortawesome/free-solid-svg-icons';
+    faCommentDots,
+    faComment} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Entry from './Entry';
 import { Channel, FilterStoreContext } from '../../stores/simpleFilterStore';
@@ -18,6 +19,7 @@ export default function TransformEntry({ guid }: { guid: GUID }){
     const transform = useSyncExternalStore(filterStore.subscribe(guid) as any, filterStore.getTransform.bind(filterStore, guid))
     const preview = useSyncExternalStore(filterStore.subscribePreview.bind(filterStore) as any, filterStore.getPreview.bind(filterStore))
     const [enabled, setEnabled] = useState(transform.getEnabled());
+    const in_focus = guid == preview.end && ( preview.distance == 1 || preview.distance == 0);
     // const name = useSyncExternalStore(filterStore.subscribe(guid) as any, filterStore.getTransform(guid).getName.bind(transform))
     
     let [visualiation,setVisualisation] = useState(<>0</>);
@@ -48,6 +50,14 @@ export default function TransformEntry({ guid }: { guid: GUID }){
     const handleExpansion = (expanded: boolean) => {
         transform.setExpanded(expanded)
         filterStore.commitToPersistentStore()
+    }
+
+    const handleToggleFocus = () => {
+        if (in_focus){
+            filterStore.resetPreview();
+        }else{
+            filterStore.setPreview(guid,colorsChannels.filter((_,i) => selectedColors[i]));
+        }
     }
 
     let handlePreviewColorChange = (i:number,item:Channel) => {
@@ -87,6 +97,9 @@ export default function TransformEntry({ guid }: { guid: GUID }){
                         </Button>
                         <Button className='border-0 bg-transparent'>
                             <FontAwesomeIcon onClick={handleTrashClick} className="iconInCard" icon={faTrash} />
+                        </Button>
+                        <Button className='border-0 bg-transparent'>
+                            <FontAwesomeIcon onClick={handleToggleFocus} className="iconInCard" icon={in_focus ? faCommentDots : faComment} />
                         </Button>
                         <div className='border-0 bg-transparent'>
                         {
