@@ -63,6 +63,10 @@ class ConvolutionTransform extends Transform {
     
     constructor(name?: string, fragmentShader?: string) {
         super(name ?? 'Custom kernel', '#E6F4E2');
+        if ((name ?? null) == null){
+            this.edited = true;
+        }
+
         this.kernel = Array(3).fill(0).map(() => new Array(3).fill(0));
         this.params = {...this.params, "kernel" : this.kernel};
         this.fragment = fragmentShader ?? linearConvolutionShader
@@ -168,11 +172,11 @@ class ConvolutionTransform extends Transform {
             return this.canvas;
     }
 
-    updateParams(params: KVParams): void {
-        this.params = params;
-        this.name = "Custom kernel";
-        console.log("changed name", this.name)
-    }
+    // updateParams(params: KVParams): void {
+    //     this.params = params;
+    //     // this.name = "Custom kernel";
+    //     // console.log("changed name", this.name)
+    // }
 }
 
 export default ConvolutionTransform;

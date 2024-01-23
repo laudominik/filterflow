@@ -18,6 +18,7 @@ abstract class Transform extends node<Transform> {
         this.params = {};
         this.enabled = true;
         this.expanded = false;
+        this.edited = false;
         this.canvas = new OffscreenCanvas(1,1);
         this.gl = this.canvas.getContext("webgl", {preserveDrawingBuffer: true})!;
         this.hash = crypto.randomUUID();
@@ -108,6 +109,10 @@ abstract class Transform extends node<Transform> {
 
     updateParams(params: KVParams): void {
         this.params = params;
+        if (this.edited == false){
+            this.name =  `${this.name}[edited]`
+        }
+        this.edited = true;
     }
 
     getParams() : KVParams {
@@ -128,6 +133,8 @@ abstract class Transform extends node<Transform> {
     name: string;
     @jsonMember(String)
     image?: string;
+    @jsonMember(Boolean)
+    edited: boolean;
     @jsonMember(Boolean)
     enabled: boolean;
     @jsonMember(Boolean)

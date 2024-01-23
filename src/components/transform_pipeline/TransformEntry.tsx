@@ -20,13 +20,13 @@ export default function TransformEntry({ guid }: { guid: GUID }){
     const preview = useSyncExternalStore(filterStore.subscribePreview.bind(filterStore) as any, filterStore.getPreview.bind(filterStore))
     const [enabled, setEnabled] = useState(transform.getEnabled());
     const in_focus = guid == preview.end && ( preview.distance == 1 || preview.distance == 0);
-    // const name = useSyncExternalStore(filterStore.subscribe(guid) as any, filterStore.getTransform(guid).getName.bind(transform))
+    const name = useSyncExternalStore(filterStore.subscribe(guid) as any, filterStore.getTransform(guid).getName.bind(transform))
     
     let [visualiation,setVisualisation] = useState(<>0</>);
     
     let [selectedColors,setSelectedColors] = useState([true,true,true])
     const colorsChannels = [Channel.RED, Channel.GREEN, Channel.BLUE]; // TODO: get this info from meta
-    
+
     useEffect(()=>{
         if (preview.distance === 1 && preview.end === guid) {
             setVisualisation(transform.visualizationView(guid))
