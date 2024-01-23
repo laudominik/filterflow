@@ -3,6 +3,8 @@ import ConvolutionTransform from "./transforms/ConvolutionTransform"
 import GaussianTransform from "./transforms/convolution/GaussianTransform"
 import { Conn4LaplaceTransform, Conn8LaplaceTransform } from "./transforms/convolution/LaplaceTransform"
 import { SobelXTransform, SobelYTransform } from "./transforms/convolution/SobelTransform"
+import DilatationTransform from "./transforms/morphologic/DilatationTransform"
+import ErosionTransform from "./transforms/morphologic/ErosionTransform"
 import { AndTransform } from "./transforms/point/AndTransform"
 import { BrightnessTransform } from "./transforms/point/BrightnessTransform"
 import { GrayscaleTransform } from "./transforms/point/GrayscaleTransform"
@@ -33,8 +35,8 @@ const registry = new TransformRegistry()
             .declarePoint("grayscale", GrayscaleTransform)
             .declarePoint("to YCbCr", ToYCbCrTransform)
             .declarePoint("from YCbCr", FromYCbCrTransform)
-            .declareMorphologic("erosion", ConvolutionTransform)
-            .declareMorphologic("dilatation", ConvolutionTransform)
+            .declareMorphologic("erosion", ErosionTransform)
+            .declareMorphologic("dilatation", DilatationTransform)
 
 export default function mapToTransform(name: string){
     return registry.build(name)
