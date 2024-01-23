@@ -1,5 +1,6 @@
 import TransformRegistry from "./TransformRegistry"
 import ConvolutionTransform from "./transforms/ConvolutionTransform"
+import GaussianTransform from "./transforms/convolution/GaussianTransform"
 import { Conn4LaplaceTransform, Conn8LaplaceTransform } from "./transforms/convolution/LaplaceTransform"
 import { SobelXTransform, SobelYTransform } from "./transforms/convolution/SobelTransform"
 import { AndTransform } from "./transforms/point/AndTransform"
@@ -17,7 +18,7 @@ import MinPoolingTransform from "./transforms/pooling/MinPoolingTransform"
 const registry = new TransformRegistry()
             .declareLinear("4-connected laplace", Conn4LaplaceTransform)
             .declareLinear("8-connected laplace", Conn8LaplaceTransform)
-            .declareLinear("gaussian", ConvolutionTransform)
+            .declareLinear("gaussian", GaussianTransform)
             .declareLinear("sobel X", SobelXTransform)
             .declareLinear("sobel Y", SobelYTransform)
             .declareLinear("custom_kernel", ConvolutionTransform)
