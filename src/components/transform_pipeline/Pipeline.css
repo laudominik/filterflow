@@ -1,5 +1,5 @@
 .iconInCard {
-    color: #5D6C87;
+    color: var(--secondary-color);
 }
 
 .switch-container {
@@ -60,6 +60,6 @@
   
 .transformPipeline {
     margin-right: 0%;
-    background-color: white;
+    background-color: var(--secondary-background-color);
     height: 100%;
 }

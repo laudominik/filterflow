@@ -64,7 +64,7 @@ interface TransformsTypeIfc {
 }
 
 
-function TransformsType(name:string, color:string, transforms: string[] = []): TransformsTypeIfc{
+function TransformsType(name:string, color:string, bgColor:string, transforms: string[] = []): TransformsTypeIfc{
   const id = "#" + name;
   const filterStore = useContext(FilterStoreContext);
   // TODO: call to engine to get all registered transforms of the type 
@@ -78,11 +78,11 @@ function TransformsType(name:string, color:string, transforms: string[] = []): T
 
   return {
     name: name,
-    typeCard: <ListGroup.Item action href={id} style={{backgroundColor: color}}> {name} </ListGroup.Item>,
+    typeCard: <ListGroup.Item action href={id} style={{backgroundColor: bgColor, color: color}}> {name} </ListGroup.Item>,
     typeList: <Tab.Pane eventKey={id}>
       <ListGroup>
         {transforms.map(transform => 
-          <ListGroup.Item style={{backgroundColor: color}} onClick={() => onClickHandler(transform)}>
+          <ListGroup.Item style={{backgroundColor: bgColor, color: color}} onClick={() => onClickHandler(transform)}>
             {transform}
           </ListGroup.Item>)}
       </ListGroup>
@@ -91,21 +91,21 @@ function TransformsType(name:string, color:string, transforms: string[] = []): T
 }
 
 function LinearTransforms(){
-  return TransformsType("Linear", "#E6F4E2", getLinear());
+  return TransformsType("Linear", "black", "#E6F4E2", getLinear());
 }
 
 function PoolingTransforms(){
-  return TransformsType("Pooling", "#E2E7F4", getPooling());
+  return TransformsType("Pooling", "black", "#E2E7F4", getPooling());
 }
 
 function LogicalTransforms(){
-  return TransformsType("Bitwise", "#E2F0F4", getLogical());
+  return TransformsType("Bitwise", "black", "#E2F0F4", getLogical());
 }
 
 function PointTransforms(){
-  return TransformsType("Point", "#F4E2F4", getPoint());
+  return TransformsType("Point", "black", "#F4E2F4", getPoint());
 }
 
 function MorphologicTransforms(){
-  return TransformsType("Morphologic", "#F2F4E2", getMorphologic());
+  return TransformsType("Morphologic", "black", "#F2F4E2", getMorphologic());
 }
