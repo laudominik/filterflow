@@ -9,6 +9,7 @@ import SplitPane from "./components/SplitPane";
 
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import GraphSpace from './components/graph_view/GraphSpace';
 
 export default function App() {
   const [expanded, setExpanded] = useState(true);
@@ -33,11 +34,14 @@ export default function App() {
     </Button>
   )
 
+
   return (
       <div className="App">
         <BrandNavBar />
-        {expanded ? <></> : expandButton}
-        {splitPane}
+        {/* TODO: depending on view mode select mode */}
+        {/* {expanded ? <></> : expandButton}
+        {splitPane} */}
+        <GraphSpace />
       </div>   
   );
 }

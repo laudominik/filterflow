@@ -1,0 +1,30 @@
+.App{
+    overflow: hidden;
+    position: relative;
+}
+
+
+.graphView {
+    width: 100%;
+    height: calc(100% - var(--navbar-height));  
+    border: 5px solid blue;  
+}
+
+.graphSpace{
+    width: 100%;
+    height: 100%;
+    transform-origin: top left;
+    /* this one prop gives a smooth moving */
+    /* using trainsition smooths panning, but it creates error in dispacement when zooming */
+    /* transition-duration: 0.1s; */
+}
+
+.draggable{
+    position: absolute;
+}
+
+.graphNode{
+    width: 100px;
+    height: 50px;
+    background-color: red;
+}

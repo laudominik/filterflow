@@ -8,6 +8,7 @@
   --primary-color: var(--bs-primary-text-emphasis);
   /* icons, and accent */
   --secondary-color: var(--bs-secondary-text-emphasis);
+  --navbar-height: 3%;
 
 }
 
@@ -31,8 +32,9 @@ html{
 }
 
 .brandNav {
+  z-index: 100;
   background-color: var(--secondary-background-color);
-  height: 3%;
+  height: var(--navbar-height);
 }
 
 .navModeButton {
