@@ -12,11 +12,11 @@ export default function BrandNavBar() {
                     FilterFlow
                 </Navbar.Brand>
                 <Navbar.Collapse className="justify-content-end navModeBar">
-                    <div className="navModeButton">
+                    <div className="navModeButton" title="Linear (Pipeline) View">
                         {/* linear mode */}
                         <FontAwesomeIcon icon={faTimeline}/>
                     </div>
-                    <div className="navModeButton">
+                    <div className="navModeButton" title="Graph View">
                         {/* graph mode */}
                         <FontAwesomeIcon icon={faProjectDiagram}/>
                     </div>

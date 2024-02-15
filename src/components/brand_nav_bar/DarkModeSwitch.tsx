@@ -21,6 +21,6 @@ export default function DarkModeSwitch(){
             setEnabled(currentTheme === "dark")
         }
     }, [])
-    return <div className="navModeButton" onClick={()=>HandleClick()}><FontAwesomeIcon icon={enabled ? faMoon : faSun}/></div>
+    return <div className="navModeButton" onClick={()=>HandleClick()} title={`switch to ${enabled ? 'light' : 'dark' } mode`}><FontAwesomeIcon icon={enabled ? faMoon : faSun}/></div>
 
 }
