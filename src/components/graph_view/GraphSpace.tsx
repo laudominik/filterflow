@@ -63,7 +63,6 @@ export default function GraphSpace(){
         // this results in real position
         dragTargetStartX = rect ? (window.scrollX + (rect.left - viewRect!.x)/scale) : 0;
         dragTargetStartY = rect ? (window.scrollY + (rect.top - viewRect!.y)/scale) : 0;
-        console.log(`dragTargetStart = ${window.scrollX} + ${rect.left + offset.x} - ${viewRect!.x} = ${dragTargetStartX}`)
         // move to front
 
         window.addEventListener(isTouch ? 'touchmove' : 'mousemove', dragMove, {passive: false});
@@ -114,8 +113,6 @@ export default function GraphSpace(){
             const x = dragTargetStartX + dx;
             const y = dragTargetStartY + dy;
 
-            console.log(`dragTargStartX: ${dragTargetStartX}, dragMouseStartX ${dragMouseStartX}, dx: ${dx}`)
-
             dragTarget.style.left = `${x}px`;
             dragTarget.style.top = `${y}px`;
         }
@@ -137,12 +134,11 @@ export default function GraphSpace(){
             let displacementY = posY - posY*(newScale/scale)
             handlePan(displacementX, displacementY)
 
-            //TODO:  Ctrl+Wheel on X axis break everything, investigate 
+            //TODO:  Ctrl+Wheel on X axis breaks everything, investigate 
         } else {
             e.preventDefault()
             e.stopPropagation()
             
-            console.log(`dx: ${e.deltaX}, dy: ${e.deltaY}`)
             handlePan(e.deltaX/scale, e.deltaY/scale)
         }
     }
