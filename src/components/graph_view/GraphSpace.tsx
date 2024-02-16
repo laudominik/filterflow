@@ -2,6 +2,7 @@ import { useContext, useEffect, useRef, useState, useSyncExternalStore } from 'r
 import './GraphSpace.css'
 import { FilterStoreContext } from '../../stores/simpleFilterStore';
 import GraphNode from './GraphNode';
+import Grid from './Grid';
 
 export default function GraphSpace(){
     // get nodes
@@ -16,7 +17,7 @@ export default function GraphSpace(){
     const nodes = useSyncExternalStore(filterStore.subscribeSequence.bind(filterStore), filterStore.getSequence.bind(filterStore));
 
     // offset is in real coordinates
-    const [offset, setOffset] = useState({x:0, y:100});
+    const [offset, setOffset] = useState({x:0, y:0});
     const [scale, setScale] = useState(1);
     const [debSpaceSize, setDebSpaceSize] = useState({x:0, y:0})
 
@@ -128,7 +129,6 @@ export default function GraphSpace(){
             
             let newScale = Math.pow(2,Math.log2(scale) + e.deltaY/1000)
             newScale = Math.min(Math.max(newScale,0.2),5);
-            console.log(e.deltaY)
             const viewRect = viewRef.current?.getBoundingClientRect();
 
             let posX = e.pageX - viewRect!.x;
@@ -170,77 +170,14 @@ export default function GraphSpace(){
     }, [scale])
 
     // TODO: make it generic, and reccurent (and clean)
-    useEffect(() => {
-        if(gridRef.current){
-            const baseGridSize = 50
-            const gridVisibilityRange = {invisible: 20, fully_visible: 50}
-            const baseDashSize = 5
-            const clusterSize = 5
-            const gridSize = baseGridSize * scale;
-            const dashSize = baseDashSize * scale;
-            
-            const ctx = gridRef.current.getContext("2d");
-            const width = gridRef.current.width;
-            const height = gridRef.current.height;
-
-            let color = getComputedStyle(gridRef.current).getPropertyValue("--secondary-color") 
-
-            // figure out the starting size (not base)
-
-            const clampGridSize = Math.min(Math.max(gridSize, gridVisibilityRange.invisible), gridVisibilityRange.fully_visible)
-            const visibility = (clampGridSize - gridVisibilityRange.invisible)*100 / (gridVisibilityRange.fully_visible - gridVisibilityRange.invisible)
-
-            ctx?.clearRect(0,0,width, height)
-            ctx!.strokeStyle = `color-mix(in lch, ${color}, ${100 - visibility}% transparent)`;
-
-            ctx?.setLineDash([dashSize, dashSize])
-            ctx?.beginPath();
-
-            const offsetX = offset.x % gridSize;
-            const dashOffsetY = offset.y % (2*dashSize) - dashSize;
-            let noX = Math.floor(offset.x / gridSize)
-            for (let pos = offsetX; pos < width; pos+=gridSize) {
-                ctx?.moveTo(pos, dashOffsetY);
-                ctx?.lineTo(pos, height);      
-            }
-
-            const offsetY = offset.y % gridSize;
-            const dashOffsetX = (offset.x % (2*dashSize)) - dashSize;
-            for (let pos = offsetY; pos < height; pos+=gridSize) {
-                ctx?.moveTo(dashOffsetX, pos);
-                ctx?.lineTo(width, pos);
-            }
-            ctx?.closePath();
-            ctx?.stroke();
-
-            ctx!.strokeStyle = color;
-            ctx?.beginPath();
-            ctx?.setLineDash([])
-            ctx?.beginPath()
-            
-            
-            for (let pos = offset.x%(gridSize*clusterSize); pos <  offset.x + width; pos+=gridSize*clusterSize) {
-                ctx?.moveTo(pos, dashOffsetY);
-                ctx?.lineTo(pos, height);      
-            }
-
-            for (let pos = offset.y%(gridSize*clusterSize); pos <  offset.y + height; pos+=gridSize*clusterSize) {
-                ctx?.moveTo(dashOffsetX, pos);
-                ctx?.lineTo(width, pos);      
-            }
-            ctx?.closePath()
-            ctx?.closePath();
-            ctx?.stroke()
-        }
-    }, [scale, offset])
 
     //? TODO: figure out if that's a good soultion, and if using canvas won't be better
     // TODO: handle move, by dragging element
     // TODO: make dummy graph nodes
     // TODO: add overlay (centering, and zoom controlls)
-    // TODO: add grid
     return <div className='graphView' onWheel={handleWheel}>
-        <canvas className='graphViewGrid' width={1910} height={895} ref={gridRef}/>
+        {/* TODO: set dynamic size?? */}
+        <Grid displacement={[offset.x, offset.y]} scale={scale} size={[1920, 895]}/>
         {/* DEBUG: transformation info */}
         <div style={{position: 'absolute', top: "2em", left: "0.2vw"}} className='debugOverlay'>{`offset: ${offset.x}, ${offset.y}`}</div>
         <div style={{position: 'absolute', top: "4.6em", left: "0.2vw"}} className='debugOverlay'>{`scale: ${scale}`}</div>
