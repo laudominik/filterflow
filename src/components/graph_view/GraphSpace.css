@@ -16,6 +16,7 @@
     width: 100%;
     height: 100%;
     position: absolute;
+    --grid-color: var(--secondary-color);
 }
 
 .debugOverlay, .debugSpaceOverlay {
@@ -26,6 +27,17 @@
 
 .debugOverlay {
     z-index: 90;
+}
+
+.graphViewTooltip{
+    bottom: 1em;
+    right: 0.5em;
+    position: absolute;
+    background-color: var(--background-color);
+
+    display: flex;
+    flex-direction: column;
+
 }
 
 .debugSpaceOverlay {

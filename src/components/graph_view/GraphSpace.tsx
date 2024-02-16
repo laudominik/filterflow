@@ -3,6 +3,9 @@ import './GraphSpace.css'
 import { FilterStoreContext } from '../../stores/simpleFilterStore';
 import GraphNode from './GraphNode';
 import Grid from './Grid';
+import { Button, ButtonGroup, ButtonToolbar } from 'react-bootstrap';
+import { faCircleQuestion, faExpand, faMinus, faPlus, faQuestion, faQuestionCircle, faRotateLeft } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 export default function GraphSpace(){
     // get nodes
@@ -127,17 +130,16 @@ export default function GraphSpace(){
             e.preventDefault()
             e.stopPropagation()
             
-            let newScale = Math.pow(2,Math.log2(scale) + e.deltaY/1000)
-            newScale = Math.min(Math.max(newScale,0.2),5);
+            
             const viewRect = viewRef.current?.getBoundingClientRect();
 
             let posX = e.pageX - viewRect!.x;
             let posY = e.pageY - viewRect!.y;
-            setScale(newScale)
+            
+            let newScale = Math.pow(2,Math.log2(scale) + e.deltaY/1000)
+            
 
-            let displacementX = posX - posX*(newScale/scale)
-            let displacementY = posY - posY*(newScale/scale)
-            handlePan(displacementX, displacementY)
+            handleZoom(newScale/scale, [posX, posY])
 
         } else {
             e.preventDefault()
@@ -148,8 +150,30 @@ export default function GraphSpace(){
         }
     }
 
+    /**
+     * 
+     * @param value value to multiply current zoom
+     * @param pivot 
+     */
+    function handleZoom(value: number, pivot: [number, number]){
+
+            let newScale = scale * value;
+            newScale = Math.min(Math.max(newScale,0.2),5);
+
+            setScale(newScale)
+
+            let displacementX = pivot[0] - pivot[0]*(newScale/scale)
+            let displacementY = pivot[1] - pivot[1]*(newScale/scale)
+            handlePan(displacementX, displacementY)
+    }
+
     function handlePan(x:number, y:number){
         setOffset({x: offset.x + x, y: offset.y + y})
+    }
+
+    function handleButtomZoom(value: number){
+        const viewRect = viewRef.current?.getBoundingClientRect();
+        handleZoom(value, [viewRect!.width/2, viewRect!.height/2])
     }
 
     // the trick to prevent CTRL+Wheel Zoom is to prevent it from root element
@@ -195,6 +219,20 @@ export default function GraphSpace(){
             <div onMouseDown={dragStart} className='draggable'>
                 <GraphNode guid='0'></GraphNode>
             </div>
+        </div>
+
+        {/* TODO: change collor of this */}
+        <div className='graphViewTooltip'>
+
+        <Button title='view help'><FontAwesomeIcon icon={faQuestion}/></Button>
+        <ButtonGroup vertical={true} >
+            <Button title='auto zoom to content'><FontAwesomeIcon icon={faExpand}/></Button>
+            <Button onClick={()=>{setScale(1); setOffset({x:0,y:0})}} title='reset to origin'><FontAwesomeIcon icon={faRotateLeft}/></Button>
+        </ ButtonGroup>
+        <ButtonGroup vertical={true} >
+            <Button onClick={()=>{handleButtomZoom(3/2)}} title='zoom in'><FontAwesomeIcon icon={faPlus}/></Button>
+            <Button onClick={()=>{handleButtomZoom(2/3)}} title='zoom out'><FontAwesomeIcon icon={faMinus}/></Button>
+        </ButtonGroup>
         </div>
     </div>
 }

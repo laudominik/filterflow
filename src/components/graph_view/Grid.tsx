@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-export default function Grid({displacement, scale, size, clusterSize=5, baseSize=80, levels=2, color="black"}:{displacement: [number, number], scale: number, size: [number, number], clusterSize?: number, baseSize?: number, levels?:number, color?: string}){
+export default function Grid({displacement, scale, size, clusterSize=5, baseSize=80, levels=2}:{displacement: [number, number], scale: number, size: [number, number], clusterSize?: number, baseSize?: number, levels?:number}){
     
     const canvasRef = useRef<HTMLCanvasElement>(null);
     useEffect(()=>{
@@ -14,8 +14,8 @@ export default function Grid({displacement, scale, size, clusterSize=5, baseSize
         const maxDimSize = Math.max(size[0], size[1])
         const level = Math.log2(scale)/Math.log2(clusterSize)
 
-        const gridVisibilityRange = {invisible: 0.1, fully_visible: 0.6}
-        
+        const gridVisibilityRange = {invisible: 0.0, fully_visible: 0.8}
+        const color = getComputedStyle(canvasRef.current).getPropertyValue("--grid-color")
         // 
 
         const ctx = canvasRef.current.getContext("2d");
@@ -24,7 +24,8 @@ export default function Grid({displacement, scale, size, clusterSize=5, baseSize
 
         const levelInfo = {minium: 0, maximum: 5, poly: 3};
         ctx?.clearRect(0,0,width, height)
-        // ctx!.strokeStyle = color;
+        ctx!.strokeStyle = color;
+
         
         // figure out the starting size (not base)
         for (let lv = 0; lv < levelInfo.poly; lv++) {
@@ -34,7 +35,7 @@ export default function Grid({displacement, scale, size, clusterSize=5, baseSize
             
             const scaleCoeff = Math.pow(clusterSize, pow)
             const gridSize =  scaleCoeff * baseSize;
-            const dashSize = 10
+            const dashSize = 4 * scaleCoeff
             
             ctx!.strokeStyle = `color-mix(in lch, ${color}, ${100 - visibility}% transparent)`;
             ctx?.setLineDash([dashSize, dashSize])
