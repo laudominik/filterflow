@@ -182,7 +182,9 @@ export default function GraphSpace(){
         <div style={{position: 'absolute', top: "2em", left: "0.2vw"}} className='debugOverlay'>{`offset: ${offset.x}, ${offset.y}`}</div>
         <div style={{position: 'absolute', top: "4.6em", left: "0.2vw"}} className='debugOverlay'>{`scale: ${scale}`}</div>
         {/* END DEBUG */}
-        <div className="graphSpace" ref={viewRef} style={{transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`, border: "1px solid green"}}>
+        <div className="graphSpace" ref={viewRef} style={{transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`, outline: "1px solid green"}}>
+            {/* a gnome here represent a plank size */}
+            <div onMouseDown={dragStart} className='draggable' style={{backgroundImage: 'url(filterflow/gnome.webp)', backgroundSize:"0.0085px 0.0085px", width: "0.0085px", height: "0.0085px", top:"-0.0085px"}}/>
             {elements}
             {/* DEBUG: coordinates markers */}
             <div style={{position: 'absolute', top: "-2.5rem", left: "-1.5rem"}} className='debugSpaceOverlay'>0, 0</div>
