@@ -6,6 +6,7 @@ import Grid from './Grid';
 import { Button, ButtonGroup, ButtonToolbar } from 'react-bootstrap';
 import { faCircleQuestion, faExpand, faMinus, faPlus, faQuestion, faQuestionCircle, faRotateLeft } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import SearchPopup from './SearchPopup';
 
 export default function GraphSpace(){
     // get nodes
@@ -221,6 +222,7 @@ export default function GraphSpace(){
             </div>
         </div>
 
+        <SearchPopup></SearchPopup>
         {/* TODO: change collor of this */}
         <div className='graphViewTooltip'>
 

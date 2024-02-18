@@ -63,3 +63,21 @@
 .graphNode{
     background-color: var(--background-color);
 }
+
+/* popup search */
+.search-popup .fuse-highlight{
+    font-weight: bold;
+}
+
+.search-result{
+    background-color: var(--background-color);
+    border-bottom: 1px solid var(--secondary-color);
+}
+
+.search-result-list{
+    display: flex;
+    flex-direction: column;
+    overflow-y: scroll;
+    max-height: 200px;
+    border: 1px solid black;
+}
