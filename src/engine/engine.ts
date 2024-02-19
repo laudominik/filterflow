@@ -73,7 +73,7 @@ export class Engine extends EventTarget{
         if (node.meta.input_size == 0){
             this.source_nodes.push(guid)
         }
-        node.engineChannel = this.internal;
+        node.engine = this;
         this.nodes.set(guid,node) 
         return guid
     }
