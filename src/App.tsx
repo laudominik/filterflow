@@ -9,7 +9,7 @@ import SplitPane from "./components/SplitPane";
 
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import GraphSpace from './components/graph_view/GraphSpace';
+import GraphView from './components/graph_view/GraphView';
 
 export default function App() {
   const [expanded, setExpanded] = useState(true);
@@ -41,7 +41,7 @@ export default function App() {
         {/* TODO: depending on view mode select mode */}
         {/* {expanded ? <></> : expandButton}
         {splitPane} */}
-        <GraphSpace />
+        <GraphView />
       </div>   
   );
 }

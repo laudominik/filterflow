@@ -48,13 +48,12 @@ DESIGN NOTES:
     - Form over content?
 */
 
-
 function searchResult(transform: new ()=> Transform, element: ReactNode): ReactNode{
   return <div className='search-result'>{element}</div>
 }
 
 // give default list from start
-export default function SearchPopup(){
+export default function SearchPopup({visible=true}:{visible?: boolean}){
   const [pattern, setPattern] = useState<string>("")
   const list = Array.from(knownTypes().values());
   const fuse = new Fuse(list, {includeMatches: true, keys: ['name']})
@@ -81,7 +80,7 @@ export default function SearchPopup(){
     return <div className='search-result-list'  onWheel={preventPropagation}>{list.map(el => searchResult(el, el.name))}</div>
   }
 
-  return <div style={{top: "50%", left: "50%", position: "absolute", zIndex: 110}} className='search-popup'>
+  return <div style={{top: "50%", left: "50%", position: "absolute", zIndex: 110, visibility: visible ? "visible" : "hidden" }} className='search-popup'>
     <input onChange={handleSearch}/>
     {pattern === "" ? defaultResult():searchResults(pattern)}
   </div>

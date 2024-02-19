@@ -1,40 +1,33 @@
-import { useContext, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import './GraphSpace.css'
-import { FilterStoreContext } from '../../stores/simpleFilterStore';
-import GraphNode from './GraphNode';
-import Grid from './Grid';
-import { Button, ButtonGroup, ButtonToolbar } from 'react-bootstrap';
-import { faCircleQuestion, faExpand, faMinus, faPlus, faQuestion, faQuestionCircle, faRotateLeft } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import SearchPopup from './SearchPopup';
+import { ReactNode, Ref, forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import GraphNode from "./GraphNode";
 
-export default function GraphSpace(){
-    // get nodes
-    // render them
-    // store UI position of nodes
-    // render arrows (use single SVG element overlay with multiple path (use <g> elements to wrap them))
-    const filterStore = useContext(FilterStoreContext);
+
+export interface GraphSpaceInterface{
+    getDebugSpaceSize: ()=>{x:number, y:number},
+    getSpaceRect: ()=>DOMRect|undefined
+}
+
+export default function GraphSpaceComponent({children, scale, offset}: {children: ReactNode, scale: number, offset: {x: number, y: number}}, forwardedRef: Ref<GraphSpaceInterface>){
+
     const viewRef = useRef<HTMLDivElement>(null);
-    const gridRef = useRef<HTMLCanvasElement>(null);
-    // TODO: add nodes, and edges to store
-    //* NOTE, this is more like a preview of UI
-    const nodes = useSyncExternalStore(filterStore.subscribeSequence.bind(filterStore), filterStore.getSequence.bind(filterStore));
-
-    // offset is in real coordinates
-    const [offset, setOffset] = useState({x:0, y:0});
-    const [scale, setScale] = useState(1);
     const [debSpaceSize, setDebSpaceSize] = useState({x:0, y:0})
-
-    // TODO: handle move (pan), and zoom (pinch)
-    const elements = nodes.map((guid, index) => (
-        <GraphNode guid={guid} key={index}/>
-    ))
+    useImperativeHandle(forwardedRef, () =>{
+        return {
+            getDebugSpaceSize(){
+                return debSpaceSize
+            },
+            getSpaceRect(): DOMRect|undefined{
+                return viewRef.current?.getBoundingClientRect();
+            }
+        }
+    }, [debSpaceSize]);
 
     let dragTarget: HTMLElement | undefined
     let dragMouseStartX = 0;
     let dragMouseStartY = 0;
     let dragTargetStartX = 0 , dragTargetStartY = 0;
     let dragDistance = 0;
+
 
     // adding moving elements in space instead element wise, allows to controll z-index
     function dragStart(e: React.SyntheticEvent){
@@ -76,7 +69,7 @@ export default function GraphSpace(){
         window.addEventListener(isTouch ? 'touchmove' : 'mousemove', dragMove, {passive: false});
         window.addEventListener(isTouch ? 'touchend' : 'mouseup', dragStop, {passive: false});
     }
-    
+
     function dragStop(e: MouseEvent | TouchEvent){
         if(dragTarget){
             e.preventDefault();
@@ -126,67 +119,7 @@ export default function GraphSpace(){
         }
     }
 
-    function handleWheel(e: React.WheelEvent){
-        if(e.ctrlKey){
-            e.preventDefault()
-            e.stopPropagation()
-            
-            
-            const viewRect = viewRef.current?.getBoundingClientRect();
-
-            let posX = e.pageX - viewRect!.x;
-            let posY = e.pageY - viewRect!.y;
-            
-            let newScale = Math.pow(2,Math.log2(scale) + e.deltaY/1000)
-            
-
-            handleZoom(newScale/scale, [posX, posY])
-
-        } else {
-            e.preventDefault()
-            e.stopPropagation()
-            
-            // TODO: 
-            handlePan(e.deltaX, e.deltaY)
-        }
-    }
-
-    /**
-     * 
-     * @param value value to multiply current zoom
-     * @param pivot 
-     */
-    function handleZoom(value: number, pivot: [number, number]){
-
-            let newScale = scale * value;
-            newScale = Math.min(Math.max(newScale,0.2),5);
-
-            setScale(newScale)
-
-            let displacementX = pivot[0] - pivot[0]*(newScale/scale)
-            let displacementY = pivot[1] - pivot[1]*(newScale/scale)
-            handlePan(displacementX, displacementY)
-    }
-
-    function handlePan(x:number, y:number){
-        setOffset({x: offset.x + x, y: offset.y + y})
-    }
-
-    function handleButtomZoom(value: number){
-        const viewRect = viewRef.current?.getBoundingClientRect();
-        handleZoom(value, [viewRect!.width/2, viewRect!.height/2])
-    }
-
-    // the trick to prevent CTRL+Wheel Zoom is to prevent it from root element
-    // TODO: convert this to more React-ish solution
-    useEffect(()=>{
-        document.getElementById('root')?.addEventListener('wheel', (e: WheelEvent)=>{
-            if(e.ctrlKey){
-                e.preventDefault();
-            }
-        })
-    })
-
+    
     useEffect(() => {
         if(viewRef.current){
             const rect = viewRef.current.getBoundingClientRect()
@@ -194,47 +127,21 @@ export default function GraphSpace(){
         }
     }, [scale])
 
-    // TODO: make it generic, and reccurent (and clean)
-
-    //? TODO: figure out if that's a good soultion, and if using canvas won't be better
-    // TODO: handle move, by dragging element
-    // TODO: make dummy graph nodes
-    // TODO: add overlay (centering, and zoom controlls)
-    return <div className='graphView' onWheel={handleWheel}>
-        {/* TODO: set dynamic size?? */}
-        <Grid displacement={[offset.x, offset.y]} scale={scale} size={[1920, 895]}/>
-        {/* DEBUG: transformation info */}
-        <div style={{position: 'absolute', top: "2em", left: "0.2vw"}} className='debugOverlay'>{`offset: ${offset.x}, ${offset.y}`}</div>
-        <div style={{position: 'absolute', top: "4.6em", left: "0.2vw"}} className='debugOverlay'>{`scale: ${scale}`}</div>
-        {/* END DEBUG */}
-        <div className="graphSpace" ref={viewRef} style={{transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`, outline: "1px solid green"}}>
-            {/* a gnome here represent a plank size */}
-            <div onMouseDown={dragStart} className='draggable' style={{backgroundImage: 'url(filterflow/gnome.webp)', backgroundSize:"0.0085px 0.0085px", width: "0.0085px", height: "0.0085px", top:"-0.0085px"}}/>
-            {elements}
-            {/* DEBUG: coordinates markers */}
-            <div style={{position: 'absolute', top: "-2.5rem", left: "-1.5rem"}} className='debugSpaceOverlay'>0, 0</div>
-            <div style={{position: 'absolute', top: "100%", left: "100%"}} className='debugSpaceOverlay'>{viewRef.current ? `${debSpaceSize.x}, ${debSpaceSize.y}` : ''}</div>
-            <div style={{position: 'absolute', top: "-2.5rem", left: "100%"}} className='debugSpaceOverlay'>{viewRef.current ? `${debSpaceSize.x}, 0` : ''}</div>
-            <div style={{position: 'absolute', top: "100%", left: "-1.5rem"}} className='debugSpaceOverlay'>{viewRef.current ? `0, ${debSpaceSize.y}` : ''}</div>
-            {/* END DEBUG */}
-            <div onMouseDown={dragStart} className='draggable'>
-                <GraphNode guid='0'></GraphNode>
-            </div>
-        </div>
-
-        <SearchPopup></SearchPopup>
-        {/* TODO: change collor of this */}
-        <div className='graphViewTooltip'>
-
-        <Button title='view help'><FontAwesomeIcon icon={faQuestion}/></Button>
-        <ButtonGroup vertical={true} >
-            <Button title='auto zoom to content'><FontAwesomeIcon icon={faExpand}/></Button>
-            <Button onClick={()=>{setScale(1); setOffset({x:0,y:0})}} title='reset to origin'><FontAwesomeIcon icon={faRotateLeft}/></Button>
-        </ ButtonGroup>
-        <ButtonGroup vertical={true} >
-            <Button onClick={()=>{handleButtomZoom(3/2)}} title='zoom in'><FontAwesomeIcon icon={faPlus}/></Button>
-            <Button onClick={()=>{handleButtomZoom(2/3)}} title='zoom out'><FontAwesomeIcon icon={faMinus}/></Button>
-        </ButtonGroup>
-        </div>
+    return <div className="graphSpace" ref={viewRef} style={{transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`, outline: "1px solid green"}}>
+    {/* a gnome here represent a plank size */}
+    <div onMouseDown={dragStart} className='draggable' style={{backgroundImage: 'url(filterflow/gnome.webp)', backgroundSize:"0.0085px 0.0085px", width: "0.0085px", height: "0.0085px", top:"-0.0085px"}}/>
+    {/* TODO: add render elements */}
+    {/* DEBUG: coordinates markers */}
+    <div style={{position: 'absolute', top: "-2.5rem", left: "-1.5rem"}} className='debugSpaceOverlay'>0, 0</div>
+    <div style={{position: 'absolute', top: "100%", left: "100%"}} className='debugSpaceOverlay'>{viewRef.current ? `${debSpaceSize.x}, ${debSpaceSize.y}` : ''}</div>
+    <div style={{position: 'absolute', top: "-2.5rem", left: "100%"}} className='debugSpaceOverlay'>{viewRef.current ? `${debSpaceSize.x}, 0` : ''}</div>
+    <div style={{position: 'absolute', top: "100%", left: "-1.5rem"}} className='debugSpaceOverlay'>{viewRef.current ? `0, ${debSpaceSize.y}` : ''}</div>
+    {/* END DEBUG */}
+    <div onMouseDown={dragStart} className='draggable'>
+        <GraphNode guid='0'></GraphNode>
     </div>
+    {children}
+</div>
 }
+
+export const GraphSpace = forwardRef(GraphSpaceComponent);
