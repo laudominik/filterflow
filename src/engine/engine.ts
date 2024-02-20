@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { jsonMapMember, jsonObject } from "typedjson";
-import Transform from "./Transform";
+import Transform, { KVParams } from "./Transform";
 import mapToTransform, {knownTypes} from "./TransformDeclarations";
 import { connect, disconnect } from './node';
 import { NodeResponse } from './nodeResponse';
@@ -55,7 +55,7 @@ export class Engine extends EventTarget{
         this.internal.addEventListener("info",this.handleInternalInfo as any)
     }
 
-    public async updateNodeParams(node:GUID,params:any){
+    public async updateNodeParams(node:GUID,params:KVParams){
         const transform = this.nodes.get(node)
         if (transform === undefined){
             // TODO think about some error handling
@@ -141,7 +141,7 @@ export class Engine extends EventTarget{
 }
 
 // this will be send to parent element to inform that some element changed
-class ExternalEngineResponse{
+export class ExternalEngineResponse{
     updated: GUID[] // all nodes that finished update successfully
     errors: GUID[]   // all nodes that returned error
     constructor(){
