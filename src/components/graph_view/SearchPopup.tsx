@@ -1,8 +1,9 @@
 import Fuse, { FuseResult, RangeTuple } from 'fuse.js'
 
-import { knownTypes } from '../../engine/TransformDeclarations'
-import { ReactNode, useEffect, useState } from 'react';
+import { knownTypes, transformType } from '../../engine/TransformDeclarations'
+import { ReactNode, useContext, useEffect, useState } from 'react';
 import Transform from '../../engine/Transform';
+import { graphContext } from '../../stores/graphFilterStore';
 
 
 /*
@@ -48,15 +49,21 @@ DESIGN NOTES:
     - Form over content?
 */
 
-function searchResult(transform: new ()=> Transform, element: ReactNode): ReactNode{
-  return <div className='search-result'>{element}</div>
-}
 
 // give default list from start
-export default function SearchPopup({visible=true}:{visible?: boolean}){
+export default function SearchPopup({visible=true, position=[0,0]}:{visible?: boolean, position?: [number, number]}){
+  const graphStore = useContext(graphContext)
   const [pattern, setPattern] = useState<string>("")
-  const list = Array.from(knownTypes().values());
-  const fuse = new Fuse(list, {includeMatches: true, keys: ['name']})
+
+  const list = Array.from(transformType())
+    .map(val => val[1].map(name=>{return {group: val[0], name, full: `${val[0]}/${name}`}}))
+    .reduce((arr, val)=>{return arr.concat(val)}, [])
+
+  const fuse = new Fuse(list, {includeMatches: true, keys: ['full'], ignoreLocation: true, minMatchCharLength:1})
+
+  function handleAddTransform(name: string){
+    graphStore.addTransform(name)
+  }
 
   function handleSearch(e: React.ChangeEvent){
     const value = (e.target as HTMLInputElement).value
@@ -67,20 +74,27 @@ export default function SearchPopup({visible=true}:{visible?: boolean}){
     e.stopPropagation()
   }
 
+  function searchResult(result: ReactNode, name: string): ReactNode{
+    return <div className='search-result' onClick={()=> {handleAddTransform(name)}}>{result}</div>
+  }
+
   function searchResults(value: string){
     return <div className='search-result-list' onWheel={preventPropagation}>{fuse.search(value).map(result => {
       if(!result.matches) return <></>
 
-      let match = result.matches[0]
-      return searchResult(result.item, highlightMatches(match.value!, match.indices))
+      let matches = new Map(result.matches.map(value => [value.key, value]))
+      let fullMatch = matches.has('full') ? matches.get('full')!.indices : []
+      // TODO: tune search logic (handle searching by group specific, and both at the same time)
+
+      return searchResult(highlightMatches(result.item.full, fullMatch), result.item.name)
     })}</div>
   }
 
   function defaultResult(){
-    return <div className='search-result-list'  onWheel={preventPropagation}>{list.map(el => searchResult(el, el.name))}</div>
+    return <div className='search-result-list'  onWheel={preventPropagation}>{list.map(el => searchResult(el.full, el.name))}</div>
   }
 
-  return <div style={{top: "50%", left: "50%", position: "absolute", zIndex: 110, visibility: visible ? "visible" : "hidden" }} className='search-popup'>
+  return <div style={{top: `50%`, left: `50%`, position: "absolute", zIndex: 110, visibility: visible ? "visible" : "hidden" }} className='search-popup' onClick={preventPropagation}>
     <input onChange={handleSearch}/>
     {pattern === "" ? defaultResult():searchResults(pattern)}
   </div>

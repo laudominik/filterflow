@@ -66,3 +66,6 @@ export function knownTypes(){
     return registry.getKnownTypes();
 }
 
+export function transformType(){
+    return registry.getTransformType();
+}

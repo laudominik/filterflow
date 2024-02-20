@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useContext, useState, useSyncExternalStore } from "react";
 import { GUID } from "../../engine/engine";
 import { Card, CardBody, CardHeader, CardTitle } from "react-bootstrap";
+import { graphContext } from "../../stores/graphFilterStore";
 
 export default function GraphNode({ guid }: { guid: GUID }){
 
     const [position, setPosition] = useState({x:0, y:0});
+    const graphStore = useContext(graphContext) 
+    const node = useSyncExternalStore(graphStore.subscribeNode(guid) as any, graphStore.getNode.bind(graphStore, guid));
     
     // TODO: track global position, and handle unclick even if is outside the node
     // found this: https://jsfiddle.net/Af9Jt/2/
@@ -15,7 +18,7 @@ export default function GraphNode({ guid }: { guid: GUID }){
 
     return <div className="graphNode">
         <Card>
-            <CardTitle>Graph Node</CardTitle>
+            <CardTitle>{node.value.getName()}</CardTitle>
             <CardBody>Body</CardBody>
         </Card>
     </div>

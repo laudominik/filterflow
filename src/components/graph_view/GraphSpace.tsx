@@ -1,5 +1,6 @@
-import { ReactNode, Ref, forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { ReactNode, Ref, forwardRef, useContext, useEffect, useImperativeHandle, useRef, useState, useSyncExternalStore } from "react";
 import GraphNode from "./GraphNode";
+import { graphContext } from "../../stores/graphFilterStore";
 
 
 export interface GraphSpaceInterface{
@@ -10,6 +11,8 @@ export interface GraphSpaceInterface{
 export default function GraphSpaceComponent({children, scale, offset}: {children: ReactNode, scale: number, offset: {x: number, y: number}}, forwardedRef: Ref<GraphSpaceInterface>){
 
     const viewRef = useRef<HTMLDivElement>(null);
+    const graphStore = useContext(graphContext);
+    const nodeCollection = useSyncExternalStore(graphStore.subscribeNodeCollection.bind(graphStore), graphStore.getNodeCollection.bind(graphStore));
     const [debSpaceSize, setDebSpaceSize] = useState({x:0, y:0})
     useImperativeHandle(forwardedRef, () =>{
         return {
@@ -28,7 +31,7 @@ export default function GraphSpaceComponent({children, scale, offset}: {children
     let dragTargetStartX = 0 , dragTargetStartY = 0;
     let dragDistance = 0;
 
-
+    //#region MouseEvents
     // adding moving elements in space instead element wise, allows to controll z-index
     function dragStart(e: React.SyntheticEvent){
         // typescript type checking
@@ -118,6 +121,7 @@ export default function GraphSpaceComponent({children, scale, offset}: {children
             dragTarget.style.top = `${y}px`;
         }
     }
+    //#endregion
 
     
     useEffect(() => {
@@ -137,9 +141,14 @@ export default function GraphSpaceComponent({children, scale, offset}: {children
     <div style={{position: 'absolute', top: "-2.5rem", left: "100%"}} className='debugSpaceOverlay'>{viewRef.current ? `${debSpaceSize.x}, 0` : ''}</div>
     <div style={{position: 'absolute', top: "100%", left: "-1.5rem"}} className='debugSpaceOverlay'>{viewRef.current ? `0, ${debSpaceSize.y}` : ''}</div>
     {/* END DEBUG */}
-    <div onMouseDown={dragStart} className='draggable'>
-        <GraphNode guid='0'></GraphNode>
-    </div>
+    {
+        nodeCollection.map(guid => 
+            <div onMouseDown={dragStart} className='draggable'>
+                <GraphNode guid={guid}></GraphNode>
+            </div>
+        )
+    }
+    
     {children}
 </div>
 }

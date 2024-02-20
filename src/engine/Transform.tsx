@@ -12,7 +12,7 @@ export interface KVParams {
 @jsonObject
 abstract class Transform extends node<Transform> {
     constructor(name: string, color: string){
-        super({id:crypto.randomUUID(),inputs:1,outputs:1,engine:new EventTarget()});
+        super({id:crypto.randomUUID(),inputs:1,outputs:1});
         this.color = color;
         this.name = name;
         this.params = {};

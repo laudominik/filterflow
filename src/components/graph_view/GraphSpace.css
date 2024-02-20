@@ -72,6 +72,12 @@
 .search-result{
     background-color: var(--background-color);
     border-bottom: 1px solid var(--secondary-color);
+    cursor: pointer;
+}
+
+.search-result:hover{
+    background-color: color-mix(in srgb, var(--background-color) 50%, var(--secondary-color) 50%);
+
 }
 
 .search-result-list{

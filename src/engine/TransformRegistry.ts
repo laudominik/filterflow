@@ -18,6 +18,7 @@ export default class TransformRegistry {
         this.registry = new Map()
         this.registry.set("source", new TransformBuilder(SourceTransform))
         this.knownTypes = new Set();
+        // TODO: better name; either for knownTypes or transformType (knownType referst to concrete transformations, transformType reffers to collections)
         this.knownTypes.add(SourceTransform)
         this.transformType = new Map([
             ["linear", []],
@@ -37,6 +38,10 @@ export default class TransformRegistry {
 
     getKnownTypes(){
         return this.knownTypes;
+    }
+
+    getTransformType(){
+        return this.transformType;
     }
 
     getOfType(type: string): string[] | undefined {

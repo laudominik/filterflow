@@ -14,7 +14,7 @@ export function disconnect<T extends node<T>>(source: T, source_nr: number, dest
 
 
 export type NodeInit = {
-    id: string, inputs: number, outputs: number, engine: Engine
+    id: string, inputs: number, outputs: number, engine?: Engine
 }
 
 
@@ -34,7 +34,7 @@ export abstract class node<T extends node<T>>{
     connected_to_outputs: Map<number, [GUID, number][]> // two way linked list
 
     constructor(params: NodeInit) {
-        this.engine = params.engine
+        this.engine = params.engine!
         this.inputs = new Map<number, [GUID, number]>()
         this.connected_to_outputs = new Map<number, [GUID, number][]>()
         this.meta = {

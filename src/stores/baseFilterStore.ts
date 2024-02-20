@@ -14,12 +14,16 @@ export abstract class BaseFilterStore{
     // store Transform in new object to trigger react update
     nodeWrappers:  Map<GUID,{value: Transform,hash: string}>
     
+    nodeCollectionListener: CallableFunction[]
+    nodeCollection: GUID[]
 
     constructor(filename: string, engine: Engine){
         this.filename = filename;
         this.engine = engine;
         this.nodeListeners = [];
         this.nodeWrappers = new Map();
+        this.nodeCollection = [];
+        this.nodeCollectionListener = [];
     }
     
     //#region Node
@@ -58,6 +62,24 @@ export abstract class BaseFilterStore{
     }
     //#endregion
 
+    //#region Node Collection
+    public getNodeCollection(){
+        return this.nodeCollection;
+    }
+
+    public subscribeNodeCollection(listener: CallableFunction) {
+        this.nodeCollectionListener = [...this.nodeCollectionListener, listener]
+        return () => {
+            this.nodeCollectionListener = this.nodeCollectionListener.filter(l => l != listener);
+        };
+    }
+
+    public emitChangeNodeCollection(){
+        this.nodeCollectionListener.forEach((v) => v())
+    }
+
+    //#endregion
+
     //#region Engine exports
     
     public updateParam(id: GUID,param: KVParams){
@@ -67,12 +89,17 @@ export abstract class BaseFilterStore{
     public addTransform(name: string,params: KVParams = {}):Transform{
         params.engine = this.engine;
         const guid = this.engine.addNode(name, params);
+        this.nodeCollection = [...this.nodeCollection,guid];
+        this.emitChangeNodeCollection();
         this.save();
         return this.engine.getNode(guid)!;
     }
 
     public removeTransform(id: GUID){
         this.engine.removeNode(id);
+        this.nodeCollection = this.nodeCollection.filter(v => v != id);
+        this.emitChangeNodeCollection();
+        this.save();
     }
 
     // #endregion 
