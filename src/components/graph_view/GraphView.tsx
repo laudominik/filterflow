@@ -8,6 +8,7 @@ import { faCircleQuestion, faExpand, faMagnifyingGlassMinus, faMagnifyingGlassPl
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import SearchPopup from './SearchPopup';
 import {GraphSpace, GraphSpaceInterface} from './GraphSpace';
+import useWindowDimensions from '../../util/WindowDimensionHook';
 
 // exposing stuff based https://github.com/PaulLeCam/react-leaflet/blob/master/packages/react-leaflet/src/MapContainer.tsx
 export default function GraphView(){
@@ -16,6 +17,8 @@ export default function GraphView(){
     const graphSpaceRef = useRef<GraphSpaceInterface>(null);
     const nodes = useSyncExternalStore(filterStore.subscribeSequence.bind(filterStore), filterStore.getSequence.bind(filterStore));
 
+    // TODO: make this use element size instead of screen size??
+    const { width: screenWidth, height: screenHeight } = useWindowDimensions();
     const [offset, setOffset] = useState({x:0, y:0});
     const [scale, setScale] = useState(1);
     const [searchVisible, setSearchVisibiilty] = useState(false)
@@ -108,11 +111,11 @@ export default function GraphView(){
     // TODO: handle move, by dragging element
     return <div className='graphView' onWheel={handleWheel} onKeyDown={handleKeyDown} onClick={handleClick}>
         {/* TODO: set dynamic size?? */}
-        <Grid displacement={[offset.x, offset.y]} scale={scale} size={[1920, 895]}/>
+        <Grid displacement={[offset.x, offset.y]} scale={scale} size={[screenWidth, screenHeight]}/>
         {/* DEBUG: transformation info */}
-        <div style={{position: 'absolute', top: "1em", left: "0.2vw"}} className='debugOverlay'>{`search: ${searchVisible}`}</div>
-        <div style={{position: 'absolute', top: "2em", left: "0.2vw"}} className='debugOverlay'>{`offset: ${offset.x}, ${offset.y}`}</div>
-        <div style={{position: 'absolute', top: "4.6em", left: "0.2vw"}} className='debugOverlay'>{`scale: ${scale}`}</div>
+        <div style={{position: 'absolute', top: "1em", left: "0.2vw"}} className='debugOverlay'>{`screen size: ${screenWidth}, ${screenHeight}`}</div>
+        <div style={{position: 'absolute', top: "3em", left: "0.2vw"}} className='debugOverlay'>{`offset: ${offset.x}, ${offset.y}`}</div>
+        <div style={{position: 'absolute', top: "5.6em", left: "0.2vw"}} className='debugOverlay'>{`scale: ${scale}`}</div>
         {/* END DEBUG */}
         <GraphSpace scale={scale} offset={offset} ref={graphSpaceRef}>
         </GraphSpace>

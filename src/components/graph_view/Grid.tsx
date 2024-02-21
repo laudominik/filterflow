@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 
-export default function Grid({displacement, scale, size, clusterSize=5, baseSize=80, levels=2}:{displacement: [number, number], scale: number, size: [number, number], clusterSize?: number, baseSize?: number, levels?:number}){
+export default function Grid({displacement, scale, size, clusterSize=5, baseSize=80, levels=3, levelsVisibility=[50,70, 70], repeat=true}:{displacement: [number, number], scale: number, size: [number, number], clusterSize?: number, baseSize?: number, levels?:number, levelsVisibility?: Array<number>, repeat?: boolean}){
     
     const canvasRef = useRef<HTMLCanvasElement>(null);
     useEffect(()=>{
@@ -22,7 +22,7 @@ export default function Grid({displacement, scale, size, clusterSize=5, baseSize
         const width = canvasRef.current.width;
         const height = canvasRef.current.height;
 
-        const levelInfo = {minium: 0, maximum: 5, poly: 3};
+        const levelInfo = {minium: 0, maximum: 5, poly: 4};
         ctx?.clearRect(0,0,width, height)
         ctx!.strokeStyle = color;
 
@@ -31,11 +31,12 @@ export default function Grid({displacement, scale, size, clusterSize=5, baseSize
         for (let lv = 0; lv < levelInfo.poly; lv++) {
             let pow = lv + (level % 1);
             const visi = (pow - gridVisibilityRange.invisible)/(gridVisibilityRange.fully_visible - gridVisibilityRange.invisible)
-            const visibility = Math.min(Math.max(visi*100, 0), 100);
+            const baseVisibility = levelsVisibility[lv]
+            const visibility = Math.min(Math.max(visi*100, 0), baseVisibility);
             
             const scaleCoeff = Math.pow(clusterSize, pow)
             const gridSize =  scaleCoeff * baseSize;
-            const dashSize = 4 * scaleCoeff
+            const dashSize = 4 * scaleCoeff;
             
             ctx!.strokeStyle = `color-mix(in lch, ${color}, ${100 - visibility}% transparent)`;
             ctx?.setLineDash([dashSize, dashSize])
