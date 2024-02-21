@@ -2,6 +2,7 @@ import {Nav, Navbar} from "react-bootstrap";
 import { faFilm, faProjectDiagram, faTimeline } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import DarkModeSwitch from "./DarkModeSwitch";
+import EngineModeSwitch from "./EngineModeSwitch";
 
 export default function BrandNavBar() {
     return <Navbar expand="lg" className="brandNav">
@@ -12,15 +13,8 @@ export default function BrandNavBar() {
                     FilterFlow
                 </Navbar.Brand>
                 <Navbar.Collapse className="justify-content-end navModeBar">
-                    <div className="navModeButton" title="Linear (Pipeline) View">
-                        {/* linear mode */}
-                        <FontAwesomeIcon icon={faTimeline}/>
-                    </div>
-                    <div className="navModeButton" title="Graph View">
-                        {/* graph mode */}
-                        <FontAwesomeIcon icon={faProjectDiagram}/>
-                    </div>
                     <DarkModeSwitch />
+                    <EngineModeSwitch />
                 </Navbar.Collapse>
            </Navbar>
   }
