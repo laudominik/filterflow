@@ -1,6 +1,8 @@
 import { ReactNode, Ref, forwardRef, useContext, useEffect, useImperativeHandle, useRef, useState, useSyncExternalStore } from "react";
 import GraphNode from "./GraphNode";
 import { graphContext } from "../../stores/graphFilterStore";
+import ImportGraphNode from "./ImportGraphNode";
+import TransformGraphNode from "./TransformGraphNode";
 
 
 export interface GraphSpaceInterface{
@@ -144,7 +146,9 @@ export default function GraphSpaceComponent({children, scale, offset}: {children
     {
         nodeCollection.map(guid => 
             <div onMouseDown={dragStart} className='draggable'>
-                <GraphNode guid={guid}></GraphNode>
+                {
+                    graphStore.getNode(guid).value.name == "source" ? <ImportGraphNode guid={guid} /> :  <TransformGraphNode guid={guid} />
+                }
             </div>
         )
     }

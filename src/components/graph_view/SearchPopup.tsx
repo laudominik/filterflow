@@ -57,7 +57,7 @@ export default function SearchPopup({visible=true, position=[0,0]}:{visible?: bo
 
   const list = Array.from(transformType())
     .map(val => val[1].map(name=>{return {group: val[0], name, full: `${val[0]}/${name}`}}))
-    .reduce((arr, val)=>{return arr.concat(val)}, [])
+    .reduce((arr, val)=>{return arr.concat(val)}, []).concat({group: "", name: "source", full:"source"})
 
   const fuse = new Fuse(list, {includeMatches: true, keys: ['full'], ignoreLocation: true, minMatchCharLength:1})
 
