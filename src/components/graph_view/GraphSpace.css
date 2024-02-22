@@ -60,10 +60,6 @@
     position: absolute;
 }
 
-.graphNode{
-    background-color: var(--background-color);
-}
-
 /* popup search */
 .search-popup .fuse-highlight{
     font-weight: bold;

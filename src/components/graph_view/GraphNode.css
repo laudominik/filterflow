@@ -1,0 +1,32 @@
+.graphNode {
+    background-color: var(--background-color);
+    margin: 0;
+    padding: 0;
+}
+
+.circle-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.circle {
+    border-width: 5%;
+    border-style: double;
+    background-color: #ccc;
+    width: 0.5vw;
+    height: 0.5vw;
+    border-radius: 50%;
+    margin: 0 5% 0 5%;
+}
+
+.circle-top {
+    top: -5px;
+    border-color: #f00;
+}
+
+.circle-bottom {
+    bottom: -5px; 
+    border-color: #0f0;
+}

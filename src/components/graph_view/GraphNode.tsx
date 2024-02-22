@@ -6,6 +6,8 @@ import { graphContext } from "../../stores/graphFilterStore";
 import { faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
+import './GraphNode.css';
+
 interface NodeBodyProps {
     children: ReactNode;
 }
@@ -15,11 +17,16 @@ interface NodeProps {
     guid: GUID;
 }
 
+const NodeBefore: React.FC<NodeBodyProps> = ({ children }) => {
+    return <>{children}</>
+};
+
 const NodeBody: React.FC<NodeBodyProps> = ({ children }) => {
     return <>{children}</>
 };
 
 const GraphNode: React.FC<NodeProps> & {
+    Before: React.FC<NodeBodyProps>;
     Body: React.FC<NodeBodyProps>;
 } = ({ children, guid }) => {
     const graphStore = useContext(graphContext) 
@@ -34,32 +41,40 @@ const GraphNode: React.FC<NodeProps> & {
         return React.isValidElement(child) && child.type === NodeBody;
     });
 
+    const before = React.Children.toArray(children).find((child) => {
+        return React.isValidElement(child) && child.type === NodeBefore;
+    });
+
     // TODO: node has information about possible inputs, outputs and connections
 
-    return  <div className="graphNode">
-        <Card className="transformCard">
-            <Card.Header className="cardHeader">
-                {node.value.getName()}
-                <div>
-                    <Button 
-                        className='border-0 bg-transparent'
-                        onClick={handleOpenClick}
-                        aria-expanded={open}>
-                        <FontAwesomeIcon className="iconInCard" icon={open ? faChevronDown : faChevronUp} />
-                    </Button>
-                </div>
-            </Card.Header>
-            <Collapse in={open}>
-                <Card.Body>
-                    {body}
-                </Card.Body>
-            </Collapse>
-        </Card>
-    </div>
-    
-    
+    return  <>
+        {before}
+        <div className="graphNode">   
+            <Card className="transformCard">
+                <Card.Header className="cardHeader">
+                    {node.value.getName()}
+                    <div>
+                        <Button 
+                            className='border-0 bg-transparent'
+                            onClick={handleOpenClick}
+                            aria-expanded={open}>
+                            <FontAwesomeIcon className="iconInCard" icon={open ? faChevronDown : faChevronUp} />
+                        </Button>
+                    </div>
+                </Card.Header>
+                <Collapse in={open}>
+                    <Card.Body>
+                        {body}
+                    </Card.Body>
+                </Collapse>
+            </Card>
+        </div>
+        <div className="circle-container"><div className="circle circle-bottom"></div></div>
+    </>
 };
 
 GraphNode.Body = NodeBody;
+GraphNode.Before = NodeBefore;
+
 
 export default GraphNode;
