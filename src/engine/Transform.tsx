@@ -22,6 +22,7 @@ abstract class Transform extends node<Transform> {
         this.canvas = new OffscreenCanvas(1,1);
         this.gl = this.canvas.getContext("webgl", {preserveDrawingBuffer: true})!;
         this.hash = crypto.randomUUID();
+        this.pos = {x: 0, y: 0}
     }
 
     abstract paramView(guid: GUID): ReactElement;
@@ -87,6 +88,14 @@ abstract class Transform extends node<Transform> {
         return this.hash
     }
 
+    public getPos(): {x: number, y: number}{
+        return this.pos
+    }
+
+    public setPos(pos: {x: number, y: number}){
+        this.pos = pos
+    }
+
     async setImageString(image: string) {
         this.image = image;
     }
@@ -128,6 +137,8 @@ abstract class Transform extends node<Transform> {
         return this.name;
     }
 
+    @jsonMember
+    pos: {x: number, y:number}
     @jsonMember(String)
     color: string;
     @jsonMember(String)

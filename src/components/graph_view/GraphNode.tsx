@@ -22,7 +22,6 @@ const NodeBody: React.FC<NodeBodyProps> = ({ children }) => {
 const GraphNode: React.FC<NodeProps> & {
     Body: React.FC<NodeBodyProps>;
 } = ({ children, guid }) => {
-    const [position, setPosition] = useState({x:0, y:0});
     const graphStore = useContext(graphContext) 
     const node = useSyncExternalStore(graphStore.subscribeNode(guid) as any, graphStore.getNode.bind(graphStore, guid));
     const [open, setOpen] = useState(false);
@@ -35,11 +34,6 @@ const GraphNode: React.FC<NodeProps> & {
         return React.isValidElement(child) && child.type === NodeBody;
     });
 
-    // TODO: track global position, and handle unclick even if is outside the node
-    // found this: https://jsfiddle.net/Af9Jt/2/
-    // https://stackoverflow.com/questions/20926551/recommended-way-of-making-react-component-div-draggable
-
-    
     // TODO: node has information about possible inputs, outputs and connections
 
     return  <div className="graphNode">

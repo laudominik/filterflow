@@ -118,9 +118,12 @@ export default function GraphSpaceComponent({children, scale, offset}: {children
             dragDistance += dx + dy;
             const x = dragTargetStartX + dx;
             const y = dragTargetStartY + dy;
-
+            
             dragTarget.style.left = `${x}px`;
             dragTarget.style.top = `${y}px`;
+            if(nodeCollection.includes(dragTarget.id)){
+                graphStore.getNode(dragTarget.id).value.setPos({x, y})
+            }
         }
     }
     //#endregion
@@ -145,7 +148,7 @@ export default function GraphSpaceComponent({children, scale, offset}: {children
     {/* END DEBUG */}
     {
         nodeCollection.map(guid => 
-            <div onMouseDown={dragStart} className='draggable'>
+            <div onMouseDown={dragStart} className='draggable' id={guid}>
                 {
                     graphStore.getNode(guid).value.name == "source" ? <ImportGraphNode guid={guid} /> :  <TransformGraphNode guid={guid} />
                 }
