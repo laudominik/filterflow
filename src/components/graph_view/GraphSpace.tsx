@@ -3,6 +3,9 @@ import GraphNode from "./GraphNode";
 import { graphContext } from "../../stores/graphFilterStore";
 import ImportGraphNode from "./ImportGraphNode";
 import TransformGraphNode from "./TransformGraphNode";
+import { Button } from "react-bootstrap";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrash } from "@fortawesome/free-solid-svg-icons";
 
 
 export interface GraphSpaceInterface{
@@ -16,6 +19,9 @@ export default function GraphSpaceComponent({children, scale, offset}: {children
     const graphStore = useContext(graphContext);
     const nodeCollection = useSyncExternalStore(graphStore.subscribeNodeCollection.bind(graphStore), graphStore.getNodeCollection.bind(graphStore));
     const [debSpaceSize, setDebSpaceSize] = useState({x:0, y:0})
+    const [highlightedGUID, setHighlightedGUID] = useState("")
+
+
     useImperativeHandle(forwardedRef, () =>{
         return {
             getDebugSpaceSize(){
@@ -27,7 +33,7 @@ export default function GraphSpaceComponent({children, scale, offset}: {children
         }
     }, [debSpaceSize]);
 
-    let dragTarget: HTMLElement | undefined
+    let dragTarget : HTMLElement | undefined = undefined;
     let dragMouseStartX = 0;
     let dragMouseStartY = 0;
     let dragTargetStartX = 0 , dragTargetStartY = 0;
@@ -61,6 +67,7 @@ export default function GraphSpaceComponent({children, scale, offset}: {children
         dragMouseStartY = dragMouseStartY / scale - offset.y
 
         dragDistance = 0;
+
         dragTarget = closest;
 
         const rect = dragTarget?.getBoundingClientRect();
@@ -70,7 +77,10 @@ export default function GraphSpaceComponent({children, scale, offset}: {children
         dragTargetStartX = rect ? (window.scrollX + (rect.left - viewRect!.x)/scale) : 0;
         dragTargetStartY = rect ? (window.scrollY + (rect.top - viewRect!.y)/scale) : 0;
         // move to front
-
+        if(dragTarget){
+            setHighlightedGUID(dragTarget.id)
+        }
+        
         window.addEventListener(isTouch ? 'touchmove' : 'mousemove', dragMove, {passive: false});
         window.addEventListener(isTouch ? 'touchend' : 'mouseup', dragStop, {passive: false});
     }
@@ -81,9 +91,10 @@ export default function GraphSpaceComponent({children, scale, offset}: {children
             e.stopPropagation();
 
             const isTouch = (e as TouchEvent).changedTouches && e instanceof TouchEvent;
+            
             dragTarget.classList.remove('dragging');
-            dragTarget = undefined;
-
+            dragTarget = undefined
+            
             // dragging is a rare event, so it won't be too much overhead
             window.removeEventListener(isTouch ? 'touchmove' : 'mousemove', dragMove)
             window.removeEventListener(isTouch ? 'touchend' : 'mouseup', dragStop)
@@ -105,10 +116,7 @@ export default function GraphSpaceComponent({children, scale, offset}: {children
     function dragMove(e: MouseEvent | TouchEvent){
         if(dragTarget){
             e.preventDefault();
-            e.stopPropagation();
-            // dragTarget.classList.add('dragging');
-            // const isTouch = e.type === 'touchmove';
-            
+            e.stopPropagation();           
             
             const isTouch = (e as TouchEvent).changedTouches && e instanceof TouchEvent;
             const vx = (isTouch ? e.touches[0].pageX : (e as MouseEvent).pageX);
@@ -128,7 +136,11 @@ export default function GraphSpaceComponent({children, scale, offset}: {children
     }
     //#endregion
 
-    
+    function handleTrashIcon(){
+        graphStore.removeTransform(highlightedGUID)
+        setHighlightedGUID("")
+    }
+
     useEffect(() => {
         if(viewRef.current){
             const rect = viewRef.current.getBoundingClientRect()
@@ -136,28 +148,51 @@ export default function GraphSpaceComponent({children, scale, offset}: {children
         }
     }, [scale])
 
-    return <div className="graphSpace" ref={viewRef} style={{transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`, outline: "1px solid green"}}>
-    {/* a gnome here represent a plank size */}
-    <div onMouseDown={dragStart} className='draggable' style={{backgroundImage: 'url(filterflow/gnome.webp)', backgroundSize:"0.0085px 0.0085px", width: "0.0085px", height: "0.0085px", top:"-0.0085px"}}/>
-    {/* TODO: add render elements */}
-    {/* DEBUG: coordinates markers */}
-    <div style={{position: 'absolute', top: "-2.5rem", left: "-1.5rem"}} className='debugSpaceOverlay'>0, 0</div>
-    <div style={{position: 'absolute', top: "100%", left: "100%"}} className='debugSpaceOverlay'>{viewRef.current ? `${debSpaceSize.x}, ${debSpaceSize.y}` : ''}</div>
-    <div style={{position: 'absolute', top: "-2.5rem", left: "100%"}} className='debugSpaceOverlay'>{viewRef.current ? `${debSpaceSize.x}, 0` : ''}</div>
-    <div style={{position: 'absolute', top: "100%", left: "-1.5rem"}} className='debugSpaceOverlay'>{viewRef.current ? `0, ${debSpaceSize.y}` : ''}</div>
-    {/* END DEBUG */}
-    {
-        nodeCollection.map(guid => 
-            <div onMouseDown={dragStart} className='draggable' id={guid}>
-                {
-                    graphStore.getNode(guid).value.name == "source" ? <ImportGraphNode guid={guid} /> :  <TransformGraphNode guid={guid} />
+    return <>
+    <div className="graphSpace" ref={viewRef} style={{transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`, outline: "1px solid green"}}>
+        {/* a gnome here represent a plank size */}
+        <div onMouseDown={dragStart} className='draggable' style={{backgroundImage: 'url(filterflow/gnome.webp)', backgroundSize:"0.0085px 0.0085px", width: "0.0085px", height: "0.0085px", top:"-0.0085px"}}/>
+        {/* TODO: add render elements */}
+        {/* DEBUG: coordinates markers */}
+        <div style={{position: 'absolute', top: "-2.5rem", left: "-1.5rem"}} className='debugSpaceOverlay'>0, 0</div>
+        <div style={{position: 'absolute', top: "100%", left: "100%"}} className='debugSpaceOverlay'>{viewRef.current ? `${debSpaceSize.x}, ${debSpaceSize.y}` : ''}</div>
+        <div style={{position: 'absolute', top: "-2.5rem", left: "100%"}} className='debugSpaceOverlay'>{viewRef.current ? `${debSpaceSize.x}, 0` : ''}</div>
+        <div style={{position: 'absolute', top: "100%", left: "-1.5rem"}} className='debugSpaceOverlay'>{viewRef.current ? `0, ${debSpaceSize.y}` : ''}</div>
+        {/* END DEBUG */}
+        {
+            nodeCollection.map(guid => {
+
+                const trf = graphStore.getNode(guid).value;
+                const style = guid == highlightedGUID ? {
+                    left: trf.getPos().x, 
+                    top: trf.getPos().y,
+                    borderStyle: "dashed",
+                    borderWidth: "10px",
+                    borderColor: "red"
+                } : {
+                    left: trf.getPos().x, 
+                    top: trf.getPos().y,
+                    borderWitdh: "0px"
                 }
-            </div>
-        )
-    }
+                const draggable = <div onMouseDown={dragStart} className='draggable' id={guid} style={style}>
+                {
+                    trf.name == "source" ? <ImportGraphNode guid={guid} /> :  <TransformGraphNode guid={guid} />
+                }
+                </div>
+
+                return draggable
+            })
+        }
+        
+        {children}
+        </div>
+    {highlightedGUID ? 
+        <div className='nodeContextMenu'>
+            GUID: {highlightedGUID} <Button onClick={handleTrashIcon}><FontAwesomeIcon icon={faTrash}/></Button>
+        </div>
+     : <></>}
+    </>
     
-    {children}
-</div>
 }
 
 export const GraphSpace = forwardRef(GraphSpaceComponent);

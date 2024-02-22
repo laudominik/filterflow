@@ -49,10 +49,11 @@ const GraphNode: React.FC<NodeProps> & {
 
     return  <>
         {before}
-        <div className="graphNode">   
+        <div className="graphNode" id={guid}>   
             <Card className="transformCard">
                 <Card.Header className="cardHeader">
                     {node.value.getName()}
+                    : {guid}
                     <div>
                         <Button 
                             className='border-0 bg-transparent'

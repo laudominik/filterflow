@@ -40,6 +40,16 @@
 
 }
 
+.nodeContextMenu{
+    bottom: 1em;
+    left: 0.5em;
+    position: absolute;
+    background-color: var(--background-color);
+
+    display: flex;
+    flex-direction: row;
+}
+
 .debugSpaceOverlay {
     text-overflow: ellipsis;
     white-space: nowrap;
