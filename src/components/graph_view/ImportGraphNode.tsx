@@ -2,10 +2,11 @@ import { ChangeEvent, useContext, useState, useSyncExternalStore } from "react";
 import { GUID } from "../../engine/engine";
 import { Card, CardBody, CardHeader, CardTitle, Form } from "react-bootstrap";
 import "../preview_container/Preview.css"
-import GraphNode from "./GraphNode";
+import "./GraphNode.css"
+import GraphNode, { IOFunctionType } from "./GraphNode";
 
 // todo: same component as regular GraphNode
-export default function ImportGraphNode({ guid }: { guid: GUID }){    
+export default function ImportGraphNode({ guid, style, onBodyClick }: { guid: GUID, style: React.CSSProperties, onBodyClick?: (e : React.MouseEvent)=>void, ioFunction?: IOFunctionType }){    
     const [imageDataUrl, setImageDataUrl] = useState("")
     const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -29,10 +30,10 @@ export default function ImportGraphNode({ guid }: { guid: GUID }){
         </Form.Group>
     </Form>
 
-    const img = <div className="imageContainer"><div className="centeredImage"><img src={imageDataUrl} /></div></div>
+    const img = <div className="imageContainer"><div className="centeredImage"><img className="image-boundaries" src={imageDataUrl} /></div></div>
 
-    return <GraphNode guid={guid}>
-            <GraphNode.Body>{imageDataUrl ? img : form}</GraphNode.Body>
+    return <GraphNode guid={guid} onBodyClick={onBodyClick} style={style}>
+            {imageDataUrl ? img : form}
         </GraphNode>
     
 }

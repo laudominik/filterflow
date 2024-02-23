@@ -30,3 +30,8 @@
     bottom: -5px; 
     border-color: #0f0;
 }
+
+.image-boundaries {
+    max-width: 20em;
+    max-height: 20em;
+}

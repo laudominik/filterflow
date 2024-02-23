@@ -1,11 +1,12 @@
-import { ReactNode, Ref, forwardRef, useContext, useEffect, useImperativeHandle, useRef, useState, useSyncExternalStore } from "react";
+import React, { ReactNode, Ref, forwardRef, useContext, useEffect, useImperativeHandle, useRef, useState, useSyncExternalStore } from "react";
 import GraphNode from "./GraphNode";
 import ImportGraphNode from "./ImportGraphNode";
 import TransformGraphNode from "./TransformGraphNode";
 import { Button } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import { nodeStoreContext } from "../../stores/context";
+import { faL, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { GUID } from "../../engine/nodeResponse";
 
 
 export interface GraphSpaceInterface{
@@ -13,11 +14,13 @@ export interface GraphSpaceInterface{
     getSpaceRect: ()=>DOMRect|undefined
 }
 
-export default function GraphSpaceComponent({children, scale, offset}: {children: ReactNode, scale: number, offset: {x: number, y: number}}, forwardedRef: Ref<GraphSpaceInterface>){
+export default function GraphSpaceComponent({children=undefined, scale, offset}: {children?: ReactNode, scale: number, offset: {x: number, y: number}}, forwardedRef: Ref<GraphSpaceInterface>){
 
     const viewRef = useRef<HTMLDivElement>(null);
     const nodeContext = useContext(nodeStoreContext);
     const nodeCollection = useSyncExternalStore(nodeContext.subscribeNodeCollection.bind(nodeContext), nodeContext.getNodeCollection.bind(nodeContext));
+    const [addingInputConnection, setAddingInputConnection] = useState(false);
+    const [addingOutputConnection, setAddingOutputConnection] = useState(false);
     const [debSpaceSize, setDebSpaceSize] = useState({x:0, y:0})
     const [highlightedGUID, setHighlightedGUID] = useState("")
 
@@ -39,12 +42,12 @@ export default function GraphSpaceComponent({children, scale, offset}: {children
     let dragTargetStartX = 0 , dragTargetStartY = 0;
     let dragDistance = 0;
 
-    //#region MouseEvents
+    //#region node MouseEvents
     // adding moving elements in space instead element wise, allows to controll z-index
     function dragStart(e: React.SyntheticEvent){
         // typescript type checking
         if(!(e.nativeEvent.target instanceof HTMLElement)) return;
-        // TODO: check if this really do anything
+        // TODO: check if this really do anything (yes, now it does)
         let closest = e.nativeEvent.target.closest('.draggable');
         if (!(closest instanceof HTMLElement)) return;
         
@@ -135,6 +138,42 @@ export default function GraphSpaceComponent({children, scale, offset}: {children
         }
     }
     //#endregion
+    //#region input/output MouseEvents
+    let [addingGUID, setAddingGUID] = useState("");
+
+    function connectionToggle(e: React.SyntheticEvent, myGUID: GUID){
+        if(!(e.nativeEvent.target instanceof HTMLElement)) return;
+        
+        let closest = e.nativeEvent.target;
+        if (!(closest instanceof HTMLElement)) return;
+        
+        const input = closest.classList.contains("circle-top");
+
+        if((addingInputConnection && input) || (addingOutputConnection && !input)){
+            addingGUID = myGUID;
+            return;
+        }
+
+        if(addingInputConnection && !input && addingGUID != myGUID){
+            setAddingInputConnection(false);
+            // TODO: connectionStore.addConnection(addingGUID, myGUID);
+            console.log("added connection ", myGUID, " -> ", addingGUID);
+            return;
+        }
+
+        if(addingOutputConnection && input && addingGUID != myGUID){
+            setAddingOutputConnection(false);
+            // TODO: connectionStore.addConnection(myGUID, addingGUID);
+            console.log("added connection ", addingGUID, " -> ", myGUID);
+            return;
+        }
+
+        setAddingInputConnection(input);
+        setAddingOutputConnection(!input);
+        setAddingGUID(myGUID);
+    }
+
+    //#endregion
 
     function handleTrashIcon(){
         nodeContext.removeTransform(highlightedGUID)
@@ -152,7 +191,17 @@ export default function GraphSpaceComponent({children, scale, offset}: {children
     <div className="graphSpace" ref={viewRef} style={{transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`, outline: "1px solid green"}}>
         {/* a gnome here represent a plank size */}
         <div onMouseDown={dragStart} className='draggable' style={{backgroundImage: 'url(filterflow/gnome.webp)', backgroundSize:"0.0085px 0.0085px", width: "0.0085px", height: "0.0085px", top:"-0.0085px"}}/>
-        {/* TODO: add render elements */}
+        <svg id="arrows" className="arrows">
+            <defs>
+                {/* from https://webgl2fundamentals.org/webgl/lessons/resources/webgl-state-diagram.html#no-help */}
+                <marker id="hsl-260--100---80--" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill="hsl(260, 100%, 80%)"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
+                <marker id="hsl-190--100---80--" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill="hsl(190, 100%, 80%)"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
+                <marker id="hsl-95--100---80--" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill="hsl(95, 100%, 80%)"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
+            </defs>
+            <g fill="none" stroke="hsl(260, 100%, 80%)" strokeWidth={2} markerEnd="url(#hsl-260--100---80--)">
+                <path d="M347,198.5 C447,198.5 471,20.5 571,20.5"></path>
+            </g>
+        </svg>
         {/* DEBUG: coordinates markers */}
         <div style={{position: 'absolute', top: "-2.5rem", left: "-1.5rem"}} className='debugSpaceOverlay'>0, 0</div>
         <div style={{position: 'absolute', top: "100%", left: "100%"}} className='debugSpaceOverlay'>{viewRef.current ? `${debSpaceSize.x}, ${debSpaceSize.y}` : ''}</div>
@@ -164,24 +213,17 @@ export default function GraphSpaceComponent({children, scale, offset}: {children
 
                 const trf = nodeContext.getNode(guid)().value;
                 const style = guid == highlightedGUID ? {
-                    left: trf.getPos().x, 
-                    top: trf.getPos().y,
-                    borderStyle: "dashed",
-                    borderWidth: "10px",
-                    borderColor: "red"
-                } : {
-                    left: trf.getPos().x, 
-                    top: trf.getPos().y,
-                    borderWitdh: "0px"
-                }
-                const draggable = <div onMouseDown={dragStart} className='draggable' id={guid} style={style}>
-                {
-                    trf.name == "source" ? <ImportGraphNode guid={guid} /> :  <TransformGraphNode guid={guid} />
-                }
-                </div>
-
-                return draggable
-            })
+                        borderStyle: "solid",
+                        borderWidth: "3px",
+                        borderColor: "blue"
+                    } : {
+                        borderWitdh: "0px"
+                    }
+                return trf.name == "source" ? 
+                <ImportGraphNode guid={guid} style={style} onBodyClick={dragStart} ioFunction={connectionToggle}/> : 
+                <TransformGraphNode guid={guid} style={style} onBodyClick={dragStart} ioFunction={connectionToggle}/>
+            }
+            )
         }
         
         {children}

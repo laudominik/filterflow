@@ -12,23 +12,29 @@ interface NodeBodyProps {
     children: ReactNode;
 }
 
+type NodeMouseEvent = React.MouseEvent;
+export type IOFunctionType = (e: React.SyntheticEvent, myGUID: GUID) => void;
+
+
 interface NodeProps {
     children: ReactNode;
     guid: GUID;
+    style?: React.CSSProperties;
+    onBodyClick?: (e : NodeMouseEvent)=>void;
+    ioFunction?: IOFunctionType
+    // mouseOver&touchOver (for inputs/node itselt) - for creating edges
+    // touch (handle click and drag) - for selecting and drag
+    // touch (handle click and drag)
+    
 }
 
-const NodeBefore: React.FC<NodeBodyProps> = ({ children }) => {
-    return <>{children}</>
-};
 
-const NodeBody: React.FC<NodeBodyProps> = ({ children }) => {
-    return <>{children}</>
-};
-
-const GraphNode: React.FC<NodeProps> & {
-    Before: React.FC<NodeBodyProps>;
-    Body: React.FC<NodeBodyProps>;
-} = ({ children, guid }) => {
+const GraphNode: React.FC<NodeProps> = ({ children, 
+    guid,
+    style,
+    onBodyClick,
+    ioFunction
+    }) => {
     const nodeContext = useContext(nodeStoreContext) 
     const node = useSyncExternalStore(nodeContext.subscribeNode(guid), nodeContext.getNode(guid));
     const [open, setOpen] = useState(false);
@@ -37,45 +43,39 @@ const GraphNode: React.FC<NodeProps> & {
         setOpen(!open)
     }
 
-    const body = React.Children.toArray(children).find((child) => {
-        return React.isValidElement(child) && child.type === NodeBody;
-    });
-
-    const before = React.Children.toArray(children).find((child) => {
-        return React.isValidElement(child) && child.type === NodeBefore;
-    });
-
     // TODO: node has information about possible inputs, outputs and connections
 
-    return  <>
-        {before}
-        <div className="graphNode" id={guid}>   
-            <Card className="transformCard">
-                <Card.Header className="cardHeader">
-                    {node.value.getName()}
-                    : {guid}
-                    <div>
-                        <Button 
-                            className='border-0 bg-transparent'
-                            onClick={handleOpenClick}
-                            aria-expanded={open}>
-                            <FontAwesomeIcon className="iconInCard" icon={open ? faChevronDown : faChevronUp} />
-                        </Button>
-                    </div>
-                </Card.Header>
-                <Collapse in={open}>
-                    <Card.Body>
-                        {body}
-                    </Card.Body>
-                </Collapse>
-            </Card>
+    /* TODO: change to: for i in range(inputs), onClick = onInputClick(i) */
+    const inputs = <div className="circle-container"><div className="circle circle-top" onMouseDown={(e) => ioFunction ? ioFunction(e, guid) : {}}></div></div>;
+    const outputs = <div className="circle-container"><div className="circle circle-bottom" onMouseDown={(e) => ioFunction ? ioFunction(e, guid) : {}}></div></div>
+
+    return  <div className="draggable" id={guid} key={guid} style={{left: node.value.getPos().x, top: node.value.getPos().y}}>
+            {inputs}
+            <div className="graphNode" id={guid} onMouseDown={onBodyClick}>   
+                <Card className="transformCard" style={style}>
+                    <Card.Header className="cardHeader">
+                        {node.value.getName()}
+                        : {guid}
+                        <div>
+                            <Button 
+                                className='border-0 bg-transparent'
+                                onClick={handleOpenClick}
+                                aria-expanded={open}>
+                                <FontAwesomeIcon className="iconInCard" icon={open ? faChevronDown : faChevronUp} />
+                            </Button>
+                        </div>
+                    </Card.Header>
+                    <Collapse in={open}>
+                        <Card.Body>
+                            {children}
+                            {/* TODO: render node parameters */}
+                            {/* {node.value.paramView(guid)} */}
+                        </Card.Body>
+                    </Collapse>
+                </Card>
+            </div>
+            {outputs}
         </div>
-        <div className="circle-container"><div className="circle circle-bottom"></div></div>
-    </>
 };
-
-GraphNode.Body = NodeBody;
-GraphNode.Before = NodeBefore;
-
 
 export default GraphNode;

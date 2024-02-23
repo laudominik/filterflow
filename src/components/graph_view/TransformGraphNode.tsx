@@ -1,12 +1,11 @@
 import { GUID } from "../../engine/engine";
-import GraphNode from "./GraphNode";
+import GraphNode, { IOFunctionType } from "./GraphNode";
 
-export default function TransformGraphNode({ guid }: { guid: GUID }){
+export default function TransformGraphNode({ guid, style, onBodyClick, ioFunction }: { guid: GUID, style: React.CSSProperties, onBodyClick?: (e : React.MouseEvent)=>void, ioFunction?: IOFunctionType}){
 
-   return <GraphNode guid={guid}>
+   return <GraphNode guid={guid} onBodyClick={onBodyClick} style={style} ioFunction={ioFunction}>
         {/* TODO: make it dependent on number of node inputs */}
-        <GraphNode.Before><div className="circle-container"><div className="circle circle-top"></div><div className="circle circle-top"></div></div></GraphNode.Before>
-        <GraphNode.Body>body</GraphNode.Body>
+        body
     </GraphNode>
     
 }

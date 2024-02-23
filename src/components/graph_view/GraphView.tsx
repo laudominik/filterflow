@@ -10,18 +10,42 @@ import SearchPopup from './SearchPopup';
 import {GraphSpace, GraphSpaceInterface} from './GraphSpace';
 import useWindowDimensions from '../../util/WindowDimensionHook';
 
+// for some f*ckin reason, there's no constanst for button number.. 
+// despite values being specified in standard
+const MIDDLE_BUTTON = 1;
+
 // exposing stuff based https://github.com/PaulLeCam/react-leaflet/blob/master/packages/react-leaflet/src/MapContainer.tsx
 export default function GraphView(){
     const filterStore = useContext(FilterStoreContext);
     const gridRef = useRef<HTMLCanvasElement>(null);
+    const rootRef = useRef<HTMLDivElement>(null);
     const graphSpaceRef = useRef<GraphSpaceInterface>(null);
     const nodes = useSyncExternalStore(filterStore.subscribeSequence.bind(filterStore), filterStore.getSequence.bind(filterStore));
 
     // TODO: make this use element size instead of screen size??
-    const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+    // TODO: remove couping
+    const [{width: viewWidth, height: viewHeight}, setViewSize] = useState({width:0, height:0});
     const [offset, setOffset] = useState({x:0, y:0});
     const [scale, setScale] = useState(1);
+    const [isMoving, SetIsMoving] = useState(false);
     const [searchVisible, setSearchVisibiilty] = useState(false)
+
+
+    useEffect(() => {
+        function handleResize() {
+            setViewSize(getViewSize());
+        }
+    
+        window.addEventListener('resize', handleResize);
+        setViewSize(getViewSize());
+        return () => window.removeEventListener('resize', handleResize);
+      }, []);
+
+    function getViewSize(): {width: number, height: number}{
+        if(!rootRef.current) return {width: 0, height: 0}
+        const rect = rootRef.current.getBoundingClientRect();
+        return {width: rect.width, height: rect.height}
+    }
 
     // TODO: fix this mess, something is wrong
     /**
@@ -76,6 +100,29 @@ export default function GraphView(){
         }
     }
 
+    function handleMouseDown(event : React.MouseEvent){
+
+        if(event.button === MIDDLE_BUTTON){
+            // start move
+            SetIsMoving(true);
+        }
+    }
+
+    function handleMousePan(event : React.MouseEvent){
+        if(!isMoving) return;
+        // TODO: replace with a global offset for more precision and better smoothness
+        handlePan(event.movementX, event.movementY);
+    }
+
+    function handleMouseUp(event : React.MouseEvent){
+        // TODO: handle other methods of move (so, this should be updated)
+        if(event.button === MIDDLE_BUTTON){
+            if(isMoving){
+                SetIsMoving(false);
+            }
+        }
+    }
+
     // TODO: add handle by shortcut???
     function handleOpenSearch(position?: [number, number]){
         // set visibility,
@@ -109,17 +156,16 @@ export default function GraphView(){
 
 
     // TODO: handle move, by dragging element
-    return <div className='graphView' onWheel={handleWheel} onKeyDown={handleKeyDown} onClick={handleClick}>
+    return <div className='graphView' onWheel={handleWheel} onKeyDown={handleKeyDown} onClick={handleClick} onMouseDown={handleMouseDown} onMouseMove={handleMousePan} onMouseUp={handleMouseUp} ref={rootRef}>
         {/* TODO: set dynamic size?? */}
-        <Grid displacement={[offset.x, offset.y]} scale={scale} size={[screenWidth, screenHeight]}/>
+        <Grid displacement={[offset.x, offset.y]} scale={scale} size={[viewWidth, viewHeight]}/>
         {/* DEBUG: transformation info */}
-        <div style={{position: 'absolute', top: "1em", left: "0.2vw"}} className='debugOverlay'>{`screen size: ${screenWidth}, ${screenHeight}`}</div>
+        <div style={{position: 'absolute', top: "1em", left: "0.2vw"}} className='debugOverlay'>{`screen size: ${viewWidth}, ${viewHeight}`}</div>
         <div style={{position: 'absolute', top: "3em", left: "0.2vw"}} className='debugOverlay'>{`offset: ${offset.x}, ${offset.y}`}</div>
         <div style={{position: 'absolute', top: "5.6em", left: "0.2vw"}} className='debugOverlay'>{`scale: ${scale}`}</div>
         {/* END DEBUG */}
-        <GraphSpace scale={scale} offset={offset} ref={graphSpaceRef}>
-        </GraphSpace>
 
+        <GraphSpace scale={scale} offset={offset} ref={graphSpaceRef}></GraphSpace>
         <SearchPopup visible={searchVisible}></SearchPopup>
         {/* TODO: change collor of this */}
         <div className='graphViewTooltip'>

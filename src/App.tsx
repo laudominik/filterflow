@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, StrictMode } from 'react';
 import { Button } from 'react-bootstrap';
 import { faList } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -50,9 +50,11 @@ export default function App() {
   const view = modeGraph ? <GraphView /> : <>{expanded ? <></> : expandButton} {splitPane}</>
   console.log(modeGraph)
   return (
+    <StrictMode>
       <div className="App">
         <BrandNavBar />
         {view}
-      </div>   
+      </div>
+    </StrictMode>
   );
 }
