@@ -1,25 +1,11 @@
-import { createContext, createRef, useEffect, useRef } from "react";
+import { createContext } from "react";
 import Transform, { KVParams }  from '../engine/Transform'
 import { Engine, GUID } from "../engine/engine";
 import { TypedJSON } from "typedjson";
 import SourceTransform from "../engine/transforms/SourceTransform";
+import { CanvasPointer, CanvasSelection, Channel, ChannelValue, PreviewSelections, PreviewType } from "./storeInterfaces";
 
 type MarkedListener = CallableFunction & { id: GUID }
-type PreviewType = {start: GUID, end: GUID, distance: number, visualizationChannel: Channel, previewChannels: Channel[]}
-
-// For now we support only rectangles as selection
-type CanvasPosition = [number, number]
-type CanvasPointer = {source: CanvasPosition ,destination: CanvasPosition}
-type CanvasSelection = {start: CanvasPosition, size: CanvasPosition, center: CanvasPosition}
-type PreviewSelections = {source: CanvasSelection, destination: CanvasSelection}
-enum Channel {NONE = "NONE", RED = "RED", GREEN = "GREEN", BLUE = "BLUE", GRAY = "GRAY"};
-const ChannelValue: Record<keyof typeof Channel, number> = {
-    NONE: 0,
-    RED: 0,
-    GREEN: 1,
-    BLUE: 2,
-    GRAY: 0
-};
 
 class simpleFilterStore {
     listeners: MarkedListener[]

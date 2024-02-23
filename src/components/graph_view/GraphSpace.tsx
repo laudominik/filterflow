@@ -1,11 +1,11 @@
 import { ReactNode, Ref, forwardRef, useContext, useEffect, useImperativeHandle, useRef, useState, useSyncExternalStore } from "react";
 import GraphNode from "./GraphNode";
-import { graphContext } from "../../stores/graphFilterStore";
 import ImportGraphNode from "./ImportGraphNode";
 import TransformGraphNode from "./TransformGraphNode";
 import { Button } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
+import { nodeStoreContext } from "../../stores/context";
 
 
 export interface GraphSpaceInterface{
@@ -16,8 +16,8 @@ export interface GraphSpaceInterface{
 export default function GraphSpaceComponent({children, scale, offset}: {children: ReactNode, scale: number, offset: {x: number, y: number}}, forwardedRef: Ref<GraphSpaceInterface>){
 
     const viewRef = useRef<HTMLDivElement>(null);
-    const graphStore = useContext(graphContext);
-    const nodeCollection = useSyncExternalStore(graphStore.subscribeNodeCollection.bind(graphStore), graphStore.getNodeCollection.bind(graphStore));
+    const nodeContext = useContext(nodeStoreContext);
+    const nodeCollection = useSyncExternalStore(nodeContext.subscribeNodeCollection.bind(nodeContext), nodeContext.getNodeCollection.bind(nodeContext));
     const [debSpaceSize, setDebSpaceSize] = useState({x:0, y:0})
     const [highlightedGUID, setHighlightedGUID] = useState("")
 
@@ -130,14 +130,14 @@ export default function GraphSpaceComponent({children, scale, offset}: {children
             dragTarget.style.left = `${x}px`;
             dragTarget.style.top = `${y}px`;
             if(nodeCollection.includes(dragTarget.id)){
-                graphStore.getNode(dragTarget.id).value.setPos({x, y})
+                nodeContext.getNode(dragTarget.id)().value.setPos({x, y})
             }
         }
     }
     //#endregion
 
     function handleTrashIcon(){
-        graphStore.removeTransform(highlightedGUID)
+        nodeContext.removeTransform(highlightedGUID)
         setHighlightedGUID("")
     }
 
@@ -162,7 +162,7 @@ export default function GraphSpaceComponent({children, scale, offset}: {children
         {
             nodeCollection.map(guid => {
 
-                const trf = graphStore.getNode(guid).value;
+                const trf = nodeContext.getNode(guid)().value;
                 const style = guid == highlightedGUID ? {
                     left: trf.getPos().x, 
                     top: trf.getPos().y,

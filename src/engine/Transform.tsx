@@ -47,8 +47,8 @@ abstract class Transform extends node<Transform> {
     }
 
     // TODO: better naming?
-    public fromDestinationToSourcePosition(positon: [number, number]): [number, number] {
-        return positon
+    public fromDestinationToSourcePosition(position: [number, number]): [number, number] {
+        return position
     }
 
     public fromSourceToDestinationPosition(positon: [number, number]): [number, number] {

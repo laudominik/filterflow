@@ -2,20 +2,14 @@ import { createContext } from "react";
 import Transform, { KVParams } from "../engine/Transform"
 import { Engine, GUID, ExternalEngineResponse } from "../engine/engine"
 import { BaseFilterStore } from "./baseFilterStore";
+import { ConnectionDefinition, ConnectionInfo } from "./storeInterfaces";
+import { PreviewStores } from "./previewStore";
 
 
-type ConnectionSide = [GUID,number];
-type ConnectionDefinition = [ConnectionSide,ConnectionSide];
-type CanvasPosition = [number,number]; // x y
-type CanvasArrow = [CanvasPosition,CanvasPosition]
-
-interface ConnectionInfo{
-    connectionDefinition: ConnectionDefinition
-    display: CanvasArrow
-}
 
 
-export class GraphFilterStore extends BaseFilterStore{
+
+export class GraphFilterStore extends PreviewStores{
     connectionsListener: CallableFunction[]
     connections: ConnectionInfo[]
 
@@ -28,7 +22,7 @@ export class GraphFilterStore extends BaseFilterStore{
     }
 
     private handleEngineInfo(event:CustomEvent<ExternalEngineResponse>){
-        this.nodeListeners.forEach(v => v()); // TODO tmp update
+        this.nodeListeners.forEach(v => v.listener()); // TODO tmp update
     }
 
     //#region Connections
@@ -83,5 +77,3 @@ export class GraphFilterStore extends BaseFilterStore{
     }
     //#endregion
 }
-
-export const graphContext = createContext(new GraphFilterStore())

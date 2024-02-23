@@ -2,11 +2,11 @@ import React from "react"
 import { ReactNode, useContext, useState, useSyncExternalStore } from "react";
 import { GUID } from "../../engine/engine";
 import { Button, Card, CardBody, CardHeader, CardTitle, Collapse } from "react-bootstrap";
-import { graphContext } from "../../stores/graphFilterStore";
 import { faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import './GraphNode.css';
+import { nodeStoreContext } from "../../stores/context";
 
 interface NodeBodyProps {
     children: ReactNode;
@@ -29,8 +29,8 @@ const GraphNode: React.FC<NodeProps> & {
     Before: React.FC<NodeBodyProps>;
     Body: React.FC<NodeBodyProps>;
 } = ({ children, guid }) => {
-    const graphStore = useContext(graphContext) 
-    const node = useSyncExternalStore(graphStore.subscribeNode(guid) as any, graphStore.getNode.bind(graphStore, guid));
+    const nodeContext = useContext(nodeStoreContext) 
+    const node = useSyncExternalStore(nodeContext.subscribeNode(guid), nodeContext.getNode(guid));
     const [open, setOpen] = useState(false);
 
     const handleOpenClick = () => {

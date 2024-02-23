@@ -2,8 +2,7 @@ import Fuse, { FuseResult, RangeTuple } from 'fuse.js'
 
 import { knownTypes, transformType } from '../../engine/TransformDeclarations'
 import { ReactNode, useContext, useEffect, useState } from 'react';
-import Transform from '../../engine/Transform';
-import { graphContext } from '../../stores/graphFilterStore';
+import { nodeStoreContext } from '../../stores/context';
 
 
 /*
@@ -52,7 +51,7 @@ DESIGN NOTES:
 
 // give default list from start
 export default function SearchPopup({visible=true, position=[0,0]}:{visible?: boolean, position?: [number, number]}){
-  const graphStore = useContext(graphContext)
+  const nodeContext = useContext(nodeStoreContext)
   const [pattern, setPattern] = useState<string>("")
 
   const list = Array.from(transformType())
@@ -62,7 +61,7 @@ export default function SearchPopup({visible=true, position=[0,0]}:{visible?: bo
   const fuse = new Fuse(list, {includeMatches: true, keys: ['full'], ignoreLocation: true, minMatchCharLength:1})
 
   function handleAddTransform(name: string){
-    graphStore.addTransform(name)
+    nodeContext.addTransform(name,{})
   }
 
   function handleSearch(e: React.ChangeEvent){

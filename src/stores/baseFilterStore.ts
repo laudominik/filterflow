@@ -2,15 +2,16 @@
 
 import Transform, { KVParams } from "../engine/Transform";
 import { Engine, GUID } from "../engine/engine"
+import { INodeStore } from "./storeInterfaces";
 
 type MarkedListener = CallableFunction & { id: GUID }
 
-export abstract class BaseFilterStore{
+export abstract class BaseFilterStore implements INodeStore{
     filename: string
     engine: Engine
 
     // listen on node change
-    nodeListeners: MarkedListener[] 
+    nodeListeners: {listener: CallableFunction,id: GUID}[] 
     // store Transform in new object to trigger react update
     nodeWrappers:  Map<GUID,{value: Transform,hash: string}>
     
@@ -29,11 +30,10 @@ export abstract class BaseFilterStore{
     //#region Node
 
     // internal function register listening on specific id
-    private _subscribeNode(id: GUID, listener: MarkedListener) {
-        listener.id = id;
-        this.nodeListeners = [...this.nodeListeners, listener]
+    private _subscribeNode(id: GUID, listener: CallableFunction) {
+        this.nodeListeners = [...this.nodeListeners, {listener,id}]
         return () => {
-            this.nodeListeners = this.nodeListeners.filter(l => l != listener);
+            this.nodeListeners = this.nodeListeners.filter(l => l.listener != listener);
         };
     }
 
@@ -41,7 +41,11 @@ export abstract class BaseFilterStore{
         return this._subscribeNode.bind(this, id);
     } 
 
-    public getNode(id: GUID): {value: Transform,hash: string}{
+    public getNode(id:GUID){
+        return this._getNode.bind(this,id)
+    }
+
+    private _getNode(id: GUID): {value: Transform,hash: string}{
         let transformWatch = this.nodeWrappers.get(id);
         if (transformWatch){
 
@@ -58,7 +62,7 @@ export abstract class BaseFilterStore{
     }
 
     private emitChangeNode(id: GUID) {
-        this.nodeListeners.filter(f => f.id === id).forEach(f => f())
+        this.nodeListeners.filter(f => f.id === id).forEach(f => f.listener())
     }
     //#endregion
 

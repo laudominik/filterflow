@@ -1,8 +1,6 @@
 import { ChangeEvent, useContext, useState, useSyncExternalStore } from "react";
 import { GUID } from "../../engine/engine";
 import { Card, CardBody, CardHeader, CardTitle, Form } from "react-bootstrap";
-import { graphContext } from "../../stores/graphFilterStore";
-
 import "../preview_container/Preview.css"
 import GraphNode from "./GraphNode";
 
