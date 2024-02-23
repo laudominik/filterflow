@@ -146,6 +146,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         
         let closest = e.nativeEvent.target;
         if (!(closest instanceof HTMLElement)) return;
+        console.log(closest.getBoundingClientRect())
         
         const input = closest.classList.contains("circle-top");
 
@@ -191,17 +192,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
     <div className="graphSpace" ref={viewRef} style={{transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`, outline: "1px solid green"}}>
         {/* a gnome here represent a plank size */}
         <div onMouseDown={dragStart} className='draggable' style={{backgroundImage: 'url(filterflow/gnome.webp)', backgroundSize:"0.0085px 0.0085px", width: "0.0085px", height: "0.0085px", top:"-0.0085px"}}/>
-        <svg id="arrows" className="arrows">
-            <defs>
-                {/* from https://webgl2fundamentals.org/webgl/lessons/resources/webgl-state-diagram.html#no-help */}
-                <marker id="hsl-260--100---80--" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill="hsl(260, 100%, 80%)"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
-                <marker id="hsl-190--100---80--" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill="hsl(190, 100%, 80%)"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
-                <marker id="hsl-95--100---80--" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill="hsl(95, 100%, 80%)"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
-            </defs>
-            <g fill="none" stroke="hsl(260, 100%, 80%)" strokeWidth={2} markerEnd="url(#hsl-260--100---80--)">
-                <path d="M347,198.5 C447,198.5 471,20.5 571,20.5"></path>
-            </g>
-        </svg>
+        
         {/* DEBUG: coordinates markers */}
         <div style={{position: 'absolute', top: "-2.5rem", left: "-1.5rem"}} className='debugSpaceOverlay'>0, 0</div>
         <div style={{position: 'absolute', top: "100%", left: "100%"}} className='debugSpaceOverlay'>{viewRef.current ? `${debSpaceSize.x}, ${debSpaceSize.y}` : ''}</div>
