@@ -258,8 +258,19 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
     }
 
     function handleAddingEdgeAnimation(){
-        console.log(addMovePos)
-        return <AnimationEdge guid={addingGUID} isInput={addingInputConnection} mousePos={addMovePos}/> 
+        const mouseInGraphSpace = {x: (-offset.x + addMovePos.x) / scale, y: (-offset.y + addMovePos.y) / scale}
+        return <AnimationEdge guid={addingGUID} isInput={addingInputConnection} mousePos={mouseInGraphSpace}/> 
+    }
+
+    function handleUnhighlightAll(){
+        setHighlightedGUID("")
+        setHightlightedEdgeGUIDPair(["", ""])
+
+        if(addingInputConnection || addingOutputConnection){
+            setAddingInputConnection(false)
+            setAddingOutputConnection(false)    
+            window.removeEventListener('mousemove', addMove);
+        }
     }
 
     useEffect(() => {
@@ -283,6 +294,8 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         {   
             handleConnections()
         }
+        {addingInputConnection || addingOutputConnection ? handleAddingEdgeAnimation(): <></>}
+
 
         {/* END DEBUG */}
         {
@@ -315,7 +328,6 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
            {highlightedEdgeGUIDPair[0]} =- {highlightedEdgeGUIDPair[1]} <Button onClick={handleEdgeTrashIcon}><FontAwesomeIcon icon={faTrash}/></Button>
         </div>
      : <></>}
-    {addingInputConnection || addingOutputConnection ? handleAddingEdgeAnimation(): <></>}
     </>    
 }
 
