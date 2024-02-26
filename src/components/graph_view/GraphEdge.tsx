@@ -25,16 +25,16 @@ export function Edge({pos0, pos1, onClick, style}:{pos0: [number, number], pos1:
     const arrowMarkUUID = crypto.randomUUID();
     const markerEnd = `url(#${arrowMarkUUID})`
 
-    const defaultStyle = {stroke: "hsl(260, 100%, 80%)", strokeWidth: 2 }
+    const defaultStyle = {stroke: "hsl(260, 100%, 80%)", strokeWidth: 5}
 
 
-    return <svg className="arrows" style={{position: 'absolute', top: top, left: left, width: Math.abs(dx) + 50, height: Math.abs(dy) + 50}}>
+    return <svg className="arrows" style={{pointerEvents: 'none', position: 'absolute', top: top, left: left, width: Math.abs(dx) + 50, height: Math.abs(dy) + 50}}>
         <defs>
             {/* from https://webgl2fundamentals.org/webgl/lessons/resources/webgl-state-diagram.html#no-help */}
             <marker id={arrowMarkUUID} viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill={style ? style.stroke : "hsl(260, 100%, 80%)"}><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
           
         </defs>
-        <line x1={x1} y1={y1} x2={x2} y2={y2} style={style ?? defaultStyle} markerEnd={markerEnd} onClick={onClick}/>
+        <line x1={x1} y1={y1} x2={x2} y2={y2} style={style ?? defaultStyle} markerEnd={markerEnd} onClick={onClick} pointerEvents='auto'/>
  
     </svg>
 }
@@ -76,7 +76,7 @@ export default function GraphEdge({guid0, guid1, highlighted, onClick} : {guid0 
         if(!onClick) return;
         onClick(guid0, guid1);
     }
-    const style= {stroke: highlighted ? "blue" : "hsl(260, 100%, 80%)", strokeWidth: 2 }
+    const style= {stroke: highlighted ? "blue" : "hsl(260, 100%, 80%)", strokeWidth: 5 }
 
     // TODO: check if it doesn't break sometimes (multiple elements with the same id)
     const draggable0 = document.getElementById(guid0)!
