@@ -38,15 +38,19 @@ const GraphNode: React.FC<NodeProps> = ({ children,
     const nodeContext = useContext(nodeStoreContext) 
     const node = useSyncExternalStore(nodeContext.subscribeNode(guid), nodeContext.getNode(guid));
     const [open, setOpen] = useState(false);
-
+    
     const handleOpenClick = () => {
         setOpen(!open)
     }
 
-    // TODO: node has information about possible inputs, outputs and connections
-
-    /* TODO: change to: for i in range(inputs), onClick = onInputClick(i) */
-    const inputs = <div className="circle-container"><div className="circle circle-top" onMouseDown={(e) => ioFunction ? ioFunction(e, guid) : {}}></div></div>;
+    const inputs = <div className="circle-container">
+        {
+            [...Array(node.value.meta.input_size)].map(
+                _ => <div className="circle circle-top" onMouseDown={(e) => ioFunction ? ioFunction(e, guid) : {}}></div>
+            )
+        }
+    </div>
+    
     const outputs = <div className="circle-container"><div className="circle circle-bottom" onMouseDown={(e) => ioFunction ? ioFunction(e, guid) : {}}></div></div>
     return  <div className="draggable" id={guid} key={guid} style={{left: node.value.getPos().x, top: node.value.getPos().y}}>
             {inputs}

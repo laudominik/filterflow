@@ -214,6 +214,8 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         setAddingOutputConnection(!input);
         setAddingGUID(myGUID);
         window.addEventListener('mousemove', addMove, {passive: false});
+        const rectum = closest.getBoundingClientRect();
+        setAddMovePos({x: rectum.x, y:rectum.y});
     }
 
 

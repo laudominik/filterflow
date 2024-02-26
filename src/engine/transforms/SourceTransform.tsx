@@ -10,7 +10,7 @@ export default class SourceTransform extends Transform{
     image?: string
 
     constructor(){
-        super("source","#HEX");
+        super("source","#HEX", 0);
     }
 
     async apply(input: OffscreenCanvas | undefined): Promise<OffscreenCanvas | undefined> {

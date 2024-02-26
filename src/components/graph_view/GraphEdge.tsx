@@ -25,7 +25,7 @@ export function Edge({pos0, pos1, onClick, style}:{pos0: [number, number], pos1:
     const arrowMarkUUID = crypto.randomUUID();
     const markerEnd = `url(#${arrowMarkUUID})`
 
-    const defaultStyle = {stroke: "hsl(260, 100%, 80%)", strokeWidth: 5}
+    const defaultStyle = {stroke: "hsl(260, 100%, 80%)", strokeWidth: 2}
 
 
     return <svg className="arrows" style={{pointerEvents: 'none', position: 'absolute', top: top, left: left, width: Math.abs(dx) + 50, height: Math.abs(dy) + 50}}>
@@ -76,7 +76,7 @@ export default function GraphEdge({guid0, guid1, highlighted, onClick} : {guid0 
         if(!onClick) return;
         onClick(guid0, guid1);
     }
-    const style= {stroke: highlighted ? "blue" : "hsl(260, 100%, 80%)", strokeWidth: 5 }
+    const style= {stroke: highlighted ? "blue" : "hsl(260, 100%, 80%)", strokeWidth: 2 }
 
     // TODO: check if it doesn't break sometimes (multiple elements with the same id)
     const draggable0 = document.getElementById(guid0)!

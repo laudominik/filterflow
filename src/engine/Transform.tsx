@@ -11,8 +11,8 @@ export interface KVParams {
 
 @jsonObject
 abstract class Transform extends node<Transform> {
-    constructor(name: string, color: string){
-        super({id:crypto.randomUUID(),inputs:1,outputs:1});
+    constructor(name: string, color: string, inputs?: number){
+        super({id:crypto.randomUUID(),inputs: inputs ?? 1,outputs:1});
         this.color = color;
         this.name = name;
         this.params = {};
