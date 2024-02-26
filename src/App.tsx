@@ -48,7 +48,6 @@ export default function App() {
   )
 
   const view = modeGraph ? <GraphView /> : <>{expanded ? <></> : expandButton} {splitPane}</>
-  console.log(modeGraph)
   return (
     <StrictMode>
       <div className="App">

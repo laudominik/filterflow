@@ -9,16 +9,13 @@ import { nodeStoreContext } from "../../stores/context";
 */
 
 export function Edge({pos0, pos1, onClick, style}:{pos0: [number, number], pos1: [number, number], onClick?: ()=>void, style? : CSSProperties}){
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    useEffect(()=>{
-        console.log("updated component")
-    }, [])
+ 
 
     const dx = pos1[0] - pos0[0];
     const dy = pos1[1] - pos0[1];
 
-    const x1 = dx >= 0 ? 0 : -dx-5;
-    const y1 = dy >= 0 ? 0 : -dy-5;
+    const x1 = dx >= 0 ? 0 : -dx;
+    const y1 = dy >= 0 ? 0 : -dy;
     const x2 = dx >= 0 ? dx : 5;
     const y2 = dy >= 0 ? dy : 5;
 
@@ -41,14 +38,32 @@ export function Edge({pos0, pos1, onClick, style}:{pos0: [number, number], pos1:
 export default function GraphEdge({guid0, guid1, highlighted, onClick} : {guid0 : GUID, guid1 : GUID, highlighted : boolean, onClick?: (guid0: GUID, guid1: GUID)=>void}){
     
     const nodeContext = useContext(nodeStoreContext);
-    const pos0 = nodeContext.getNode(guid0)().value.getPos();
-    const pos1 = nodeContext.getNode(guid1)().value.getPos();
+    let pos0 = nodeContext.getNode(guid0)().value.getPos();
+    let pos1 = nodeContext.getNode(guid1)().value.getPos();
 
     const onClickWrapper = () => {
         if(!onClick) return;
         onClick(guid0, guid1);
     }
-    const style= {stroke: highlighted ? "blue" : "hsl(260, 100%, 80%)", strokeWidth: 2 };
+    const style= {stroke: highlighted ? "blue" : "hsl(260, 100%, 80%)", strokeWidth: 2 }
+
+    // TODO: check if it doesn't break sometimes (multiple elements with the same id)
+    const draggable0 = document.getElementById(guid0)!
+    const draggable1 = document.getElementById(guid1)!
+    
+    const output = draggable0.getElementsByClassName("circle-bottom")[0]!
+    const input = draggable1.getElementsByClassName("circle-top")[0]!;
+    
+    if(output instanceof HTMLElement){
+        const outputHTML = output as HTMLElement
+        pos0 = {x: pos0.x + outputHTML.offsetLeft, y: pos0.y + outputHTML.offsetTop}
+    }
+
+    if(input instanceof HTMLElement){
+        const inputHTML = input as HTMLElement
+        pos1 = {x: pos1.x + input.offsetLeft, y: pos1.y + input.offsetTop}
+    }
+
     // for now top left corner connects to top left corner
     return <Edge pos0={[pos0.x, pos0.y]} pos1={[pos1.x, pos1.y]} onClick={onClickWrapper} style={style}/>
 }

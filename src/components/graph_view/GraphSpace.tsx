@@ -173,7 +173,6 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         
         let closest = e.nativeEvent.target;
         if (!(closest instanceof HTMLElement)) return;
-        console.log(closest.getBoundingClientRect())
         
         const input = closest.classList.contains("circle-top");
 
@@ -246,9 +245,8 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         }
     }, [scale])
 
-    console.log(connectionComponent);
     return <>
-    <div className="graphSpace" ref={viewRef} style={{transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`, outline: "1px solid green"}}>
+    <div id="graphSpace" className="graphSpace" ref={viewRef} style={{transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`, outline: "1px solid green"}}>
         {/* a gnome here represent a plank size */}
         <div onMouseDown={dragStart} className='draggable' style={{backgroundImage: 'url(filterflow/gnome.webp)', backgroundSize:"0.0085px 0.0085px", width: "0.0085px", height: "0.0085px", top:"-0.0085px"}}/>
         
@@ -261,7 +259,6 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         {   
             handleConnections()
         }
-
 
         {/* END DEBUG */}
         {
