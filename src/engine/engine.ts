@@ -69,6 +69,9 @@ export class Engine extends EventTarget{
 
     public addNode(transformation: string, params: any): GUID{
         const node = mapToTransform(transformation)!
+        if(params.pos){
+            node.setPos(params.pos);
+        }
         const guid = node.meta.id;
         if (node.meta.input_size == 0){
             this.source_nodes.push(guid)

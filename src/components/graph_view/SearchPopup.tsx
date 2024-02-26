@@ -50,7 +50,7 @@ DESIGN NOTES:
 
 
 // give default list from start
-export default function SearchPopup({visible=true, position=[0,0]}:{visible?: boolean, position?: [number, number]}){
+export default function SearchPopup({visible=true, setVisible, position=[0,0]}:{visible?: boolean, setVisible: (_: boolean)=>void, position?: [number, number]}){
   const nodeContext = useContext(nodeStoreContext)
   const [pattern, setPattern] = useState<string>("")
 
@@ -61,7 +61,8 @@ export default function SearchPopup({visible=true, position=[0,0]}:{visible?: bo
   const fuse = new Fuse(list, {includeMatches: true, keys: ['full'], ignoreLocation: true, minMatchCharLength:1})
 
   function handleAddTransform(name: string){
-    nodeContext.addTransform(name,{})
+    nodeContext.addTransform(name,{pos: {x: position[0], y: position[1]}})
+    setVisible(false);
   }
 
   function handleSearch(e: React.ChangeEvent){

@@ -48,7 +48,6 @@ const GraphNode: React.FC<NodeProps> = ({ children,
     /* TODO: change to: for i in range(inputs), onClick = onInputClick(i) */
     const inputs = <div className="circle-container"><div className="circle circle-top" onMouseDown={(e) => ioFunction ? ioFunction(e, guid) : {}}></div></div>;
     const outputs = <div className="circle-container"><div className="circle circle-bottom" onMouseDown={(e) => ioFunction ? ioFunction(e, guid) : {}}></div></div>
-
     return  <div className="draggable" id={guid} key={guid} style={{left: node.value.getPos().x, top: node.value.getPos().y}}>
             {inputs}
             <div className="graphNode" id={guid} onMouseDown={onBodyClick}>   

@@ -29,6 +29,7 @@ export default function GraphView(){
     const [scale, setScale] = useState(1);
     const [isMoving, SetIsMoving] = useState(false);
     const [searchVisible, setSearchVisibiilty] = useState(false)
+    const [searchPos, setSearchPos] = useState<[number, number]>([0,0]);
 
 
     useEffect(() => {
@@ -67,6 +68,16 @@ export default function GraphView(){
 
     function handlePan(x:number, y:number){
         setOffset({x: offset.x + x, y: offset.y + y})
+        handleSearchPos();
+    }
+
+    function handleSearchPos(position?: [number, number]){
+        if(position){
+            setSearchPos(position)
+            return;
+        }
+        const {width, height} = getViewSize()
+        setSearchPos([(-offset.x + width/2) / scale, (-offset.y + height/2) / scale])
     }
 
     function handleButtomZoom(value: number){
@@ -127,12 +138,8 @@ export default function GraphView(){
     function handleOpenSearch(position?: [number, number]){
         // set visibility,
         // set position
-        if(!position){
-            let rect = graphSpaceRef.current?.getSpaceRect();
-            position = [rect!.width/2, rect!.height/2]
-        }
+        handleSearchPos(position)
         setSearchVisibiilty(true);
-
     }
     // TODO: handle middle mouse click
     // TODO: handle touch pinch, and pan
@@ -164,7 +171,7 @@ export default function GraphView(){
         <div style={{position: 'absolute', top: "3em", left: "0.2vw"}} className='debugOverlay'>{`offset: ${offset.x}, ${offset.y}`}</div>
         <div style={{position: 'absolute', top: "5.6em", left: "0.2vw"}} className='debugOverlay'>{`scale: ${scale}`}</div>
         {/* END DEBUG */}
-        <svg id="arrows" className="arrows">
+        <svg id="arrows" className="arrows" style={{position: 'absolute', top: '-10em'}}>
             <defs>
                 {/* from https://webgl2fundamentals.org/webgl/lessons/resources/webgl-state-diagram.html#no-help */}
                 <marker id="hsl-260--100---80--" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill="hsl(260, 100%, 80%)"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
@@ -176,7 +183,8 @@ export default function GraphView(){
             </g>
         </svg>
         <GraphSpace scale={scale} offset={offset} ref={graphSpaceRef}></GraphSpace>
-        <SearchPopup visible={searchVisible}></SearchPopup>
+        <SearchPopup visible={searchVisible} setVisible={setSearchVisibiilty} position={searchPos}></SearchPopup>
+
         {/* TODO: change collor of this */}
         <div className='graphViewTooltip'>
         <Button title="add transformation" onClick={(e)=>{e.preventDefault(); e.stopPropagation(); handleOpenSearch()}}><FontAwesomeIcon icon={faPlus}/></Button>
