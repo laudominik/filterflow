@@ -4,9 +4,11 @@ import ImportGraphNode from "./ImportGraphNode";
 import TransformGraphNode from "./TransformGraphNode";
 import { Button } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { nodeStoreContext } from "../../stores/context";
+import { connectionStoreContext, nodeStoreContext } from "../../stores/context";
 import { faL, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { GUID } from "../../engine/nodeResponse";
+import Edge from "./GraphEdge";
+import GraphEdge from "./GraphEdge";
 
 
 export interface GraphSpaceInterface{
@@ -19,10 +21,14 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
     const viewRef = useRef<HTMLDivElement>(null);
     const nodeContext = useContext(nodeStoreContext);
     const nodeCollection = useSyncExternalStore(nodeContext.subscribeNodeCollection.bind(nodeContext), nodeContext.getNodeCollection.bind(nodeContext));
+    const connectionContext = useContext(connectionStoreContext);
+    const connectionCollection = useSyncExternalStore(connectionContext.subscribeConnections.bind(connectionContext) as any, connectionContext.getConnections.bind(connectionContext));
+
     const [addingInputConnection, setAddingInputConnection] = useState(false);
     const [addingOutputConnection, setAddingOutputConnection] = useState(false);
     const [debSpaceSize, setDebSpaceSize] = useState({x:0, y:0})
     const [highlightedGUID, setHighlightedGUID] = useState("")
+    const [connectionComponent, setConnectionComponent] = useState(handleConnections())
 
 
     useImperativeHandle(forwardedRef, () =>{
@@ -116,6 +122,21 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         }
     }
 
+    function handleConnections(){
+        return connectionCollection.map(connInf => {
+            const connDef = connInf.connectionDefinition;
+            const guid0 = connDef[0][0];
+            const guid1 = connDef[1][0];
+
+            const pos0 = nodeContext.getNode(guid0)().value.getPos();
+            const pos1 = nodeContext.getNode(guid1)().value.getPos();
+            console.log(guid0, guid1);
+            // for now top left corner connects to top left corner
+
+            return <GraphEdge pos0={[pos0.x, pos0.y]} pos1={[pos1.x, pos1.y]} />
+        })
+    }
+
     function dragMove(e: MouseEvent | TouchEvent){
         if(dragTarget){
             e.preventDefault();
@@ -134,6 +155,8 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
             dragTarget.style.top = `${y}px`;
             if(nodeCollection.includes(dragTarget.id)){
                 nodeContext.getNode(dragTarget.id)().value.setPos({x, y})
+                // hacky, but works
+                setConnectionComponent(handleConnections())
             }
         }
     }
@@ -159,6 +182,10 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
             setAddingInputConnection(false);
             // TODO: connectionStore.addConnection(addingGUID, myGUID);
             console.log("added connection ", myGUID, " -> ", addingGUID);
+            connectionContext.connectNodes([
+                [myGUID, 1],
+                [addingGUID, 1]
+            ])
             return;
         }
 
@@ -166,6 +193,10 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
             setAddingOutputConnection(false);
             // TODO: connectionStore.addConnection(myGUID, addingGUID);
             console.log("added connection ", addingGUID, " -> ", myGUID);
+            connectionContext.connectNodes([
+                [addingGUID, 1],
+                [myGUID, 1]
+            ])
             return;
         }
 
@@ -188,6 +219,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         }
     }, [scale])
 
+
     return <>
     <div className="graphSpace" ref={viewRef} style={{transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`, outline: "1px solid green"}}>
         {/* a gnome here represent a plank size */}
@@ -198,6 +230,17 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         <div style={{position: 'absolute', top: "100%", left: "100%"}} className='debugSpaceOverlay'>{viewRef.current ? `${debSpaceSize.x}, ${debSpaceSize.y}` : ''}</div>
         <div style={{position: 'absolute', top: "-2.5rem", left: "100%"}} className='debugSpaceOverlay'>{viewRef.current ? `${debSpaceSize.x}, 0` : ''}</div>
         <div style={{position: 'absolute', top: "100%", left: "-1.5rem"}} className='debugSpaceOverlay'>{viewRef.current ? `0, ${debSpaceSize.y}` : ''}</div>
+        
+        {   
+            // export interface ConnectionInfo{
+            //     connectionDefinition: ConnectionDefinition
+            //     display: CanvasArrow
+            // }
+            connectionComponent
+            
+        }
+
+
         {/* END DEBUG */}
         {
             nodeCollection.map(guid => {

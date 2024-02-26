@@ -162,6 +162,18 @@ export default function GraphView(){
     })
 
 
+    // <svg id="arrows" className="arrows" style={{position: 'absolute', top: '-10em'}}>
+    // <defs>
+    //     {/* from https://webgl2fundamentals.org/webgl/lessons/resources/webgl-state-diagram.html#no-help */}
+    //     <marker id="hsl-260--100---80--" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill="hsl(260, 100%, 80%)"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
+    //     <marker id="hsl-190--100---80--" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill="hsl(190, 100%, 80%)"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
+    //     <marker id="hsl-95--100---80--" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill="hsl(95, 100%, 80%)"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
+    // </defs>
+    // <g fill="none" stroke="hsl(260, 100%, 80%)" strokeWidth={2} markerEnd="url(#hsl-260--100---80--)">
+    //     <path d={`M${offset.x - 347},${offset.y+198.5} C${offset.x + 447},${offset.y + 198.5} ${offset.x + 471},${offset.y + 20.5} ${offset.x + 571},${offset.y + 20.5}`}></path>
+    // </g>
+    // </svg>
+
     // TODO: handle move, by dragging element
     return <div className='graphView' onWheel={handleWheel} onKeyDown={handleKeyDown} onClick={handleClick} onMouseDown={handleMouseDown} onMouseMove={handleMousePan} onMouseUp={handleMouseUp} ref={rootRef}>
         {/* TODO: set dynamic size?? */}
@@ -171,17 +183,7 @@ export default function GraphView(){
         <div style={{position: 'absolute', top: "3em", left: "0.2vw"}} className='debugOverlay'>{`offset: ${offset.x}, ${offset.y}`}</div>
         <div style={{position: 'absolute', top: "5.6em", left: "0.2vw"}} className='debugOverlay'>{`scale: ${scale}`}</div>
         {/* END DEBUG */}
-        <svg id="arrows" className="arrows" style={{position: 'absolute', top: '-10em'}}>
-            <defs>
-                {/* from https://webgl2fundamentals.org/webgl/lessons/resources/webgl-state-diagram.html#no-help */}
-                <marker id="hsl-260--100---80--" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill="hsl(260, 100%, 80%)"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
-                <marker id="hsl-190--100---80--" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill="hsl(190, 100%, 80%)"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
-                <marker id="hsl-95--100---80--" viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill="hsl(95, 100%, 80%)"><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
-            </defs>
-            <g fill="none" stroke="hsl(260, 100%, 80%)" strokeWidth={2} markerEnd="url(#hsl-260--100---80--)">
-                <path d={`M${offset.x - 347},${offset.y+198.5} C${offset.x + 447},${offset.y + 198.5} ${offset.x + 471},${offset.y + 20.5} ${offset.x + 571},${offset.y + 20.5}`}></path>
-            </g>
-        </svg>
+ 
         <GraphSpace scale={scale} offset={offset} ref={graphSpaceRef}></GraphSpace>
         <SearchPopup visible={searchVisible} setVisible={setSearchVisibiilty} position={searchPos}></SearchPopup>
 

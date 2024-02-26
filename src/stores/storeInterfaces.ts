@@ -1,8 +1,15 @@
 import Transform from "../engine/Transform";
 
 export type GUID = string;
-export type ConnectionSide = [GUID,number];
+
+
+/*
+    
+    @ConnectionSide [GUID, number of input/output]
+*/
 export type ConnectionDefinition = [ConnectionSide,ConnectionSide];
+export type ConnectionSide = [GUID,number];
+
 export type CanvasPosition = [number,number]; // x y
 export type CanvasArrow = [CanvasPosition,CanvasPosition]
 export interface ConnectionInfo{

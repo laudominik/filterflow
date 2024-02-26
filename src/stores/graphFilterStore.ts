@@ -58,10 +58,14 @@ export class GraphFilterStore extends PreviewStores{
     }
     public connectNodes(connection: ConnectionDefinition){
         const [[source,source_handle],[destination,destination_handle]] = connection;
-        if (this.engine.connectNodes(source,destination,source_handle,destination_handle)){
-            this.connections = [...this.connections,{connectionDefinition:connection,display:[[0,0],[0,0]]}];
-            this.emitChangeConnections();
-        }
+        // if (this.engine.connectNodes(source,destination,source_handle,destination_handle)){
+        //     this.connections = [...this.connections,{connectionDefinition:connection,display:[[0,0],[0,0]]}];
+        //     this.emitChangeConnections();
+        // }
+
+        // TODO: fix this (this.engine.connectNodes throws exception)
+        this.connections = [...this.connections,{connectionDefinition:connection,display:[[0,0],[0,0]]}];
+        this.emitChangeConnections();
         // Store state only update Nodes, connection is between nodes
     }
     //#endregion
