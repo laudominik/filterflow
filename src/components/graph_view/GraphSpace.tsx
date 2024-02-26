@@ -24,13 +24,14 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
     const connectionContext = useContext(connectionStoreContext);
     const connectionCollection = useSyncExternalStore(connectionContext.subscribeConnections.bind(connectionContext) as any, connectionContext.getConnections.bind(connectionContext));
 
+    const [debSpaceSize, setDebSpaceSize] = useState({x:0, y:0})
+
+    const [highlightedEdgeGUIDPair, setHightlightedEdgeGUIDPair] = useState<[GUID, GUID]>(["", ""])
+    const [highlightedGUID, setHighlightedGUID] = useState("")
+
     const [addingInputConnection, setAddingInputConnection] = useState(false);
     const [addingOutputConnection, setAddingOutputConnection] = useState(false);
-
-    const [debSpaceSize, setDebSpaceSize] = useState({x:0, y:0})
-    const [highlightedGUID, setHighlightedGUID] = useState("")
     const [connectionComponent, setConnectionComponent] = useState(handleConnections())
-
 
     useImperativeHandle(forwardedRef, () =>{
         return {
@@ -89,6 +90,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         // move to front
         if(dragTarget){
             setHighlightedGUID(dragTarget.id)
+            setHightlightedEdgeGUIDPair(["", ""])
         }
         
         window.addEventListener(isTouch ? 'touchmove' : 'mousemove', dragMove, {passive: false});
@@ -124,17 +126,18 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
     }
 
     function handleConnections(){
-        console.log(connectionCollection);
         return connectionCollection.map(connInf => {
             const connDef = connInf.connectionDefinition;
             const guid0 = connDef[0][0];
             const guid1 = connDef[1][0];
 
-            const pos0 = nodeContext.getNode(guid0)().value.getPos();
-            const pos1 = nodeContext.getNode(guid1)().value.getPos();
-            // for now top left corner connects to top left corner
+            const onEdgeClick = (guid0 : GUID, guid1 : GUID) => {
+                setHighlightedGUID("")
+                setHightlightedEdgeGUIDPair([guid0, guid1])
+            }
 
-            return <GraphEdge pos0={[pos0.x, pos0.y]} pos1={[pos1.x, pos1.y]} />
+            const highlighted = highlightedEdgeGUIDPair[0] === guid0 && highlightedEdgeGUIDPair[1] === guid1;
+            return <GraphEdge guid0={guid0} guid1={guid1} highlighted={highlighted} onClick={onEdgeClick} />
         })
     }
 
@@ -209,11 +212,10 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
 
     //#endregion
 
-    function handleTrashIcon(){
+    function handleNodeTrashIcon(){
         
         // for now until connection adding/removing works
         for(const guid of nodeCollection){
-            console.log(guid)
             connectionContext.disconnectNodes([
                 [highlightedGUID, 1],
                 [guid, 1]
@@ -227,6 +229,14 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         nodeContext.removeTransform(highlightedGUID)
         setHighlightedGUID("")
         setConnectionComponent(handleConnections())
+    }
+
+    function handleEdgeTrashIcon(){
+        connectionContext.disconnectNodes([
+            [highlightedEdgeGUIDPair[0], 1],
+            [highlightedEdgeGUIDPair[1], 1]
+         ])
+         setHightlightedEdgeGUIDPair(["", ""])
     }
 
     useEffect(() => {
@@ -276,7 +286,12 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         </div>
     {highlightedGUID ? 
         <div className='nodeContextMenu'>
-            GUID: {highlightedGUID} <Button onClick={handleTrashIcon}><FontAwesomeIcon icon={faTrash}/></Button>
+            GUID: {highlightedGUID} <Button onClick={handleNodeTrashIcon}><FontAwesomeIcon icon={faTrash}/></Button>
+        </div>
+     : <></>}
+    {highlightedEdgeGUIDPair[0] && highlightedEdgeGUIDPair[1] ? 
+        <div className='nodeContextMenu'>
+           {highlightedEdgeGUIDPair[0]} =- {highlightedEdgeGUIDPair[1]} <Button onClick={handleEdgeTrashIcon}><FontAwesomeIcon icon={faTrash}/></Button>
         </div>
      : <></>}
     </>
