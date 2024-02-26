@@ -26,6 +26,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
 
     const [addingInputConnection, setAddingInputConnection] = useState(false);
     const [addingOutputConnection, setAddingOutputConnection] = useState(false);
+
     const [debSpaceSize, setDebSpaceSize] = useState({x:0, y:0})
     const [highlightedGUID, setHighlightedGUID] = useState("")
     const [connectionComponent, setConnectionComponent] = useState(handleConnections())
@@ -123,6 +124,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
     }
 
     function handleConnections(){
+        console.log(connectionCollection);
         return connectionCollection.map(connInf => {
             const connDef = connInf.connectionDefinition;
             const guid0 = connDef[0][0];
@@ -130,7 +132,6 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
 
             const pos0 = nodeContext.getNode(guid0)().value.getPos();
             const pos1 = nodeContext.getNode(guid1)().value.getPos();
-            console.log(guid0, guid1);
             // for now top left corner connects to top left corner
 
             return <GraphEdge pos0={[pos0.x, pos0.y]} pos1={[pos1.x, pos1.y]} />
@@ -203,13 +204,29 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         setAddingInputConnection(input);
         setAddingOutputConnection(!input);
         setAddingGUID(myGUID);
+        
     }
 
     //#endregion
 
     function handleTrashIcon(){
+        
+        // for now until connection adding/removing works
+        for(const guid of nodeCollection){
+            console.log(guid)
+            connectionContext.disconnectNodes([
+                [highlightedGUID, 1],
+                [guid, 1]
+             ])
+            connectionContext.disconnectNodes([
+                [guid, 1],
+                [highlightedGUID, 1]
+            ])
+        }
+
         nodeContext.removeTransform(highlightedGUID)
         setHighlightedGUID("")
+        setConnectionComponent(handleConnections())
     }
 
     useEffect(() => {
@@ -219,7 +236,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         }
     }, [scale])
 
-
+    console.log(connectionComponent);
     return <>
     <div className="graphSpace" ref={viewRef} style={{transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`, outline: "1px solid green"}}>
         {/* a gnome here represent a plank size */}
@@ -232,12 +249,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         <div style={{position: 'absolute', top: "100%", left: "-1.5rem"}} className='debugSpaceOverlay'>{viewRef.current ? `0, ${debSpaceSize.y}` : ''}</div>
         
         {   
-            // export interface ConnectionInfo{
-            //     connectionDefinition: ConnectionDefinition
-            //     display: CanvasArrow
-            // }
-            connectionComponent
-            
+            handleConnections()
         }
 
 

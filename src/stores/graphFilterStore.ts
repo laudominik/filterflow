@@ -45,15 +45,23 @@ export class GraphFilterStore extends PreviewStores{
     //#region Vertices
     public disconnectNodes(connection: ConnectionDefinition){
         const [[source,source_handle],[destination,destination_handle]] = connection;
-        if (this.engine.disconnectNodes(source,destination,source_handle,destination_handle)){
-            this.connections = this.connections.filter((info) => !(
-                info.connectionDefinition[0][0] === connection[0][0] && 
-                info.connectionDefinition[1][0] === connection[1][0] &&
-                info.connectionDefinition[0][1] === connection[0][1] && 
-                info.connectionDefinition[1][1] === connection[1][1] 
-            ))
-            this.emitChangeConnections();
-        }
+        // if (this.engine.disconnectNodes(source,destination,source_handle,destination_handle)){
+        //     this.connections = this.connections.filter((info) => !(
+        //         info.connectionDefinition[0][0] === connection[0][0] && 
+        //         info.connectionDefinition[1][0] === connection[1][0] &&
+        //         info.connectionDefinition[0][1] === connection[0][1] && 
+        //         info.connectionDefinition[1][1] === connection[1][1] 
+        //     ))
+        //     this.emitChangeConnections();
+        // }
+        this.connections = this.connections.filter((info) => !(
+            info.connectionDefinition[0][0] === connection[0][0] && 
+            info.connectionDefinition[1][0] === connection[1][0] &&
+            info.connectionDefinition[0][1] === connection[0][1] && 
+            info.connectionDefinition[1][1] === connection[1][1] 
+        ))
+        this.emitChangeConnections();
+
         // Store state only update Nodes, connection is between nodes
     }
     public connectNodes(connection: ConnectionDefinition){
