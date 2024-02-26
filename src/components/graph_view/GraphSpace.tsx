@@ -7,8 +7,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { connectionStoreContext, nodeStoreContext } from "../../stores/context";
 import { faL, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { GUID } from "../../engine/nodeResponse";
-import Edge from "./GraphEdge";
-import GraphEdge from "./GraphEdge";
+import GraphEdge, { AnimationEdge, Edge } from "./GraphEdge";
 
 
 export interface GraphSpaceInterface{
@@ -29,9 +28,16 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
     const [highlightedEdgeGUIDPair, setHightlightedEdgeGUIDPair] = useState<[GUID, GUID]>(["", ""])
     const [highlightedGUID, setHighlightedGUID] = useState("")
 
+    let [addingGUID, setAddingGUID] = useState("");
     const [addingInputConnection, setAddingInputConnection] = useState(false);
     const [addingOutputConnection, setAddingOutputConnection] = useState(false);
+
+    const [addMovePos, setAddMovePos] = useState({x: 0, y:0})
+    const [addingEdgeAnimationComponent, setAddingEdgeAnimationComponent] = useState(<></>)
+
     const [connectionComponent, setConnectionComponent] = useState(handleConnections())
+
+
 
     useImperativeHandle(forwardedRef, () =>{
         return {
@@ -166,7 +172,6 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
     }
     //#endregion
     //#region input/output MouseEvents
-    let [addingGUID, setAddingGUID] = useState("");
 
     function connectionToggle(e: React.SyntheticEvent, myGUID: GUID){
         if(!(e.nativeEvent.target instanceof HTMLElement)) return;
@@ -189,6 +194,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
                 [myGUID, 1],
                 [addingGUID, 1]
             ])
+            window.removeEventListener('mousemove', addMove);
             return;
         }
 
@@ -200,13 +206,20 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
                 [addingGUID, 1],
                 [myGUID, 1]
             ])
+            window.removeEventListener('mousemove', addMove);
             return;
         }
 
         setAddingInputConnection(input);
         setAddingOutputConnection(!input);
         setAddingGUID(myGUID);
-        
+        window.addEventListener('mousemove', addMove, {passive: false});
+    }
+
+
+    function addMove(e: MouseEvent ){
+        setAddMovePos({x: (e as MouseEvent).pageX, y: (e as MouseEvent).pageY})
+        setAddingEdgeAnimationComponent(handleAddingEdgeAnimation())
     }
 
     //#endregion
@@ -225,6 +238,12 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
             ])
         }
 
+        if((addingInputConnection || addingOutputConnection) && addingGUID == highlightedGUID){
+            setAddingInputConnection(false);
+            setAddingOutputConnection(false);
+            window.removeEventListener('mousemove', addMove);
+        }
+
         nodeContext.removeTransform(highlightedGUID)
         setHighlightedGUID("")
         setConnectionComponent(handleConnections())
@@ -236,6 +255,11 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
             [highlightedEdgeGUIDPair[1], 1]
          ])
          setHightlightedEdgeGUIDPair(["", ""])
+    }
+
+    function handleAddingEdgeAnimation(){
+        console.log(addMovePos)
+        return <AnimationEdge guid={addingGUID} isInput={addingInputConnection} mousePos={addMovePos}/> 
     }
 
     useEffect(() => {
@@ -291,8 +315,8 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
            {highlightedEdgeGUIDPair[0]} =- {highlightedEdgeGUIDPair[1]} <Button onClick={handleEdgeTrashIcon}><FontAwesomeIcon icon={faTrash}/></Button>
         </div>
      : <></>}
-    </>
-    
+    {addingInputConnection || addingOutputConnection ? handleAddingEdgeAnimation(): <></>}
+    </>    
 }
 
 export const GraphSpace = forwardRef(GraphSpaceComponent);

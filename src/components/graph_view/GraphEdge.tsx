@@ -24,16 +24,47 @@ export function Edge({pos0, pos1, onClick, style}:{pos0: [number, number], pos1:
 
     const arrowMarkUUID = crypto.randomUUID();
     const markerEnd = `url(#${arrowMarkUUID})`
+
+    const defaultStyle = {stroke: "hsl(260, 100%, 80%)", strokeWidth: 2 }
+
+
     return <svg className="arrows" style={{position: 'absolute', top: top, left: left, width: Math.abs(dx) + 50, height: Math.abs(dy) + 50}}>
         <defs>
             {/* from https://webgl2fundamentals.org/webgl/lessons/resources/webgl-state-diagram.html#no-help */}
             <marker id={arrowMarkUUID} viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill={style ? style.stroke : "hsl(260, 100%, 80%)"}><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
           
         </defs>
-        <line x1={x1} y1={y1} x2={x2} y2={y2} style={style} markerEnd={markerEnd} onClick={onClick}/>
+        <line x1={x1} y1={y1} x2={x2} y2={y2} style={style ?? defaultStyle} markerEnd={markerEnd} onClick={onClick}/>
  
     </svg>
 }
+
+export function AnimationEdge({guid, isInput, mousePos}: {guid : GUID, isInput: boolean, mousePos: {x: number, y: number}}){
+    const nodeContext = useContext(nodeStoreContext);
+    let pos0 = nodeContext.getNode(guid)().value.getPos();
+    let pos1 = {x: pos0.x, y: pos0.y};
+
+    if(isInput){
+        const draggable = document.getElementById(guid)!
+        const input = draggable.getElementsByClassName("circle-top")[0]!;
+        if(input instanceof HTMLElement){
+            pos1 = {x: pos1.x + input.offsetLeft, y: pos1.y + input.offsetTop}
+            pos0 = mousePos
+        }
+    } else {
+        const draggable = document.getElementById(guid)!
+        const output = draggable.getElementsByClassName("circle-bottom")[0]!
+        if(output instanceof HTMLElement){
+            pos0 = {x: pos0.x + output.offsetLeft, y: pos0.y + output.offsetTop}
+            pos1 = mousePos
+        }
+    }
+
+
+    return <Edge pos0={[pos0.x, pos0.y]} pos1={[pos1.x, pos1.y]}/>
+}
+
+
 
 export default function GraphEdge({guid0, guid1, highlighted, onClick} : {guid0 : GUID, guid1 : GUID, highlighted : boolean, onClick?: (guid0: GUID, guid1: GUID)=>void}){
     
@@ -55,12 +86,10 @@ export default function GraphEdge({guid0, guid1, highlighted, onClick} : {guid0 
     const input = draggable1.getElementsByClassName("circle-top")[0]!;
     
     if(output instanceof HTMLElement){
-        const outputHTML = output as HTMLElement
-        pos0 = {x: pos0.x + outputHTML.offsetLeft, y: pos0.y + outputHTML.offsetTop}
+        pos0 = {x: pos0.x + output.offsetLeft, y: pos0.y + output.offsetTop}
     }
 
     if(input instanceof HTMLElement){
-        const inputHTML = input as HTMLElement
         pos1 = {x: pos1.x + input.offsetLeft, y: pos1.y + input.offsetTop}
     }
 
