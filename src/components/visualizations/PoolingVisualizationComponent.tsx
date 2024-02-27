@@ -37,10 +37,10 @@ export default function PoolingVisualizationComponent({guid, type, reduction}: {
 
 function drawPixelValues(pixels: number[][], channel: Channel){
     return <table className="matrix">{
-        pixels.map(el =>{
-            return <tr>{
-                el.map(ell => {
-                    return <td>{ColorComponent(ell, channel)}</td>
+        pixels.map((el,key) =>{
+            return <tr key={key}>{
+                el.map((ell,key) => {
+                    return <td key={key}>{ColorComponent(ell, channel)}</td>
                 })
             }</tr>
         })

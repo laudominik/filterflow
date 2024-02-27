@@ -78,11 +78,11 @@ function TransformsType(name:string, color:string, bgColor:string, transforms: s
 
   return {
     name: name,
-    typeCard: <ListGroup.Item action href={id} style={{backgroundColor: bgColor, color: color}}> {name} </ListGroup.Item>,
-    typeList: <Tab.Pane eventKey={id}>
+    typeCard: <ListGroup.Item key={name} action href={id} style={{backgroundColor: bgColor, color: color}}> {name} </ListGroup.Item>,
+    typeList: <Tab.Pane key={name} eventKey={id}>
       <ListGroup>
-        {transforms.map(transform => 
-          <ListGroup.Item style={{backgroundColor: bgColor, color: color}} onClick={() => onClickHandler(transform)}>
+        {transforms.map((transform) => 
+          <ListGroup.Item key={transform} style={{backgroundColor: bgColor, color: color}} onClick={() => onClickHandler(transform)}>
             {transform}
           </ListGroup.Item>)}
       </ListGroup>

@@ -46,7 +46,7 @@ const GraphNode: React.FC<NodeProps> = ({ children,
     const inputs = <div className="circle-container">
         {
             [...Array(node.value.meta.input_size)].map(
-                _ => <div className="circle circle-top" onMouseDown={(e) => ioFunction ? ioFunction(e, guid) : {}}></div>
+                (_,i) => <div key={i}  className="circle circle-top" onMouseDown={(e) => ioFunction ? ioFunction(e, guid) : {}}></div>
             )
         }
     </div>

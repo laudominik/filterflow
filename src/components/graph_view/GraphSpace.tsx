@@ -143,7 +143,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
             }
 
             const highlighted = highlightedEdgeGUIDPair[0] === guid0 && highlightedEdgeGUIDPair[1] === guid1;
-            return <GraphEdge guid0={guid0} guid1={guid1} highlighted={highlighted} onClick={onEdgeClick} />
+            return <GraphEdge key={guid0+"-"+guid1} guid0={guid0} guid1={guid1} highlighted={highlighted} onClick={onEdgeClick} />
         })
     }
 
@@ -311,9 +311,10 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
                     } : {
                         borderWitdh: "0px"
                     }
-                return trf.name == "source" ? 
-                <ImportGraphNode guid={guid} style={style} onBodyClick={dragStart} ioFunction={connectionToggle}/> : 
-                <TransformGraphNode guid={guid} style={style} onBodyClick={dragStart} ioFunction={connectionToggle}/>
+                return (trf.name == "source" ? 
+               () => <ImportGraphNode key={guid} guid={guid} style={style} onBodyClick={dragStart} ioFunction={connectionToggle}/> : 
+               () => <TransformGraphNode key={guid} guid={guid} style={style} onBodyClick={dragStart} ioFunction={connectionToggle}/>
+                )()
             }
             )
         }
