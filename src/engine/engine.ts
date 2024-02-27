@@ -53,6 +53,7 @@ export class Engine extends EventTarget{
         this.nodes = new Map()
         this.source_nodes = []
         this.internal.addEventListener("info",this.handleInternalInfo as any)
+        this.internal.addEventListener("connection_remove",this.handleInternalConnectionsRemove as any)
     }
 
     public async updateNodeParams(node:GUID,params:KVParams){
@@ -77,7 +78,8 @@ export class Engine extends EventTarget{
             this.source_nodes.push(guid)
         }
         node.engine = this;
-        this.nodes.set(guid,node) 
+        this.nodes.set(guid,node)
+        this.batchState.response.node.added.push(guid); 
         return guid
     }
 
@@ -85,17 +87,24 @@ export class Engine extends EventTarget{
         let node = this.getNode(guid);
         node?.remove();
         this.nodes.delete(guid);
+        this.batchState.response.node.removed.push(guid);
         this.source_nodes = this.source_nodes.filter((v) => v!= guid);
     }
 
     public connectNodes(source:GUID,destination:GUID,source_handle: number,destination_handle:number): boolean{
-        connect(this.nodes.get(source)!,source_handle,this.nodes.get(destination)!,destination_handle)
-        return true
+        let ok = connect(this.nodes.get(source)!,source_handle,this.nodes.get(destination)!,destination_handle)
+        if (ok){
+            this.batchState.response.connection.added.push([[source,source_handle],[destination,destination_handle]]);
+        }
+        return ok;
     }
 
     public disconnectNodes(source:GUID,destination:GUID,source_handle: number,destination_handle:number): boolean{
-        disconnect(this.nodes.get(source)!,source_handle,this.nodes.get(destination)!,destination_handle)
-        return true
+        let ok = disconnect(this.nodes.get(source)!,source_handle,this.nodes.get(destination)!,destination_handle)
+        if (ok){
+            this.batchState.response.connection.removed.push([[source,source_handle],[destination,destination_handle]]);
+        }
+        return ok;
     }
 
     public getNode(node:GUID): Transform | undefined {
@@ -125,7 +134,7 @@ export class Engine extends EventTarget{
                 this.batchState.pendingUpdates.add(id);
                 this.getNode(id)?.update_node(this.batchState.tick);
             })
-            this.batchState.response.updated.push(msg.nodeId);
+            this.batchState.response.node.updated.push(msg.nodeId);
         }else if (event.detail.status == "error"){
             const msg = event.detail;
             this.batchState.doneUpdates.add(msg.nodeId);
@@ -133,23 +142,44 @@ export class Engine extends EventTarget{
                 this.batchState.pendingUpdates.add(id);
                 this.getNode(id)?.update_node(this.batchState.tick);
             })
-            this.batchState.response.errors.push(msg.nodeId);
-
+            this.batchState.response.node.errors.push(msg.nodeId);
         }
         
         if (this.batchState.pendingUpdates.size == this.batchState.doneUpdates.size){
             this.dispatchEvent(new CustomEvent<ExternalEngineResponse>("update",{detail:this.batchState.response}))
         }
     }
+    
+    private handleInternalConnectionsRemove(event: CustomEvent<[[GUID,number],[GUID,number]]>){
+        this.batchState.response.connection.removed.push(event.detail);
+        this.dispatchEvent(new CustomEvent<ExternalEngineResponse>("update",{detail:this.batchState.response}))
+    }
 }
 
 // this will be send to parent element to inform that some element changed
 export class ExternalEngineResponse{
-    updated: GUID[] // all nodes that finished update successfully
-    errors: GUID[]   // all nodes that returned error
+    node :{
+        updated: GUID[] // all nodes that finished update successfully
+        errors: GUID[]   // all nodes that returned error
+        added: GUID[]
+        removed: GUID[]
+    }
+
+    connection : {
+        added: [[GUID,number],[GUID,number]][];
+        removed: [[GUID,number],[GUID,number]][]
+    }
     constructor(){
-        this.updated = []
-        this.errors = []
+        this.node = {
+            added : [],
+            errors: [],
+            removed: [],
+            updated: []
+        };
+        this.connection = {
+            added: [],
+            removed: [],
+        }
     }
 }
 

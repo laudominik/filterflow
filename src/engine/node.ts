@@ -2,14 +2,22 @@ import { Engine, GUID } from "./engine"
 import { NodeResponse, NodeResponseError, NodeResponseUpdated } from "./nodeResponse"
 
 
-export function connect<T extends node<T>>(source: T, source_nr: number, destination: T, destination_nr: number) {
+export function connect<T extends node<T>>(source: T, source_nr: number, destination: T, destination_nr: number): boolean {
+    if (destination.inputs.has(destination_nr)){
+        return false;
+    }
     source.connect_output(source_nr, destination, destination_nr)
     destination.connect_input(destination_nr, source, source_nr)
+    return true;
 }
 
 export function disconnect<T extends node<T>>(source: T, source_nr: number, destination: T, destination_nr: number) {
+    if (!destination.inputs.has(destination_nr)){
+        return false;
+    }
     source.disconnect_output(source_nr, destination, destination_nr)
     destination.disconnect_input(destination_nr, source, source_nr)
+    return true;
 }
 
 
@@ -73,6 +81,7 @@ export abstract class node<T extends node<T>>{
         }
     }
 
+
     public connect_input(input_nr: number, parent: T, parent_output_nr: number) {
         if (this.inputs.has(input_nr)) {
             console.log("Logic error reconnecting input without disconnecting first")
@@ -93,10 +102,12 @@ export abstract class node<T extends node<T>>{
     public remove() {
         this.inputs.forEach(([parent, parent_nr], key) => {
             this.engine.getNode(parent)!.disconnect_output(parent_nr, this as any, key)
+            this.engine.dispatchEvent(new CustomEvent("connection_remove",{detail:[[parent,parent_nr],[this.meta.id,key]]}))
         })
         this.connected_to_outputs.forEach((childrens, key) => {
             childrens.forEach(([child, child_nr]) => {
                 this.engine.getNode(child)!.disconnect_input(child_nr, this as any, key)
+                this.engine.dispatchEvent(new CustomEvent("connection_remove",{detail:[[this.meta.id,key],[child,child_nr]]}))
             })
         })
 
