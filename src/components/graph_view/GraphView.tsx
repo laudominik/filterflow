@@ -112,7 +112,7 @@ export default function GraphView(){
     }
 
     function handleMouseDown(event : React.MouseEvent){
-
+        setSearchVisibiilty(false);
         if(event.button === MIDDLE_BUTTON){
             // start move
             SetIsMoving(true);
@@ -147,10 +147,6 @@ export default function GraphView(){
         console.log()
     }
 
-    function handleClick(event: React.SyntheticEvent){
-        setSearchVisibiilty(false)
-    }
-
     // the trick to prevent CTRL+Wheel Zoom is to prevent it from root element
     // TODO: convert this to more React-ish solution
     useEffect(()=>{
@@ -161,7 +157,7 @@ export default function GraphView(){
         })
     })
 
-    return <div className='graphView' onWheel={handleWheel} onKeyDown={handleKeyDown} onClick={handleClick} onMouseDown={handleMouseDown} onMouseMove={handleMousePan} onMouseUp={handleMouseUp} ref={rootRef}>
+    return <div className='graphView' onWheel={handleWheel} onKeyDown={handleKeyDown} onMouseDown={handleMouseDown} onMouseMove={handleMousePan} onMouseUp={handleMouseUp} ref={rootRef}>
         <Grid displacement={[offset.x, offset.y]} scale={scale} size={[viewWidth, viewHeight]}/>
         {/* DEBUG: transformation info */}
         <div style={{position: 'absolute', top: "1em", left: "0.2vw"}} className='debugOverlay'>{`screen size: ${viewWidth}, ${viewHeight}`}</div>
@@ -170,7 +166,7 @@ export default function GraphView(){
         {/* END DEBUG */}
  
         <GraphSpace scale={scale} offset={offset} ref={graphSpaceRef}></GraphSpace>
-        <SearchPopup visible={searchVisible} setVisible={setSearchVisibiilty} position={searchPos}></SearchPopup>
+        <SearchPopup visible={searchVisible} position={searchPos}></SearchPopup>
         
         <div className='graphViewTooltip'>
         <Button title="add transformation" onClick={(e)=>{e.preventDefault(); e.stopPropagation(); handleOpenSearch()}}><FontAwesomeIcon icon={faPlus}/></Button>

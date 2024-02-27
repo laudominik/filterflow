@@ -1,102 +1,108 @@
 import Fuse, { FuseResult, RangeTuple } from 'fuse.js'
 
 import { knownTypes, transformType } from '../../engine/TransformDeclarations'
-import { ReactNode, useContext, useEffect, useState } from 'react';
+import { ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import { nodeStoreContext } from '../../stores/context';
 
+// Notes for mobile, and tablet version
+//  - remember that it will open virtual keyboard (so we have even less screen space)
+//  - since we have actually no screen size, search should fill entire screen
 
-/*
-DESIGN NOTES:
-- the result don't need not be reactive (performance?)
-*/
+function SearchResult({children}:{children?: ReactNode}){
+  // `size` attribute for `select` is not supported for mobile
+  // that's why we are implementing <select> from scratch
+  return <div className='search-result-list' onWheel={(e) => e.stopPropagation()}>
+    {children}
+  </div>
+}
 
-/*
-    There will be at least 4 search components (graph popup, transform modal, help, and perhaps command pallete)
-    Either there will be a common something, or 4 different versions to maintain
+function SearchGroup({children, name}:{children?: ReactNode, name: string}){
+  return <div className='search-group'>
+    <div className='search-group-name'>{name}</div>
+    {children}
+  </div>
+}
 
-    What I'm thinking:
+function SearchEntry({children, name, onClick}:{children? : ReactNode, name: string, onClick? : (name: string)=>void}) {
+  return <div className='search-result' onClick={() => {onClick?.(name)}}>
+    {children}
+  </div>
+}
 
-    +----------------+
-    |  [Search Bar]  |
-    +----------------+
-    | Res1           |
-    | Res2           |
-    | Group>         |
-    +----------------+
+export default function SearchPopup({visible=true, handleResultClick: onResultClick, position=[0,0]}:{visible?: boolean, handleResultClick?: (name: string)=>void, position?: [number, number]}){
+  
+  // TODO: add keyboard arrows support
+  // QoL, onEnter select first element
+  // what about 2D list instead? check
 
-    The stylling will differ
-    The search bar action won't (it's always the same)
-    The result entries (content, and action) will differ
-    The dataset will differ along with search options (i.e. top 5, search fields)
-
-    An unified thing would actually only:
-    - create Fuse
-    - create search bar
-    - map search results
-    - handle when search pattern is empty
-
-    Creating fuse is a one line
-    Search bar is a one element + 3 lines of search function
-    Mapping is a one function
-
-    Only highlighting is a pain
-
-    Pros:
-    - We split logic
-
-    Cons:
-    - Form over content?
-*/
-
-
-// give default list from start
-export default function SearchPopup({visible=true, setVisible, position=[0,0]}:{visible?: boolean, setVisible: (_: boolean)=>void, position?: [number, number]}){
-  const nodeContext = useContext(nodeStoreContext)
-  const [pattern, setPattern] = useState<string>("")
-
-  const list = Array.from(transformType())
+  //#region TODO: figure out if react re-calculate this, or expose that
+  const transformsPaths = Array.from(transformType())
     .map(val => val[1].map(name=>{return {group: val[0], name, full: `${val[0]}/${name}`}}))
-    .reduce((arr, val)=>{return arr.concat(val)}, []).concat({group: "", name: "source", full:"source"})
+    .reduce((arr, val)=>{return arr.concat(val)}, []).concat({group: "", name: "source", full:"source"});
 
-  const fuse = new Fuse(list, {includeMatches: true, keys: ['full'], ignoreLocation: true, minMatchCharLength:1})
+  const fuse = new Fuse(transformsPaths, {includeMatches: true, keys: ['full'], ignoreLocation: true, minMatchCharLength:1})
+  //#endregion
+  
+  const nodeStore = useContext(nodeStoreContext)
+  const [query, setQuery] = useState<string>("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  const queryResults = fuse.search(query);
 
-  function handleAddTransform(name: string){
-    nodeContext.addTransform(name,{pos: {x: position[0], y: position[1]}})
-    setVisible(false);
+  useEffect(()=>{
+    if(visible === true && inputRef.current != null){
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [visible])
+  
+  const defaultResult = ()=>{
+    return <SearchResult>
+      {Array.from(transformType()).map(v => {
+        const [groupName, elements] = v;
+       return <SearchGroup key={groupName} name={groupName}>
+          {
+            elements.map((name)=>{
+              return <SearchEntry key={name} name={name} children={name} onClick={handleSelect}/>
+            })
+
+          }
+        </SearchGroup>
+    })}
+    </SearchResult>
   }
 
-  function handleSearch(e: React.ChangeEvent){
-    const value = (e.target as HTMLInputElement).value
-    setPattern(value)
+  const searchResult = ()=>{
+    return <SearchResult>
+      {queryResults.map(result => {
+        if(!result.matches) return <></>
+        const matches = new Map(result.matches.map(value => [value.key, value]));
+        const fullMatch = matches.has('full') ? matches.get('full')?.indices : [];
+        return <SearchEntry key={result.item.name} name={result.item.name} onClick={handleSelect}>{highlightMatches(result.item.full, fullMatch)}</SearchEntry>
+      })}
+    </SearchResult>
   }
 
-  function preventPropagation(e: React.SyntheticEvent){
-    e.stopPropagation()
+
+  //#region EventHandlers
+  const handleSearch = (e: React.ChangeEvent)=>{
+    const value = (e.target as HTMLInputElement).value;
+    setQuery(value);
   }
 
-  function searchResult(result: ReactNode, name: string): ReactNode{
-    return <div className='search-result' onClick={()=> {handleAddTransform(name)}}>{result}</div>
+  const handleSelect = (name : string) =>{
+    nodeStore.addTransform(name, {position: position});
+    onResultClick?.(name);
   }
 
-  function searchResults(value: string){
-    return <div className='search-result-list' onWheel={preventPropagation}>{fuse.search(value).map(result => {
-      if(!result.matches) return <></>
+  const handleArrowSelect = (e : React.KeyboardEvent)=>{
 
-      let matches = new Map(result.matches.map(value => [value.key, value]))
-      let fullMatch = matches.has('full') ? matches.get('full')!.indices : []
-      // TODO: tune search logic (handle searching by group specific, and both at the same time)
-
-      return searchResult(highlightMatches(result.item.full, fullMatch), result.item.name)
-    })}</div>
   }
+  //#endregion
 
-  function defaultResult(){
-    return <div className='search-result-list'  onWheel={preventPropagation}>{list.map(el => searchResult(el.full, el.name))}</div>
-  }
 
-  return <div style={{top: `50%`, left: `50%`, position: "absolute", zIndex: 110, visibility: visible ? "visible" : "hidden" }} className='search-popup' onClick={preventPropagation}>
-    <input onChange={handleSearch}/>
-    {pattern === "" ? defaultResult():searchResults(pattern)}
+  return <div style={{top: `50%`, left: `50%`, position: "absolute", zIndex: 110, visibility: visible ? "visible" : "hidden" }} className='search-popup' onKeyDown={handleArrowSelect} onMouseDown={(e) => {e.stopPropagation()}}>
+    <input onChange={handleSearch} ref={inputRef}/>
+    {query === "" ? defaultResult() : searchResult()}
   </div>
 }
 

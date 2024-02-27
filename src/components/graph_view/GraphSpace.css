@@ -79,11 +79,24 @@
     background-color: var(--background-color);
     border-bottom: 1px solid var(--secondary-color);
     cursor: pointer;
+    padding-top: 0.2ex;
+    padding-bottom: 0.2ex;
+    padding-left: 1ch;
+    padding-right: 1ch;
+    min-height: fit-content;
 }
 
 .search-result:hover{
     background-color: color-mix(in srgb, var(--background-color) 50%, var(--secondary-color) 50%);
 
+}
+
+.search-group{
+    background-color: var(--background-color);
+}
+
+.search-group-name{
+    font-weight: bold;
 }
 
 .search-result-list{
