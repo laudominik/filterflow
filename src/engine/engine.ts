@@ -1,4 +1,3 @@
-import 'reflect-metadata'
 import { jsonMapMember, jsonObject } from "typedjson";
 import Transform, { KVParams } from "./Transform";
 import mapToTransform, {knownTypes} from "./TransformDeclarations";
@@ -70,8 +69,8 @@ export class Engine extends EventTarget{
 
     public addNode(transformation: string, params: any): GUID{
         const node = mapToTransform(transformation)!
-        if(params.pos){
-            node.setPos(params.pos);
+        if(params.position){
+            node.setPos(params.position);
         }
         const guid = node.meta.id;
         if (node.meta.input_size == 0){

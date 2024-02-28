@@ -66,7 +66,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         if (!(closest instanceof HTMLElement)) return;
         
 
-        e.preventDefault();
+        // e.preventDefault();
         e.stopPropagation();
 
         // https://github.com/grafana/grafana/pull/79508/files#diff-0713145d1754d5f4b090224a1d1cdf818fe5cbdcc23c8d3aabff8fb82bf2f6baR186-R190
@@ -132,6 +132,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
     }
 
     function handleConnections(){
+        console.log(connectionCollection)
         return connectionCollection.map(connInf => {
             const connDef = connInf.connectionDefinition;
             const guid0 = connDef[0][0];
@@ -227,8 +228,6 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
     //#endregion
 
     function handleNodeTrashIcon(){
-        
-        // for now until connection adding/removing works
         for(const guid of nodeCollection){
             connectionContext.disconnectNodes([
                 [highlightedGUID, 1],

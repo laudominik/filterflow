@@ -4,9 +4,7 @@ import { jsonObject } from "typedjson";
 
 @jsonObject
 export default class SourceTransform extends Transform{
-    public _update_node(): void {
-        throw new Error("Method not implemented.");
-    }
+
     image?: string
 
     constructor(){

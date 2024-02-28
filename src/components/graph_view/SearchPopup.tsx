@@ -90,7 +90,7 @@ export default function SearchPopup({visible=true, handleResultClick: onResultCl
   }
 
   const handleSelect = (name : string) =>{
-    nodeStore.addTransform(name, {position: position});
+    nodeStore.addTransform(name, {position: {x: position[0], y: position[1]}});
     onResultClick?.(name);
   }
 

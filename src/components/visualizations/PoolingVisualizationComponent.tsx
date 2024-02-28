@@ -6,6 +6,10 @@ import AdnotateElement, { AdnotateText } from "./AdnotationComponent"
 import './Matrix.css'
 
 export default function PoolingVisualizationComponent({guid, type, reduction}: {guid: GUID, type:string, reduction: (...values: number[]) => number}) {
+    
+    // TODO : change API
+
+
     const filterContext = useContext(FilterStoreContext)
     
     const preview = useSyncExternalStore(filterContext.subscribePreview.bind(filterContext) as any, filterContext.getPreview.bind(filterContext))

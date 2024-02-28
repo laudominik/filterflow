@@ -24,9 +24,7 @@ class LaplaceTransform extends ConvolutionTransform {
 
 @jsonObject
 export class Conn4LaplaceTransform extends LaplaceTransform {
-    public _update_node(): void {
-        throw new Error("Method not implemented.");
-    }
+
     constructor() {
         super(true)
     }
@@ -34,9 +32,7 @@ export class Conn4LaplaceTransform extends LaplaceTransform {
 
 @jsonObject
 export class Conn8LaplaceTransform extends LaplaceTransform {
-    public _update_node(): void {
-        throw new Error("Method not implemented.");
-    }
+
     constructor() {
         super(false)
     }

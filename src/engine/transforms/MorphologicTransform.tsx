@@ -48,10 +48,7 @@ const linearConvolutionShader = `
 
 @jsonObject
 class MorphologicTransform extends Transform {
-    public _update_node(): void {
-        throw new Error("Method not implemented.");
-    }
-    
+
     image?:string
     kernelSize: [number, number];
     fragment: string;

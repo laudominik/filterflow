@@ -1,13 +1,13 @@
-import { Engine } from "../engine/engine";
+import { IEngine } from "../engine/iengine";
 import { BaseFilterStore } from "./baseFilterStore";
 import { CanvasPointer, CanvasPosition, GUID, IPreviewStore, IPreviewStores, PreviewSelections } from "./storeInterfaces";
-
-
+import { Channel } from "./storeInterfaces";
+import Transform from "../engine/Transform";
 export abstract class PreviewStores extends BaseFilterStore implements IPreviewStores{
     
     previewStores: Map<string,IPreviewStore>
 
-    constructor(fileName: string,engine: Engine ){
+    constructor(fileName: string,engine: IEngine<Transform> ){
         super(fileName,engine);
         this.previewStores = new Map();
     }
@@ -34,6 +34,7 @@ export class PreviewStore implements IPreviewStore{
     selection: {
         pointer: CanvasPointer
         preview: PreviewSelections
+        channel: Channel
     }
 
     selectionListener: CallableFunction[]
@@ -45,7 +46,8 @@ export class PreviewStore implements IPreviewStore{
         this.contextListener = [];
         this.selection = {
             pointer: {destination: [0,0],source:[0,0]},
-            preview: {destination: {center:[0,0],size:[0,0],start: [0,0]},source:{center:[0,0],size:[0,0],start: [0,0]}}
+            preview: {destination: {center:[0,0],size:[0,0],start: [0,0]},source:{center:[0,0],size:[0,0],start: [0,0]}},
+            channel: Channel.NONE
         }
     }
 
@@ -60,8 +62,8 @@ export class PreviewStore implements IPreviewStore{
         }
     }
 
-    updateSelection(pointer: CanvasPointer, preview: PreviewSelections){
-        this.selection = {pointer,preview};
+    updateSelection(pointer: CanvasPointer, preview: PreviewSelections, channel: Channel){
+        this.selection = {pointer,preview, channel};
         this.selectionListener.forEach(v => v())
     }
     

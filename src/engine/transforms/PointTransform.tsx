@@ -6,9 +6,7 @@ import { GUID } from "../engine";
 
 @jsonObject
 class PointTransform extends Transform {
-    public _update_node(): void {
-        throw new Error("Method not implemented.");
-    }
+
 
     image?:string
     fragmentShader: string;

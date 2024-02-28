@@ -161,7 +161,7 @@ export default function GraphView(){
         <Grid displacement={[offset.x, offset.y]} scale={scale} size={[viewWidth, viewHeight]}/>
         {/* DEBUG: transformation info */}
         <div style={{position: 'absolute', top: "1em", left: "0.2vw"}} className='debugOverlay'>{`screen size: ${viewWidth}, ${viewHeight}`}</div>
-        <div style={{position: 'absolute', top: "3em", left: "0.2vw"}} className='debugOverlay'>{`offset: ${offset.x}, ${offset.y}`}</div>
+        <div style={{position: 'absolute', top: "3em", left: "0.2vw"}} className='debugOverlay'>{`search pos: ${searchPos[0]}, ${searchPos[1]}`}</div>
         <div style={{position: 'absolute', top: "5.6em", left: "0.2vw"}} className='debugOverlay'>{`scale: ${scale}`}</div>
         {/* END DEBUG */}
  

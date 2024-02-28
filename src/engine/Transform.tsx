@@ -1,10 +1,10 @@
-import 'reflect-metadata'
 import { ReactElement, ReactNode } from 'react'
-import { GUID } from './engine'
 import { AnyT, jsonMember, jsonObject } from 'typedjson';
 import { node } from './node';
-import { CanvasSelection } from '../stores/simpleFilterStore';
 
+type CanvasPosition = [number,number]; 
+type CanvasSelection = {start: CanvasPosition, size: CanvasPosition, center: CanvasPosition}
+type GUID = string;
 export interface KVParams {
     [key: string]: any
 }
@@ -23,6 +23,13 @@ abstract class Transform extends node<Transform> {
         this.gl = this.canvas.getContext("webgl", {preserveDrawingBuffer: true})!;
         this.hash = crypto.randomUUID();
         this.pos = {x: 0, y: 0}
+    }
+
+    public _update_node(): void {
+        // based on input connections perform calculations
+        let [parent,nr] = this.inputs.get(0)!;
+        let input = this.engine.getNode(parent)?.canvas;
+        this.apply(input);
     }
 
     abstract paramView(guid: GUID): ReactElement;

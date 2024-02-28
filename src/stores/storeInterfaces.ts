@@ -69,9 +69,10 @@ export interface IPreviewStore{
     getSelection(): {
         pointer: CanvasPointer
         preview: PreviewSelections
+        channel: Channel
     }
     subscribeSelection(listener: Func): Func
-    updateSelection(pointer: CanvasPointer, preview: PreviewSelections): void
+    updateSelection(pointer: CanvasPointer, preview: PreviewSelections, channel: Channel): void
     updateContext(inputs: GUID[],output: GUID): void
     getContext(): {inputs: GUID[],output: GUID}
     subscribeContext(listener: Func): Func

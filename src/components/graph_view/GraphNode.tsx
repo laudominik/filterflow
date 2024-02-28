@@ -70,9 +70,9 @@ const GraphNode: React.FC<NodeProps> = ({ children,
                     </Card.Header>
                     <Collapse in={open}>
                         <Card.Body>
-                            {children}
+                            {/* {children} */}
                             {/* TODO: render node parameters */}
-                            {/* {node.value.paramView(guid)} */}
+                            {children ?? node.value.paramView(guid)}
                         </Card.Body>
                     </Collapse>
                 </Card>

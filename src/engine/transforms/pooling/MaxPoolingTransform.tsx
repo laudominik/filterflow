@@ -5,9 +5,7 @@ import PoolingVisualizationComponent from "../../../components/visualizations/Po
 
 @jsonObject
 class MaxPoolingTransform extends PoolingTransform {
-    public _update_node(): void {
-        throw new Error("Method not implemented.");
-    }
+
     constructor() {
         super('Max pooling', 
         `

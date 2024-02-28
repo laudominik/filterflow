@@ -1,14 +1,14 @@
 // Engine core functionalities
 
 import Transform, { KVParams } from "../engine/Transform";
-import { Engine, GUID } from "../engine/engine"
+import { IEngine, GUID } from "../engine/iengine"
 import { INodeStore } from "./storeInterfaces";
 
 type MarkedListener = CallableFunction & { id: GUID }
 
 export abstract class BaseFilterStore implements INodeStore{
     filename: string
-    engine: Engine
+    engine: IEngine<Transform>
 
     // listen on node change
     nodeListeners: {listener: CallableFunction,id: GUID}[] 
@@ -18,7 +18,7 @@ export abstract class BaseFilterStore implements INodeStore{
     nodeCollectionListener: CallableFunction[]
     nodeCollection: GUID[]
 
-    constructor(filename: string, engine: Engine){
+    constructor(filename: string, engine: IEngine<Transform>){
         this.filename = filename;
         this.engine = engine;
         this.nodeListeners = [];

@@ -11,10 +11,7 @@ import PoolingVisualizationComponent from "../../components/visualizations/Pooli
 
 @jsonObject
 class PoolingTransform extends Transform {
-    public _update_node(): void {
-        throw new Error("Method not implemented.");
-    }
-    
+
     image?:string
     fragment: string;
     poolingSize: number;

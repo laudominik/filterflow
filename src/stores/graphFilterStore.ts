@@ -1,7 +1,4 @@
-import { createContext } from "react";
-import Transform, { KVParams } from "../engine/Transform"
-import { Engine, GUID, ExternalEngineResponse } from "../engine/engine"
-import { BaseFilterStore } from "./baseFilterStore";
+import { Engine, ExternalEngineResponse } from "../engine/engine"
 import { ConnectionDefinition, ConnectionInfo } from "./storeInterfaces";
 import { PreviewStores } from "./previewStore";
 
@@ -49,33 +46,32 @@ export class GraphFilterStore extends PreviewStores{
 
     //#region Vertices
     public disconnectNodes(connection: ConnectionDefinition){
+        // const [[source,source_handle],[destination,destination_handle]] = connection;
+        // if (this.engine.disconnectNodes(source,destination,source_handle,destination_handle)){
+        //     this.connections = this.connections.filter((info) => !(
+        //         info.connectionDefinition[0][0] === connection[0][0] && 
+        //         info.connectionDefinition[1][0] === connection[1][0] &&
+        //         info.connectionDefinition[0][1] === connection[0][1] && 
+        //         info.connectionDefinition[1][1] === connection[1][1] 
+        //     ))
+        //     this.emitChangeConnections();
+        // }
         const [[source,source_handle],[destination,destination_handle]] = connection;
-        if (this.engine.disconnectNodes(source,destination,source_handle,destination_handle)){
-            this.connections = this.connections.filter((info) => !(
-                info.connectionDefinition[0][0] === connection[0][0] && 
-                info.connectionDefinition[1][0] === connection[1][0] &&
-                info.connectionDefinition[0][1] === connection[0][1] && 
-                info.connectionDefinition[1][1] === connection[1][1] 
-            ))
-            this.connections = this.connections.filter((info) => !(
-                info.connectionDefinition[0][0] === connection[0][0] && 
-                info.connectionDefinition[1][0] === connection[1][0] &&
-                info.connectionDefinition[0][1] === connection[0][1] && 
-                info.connectionDefinition[1][1] === connection[1][1] 
-            ))
-            this.emitChangeConnections();
-        }
-
+        this.connections = this.connections.filter((info) => !(
+            info.connectionDefinition[0][0] === connection[0][0] && 
+            info.connectionDefinition[1][0] === connection[1][0] &&
+            info.connectionDefinition[0][1] === connection[0][1] && 
+            info.connectionDefinition[1][1] === connection[1][1] 
+        ))
+        this.emitChangeConnections();
         // Store state only update Nodes, connection is between nodes
     }
     public connectNodes(connection: ConnectionDefinition){
-        const [[source,source_handle],[destination,destination_handle]] = connection;
+        // const [[source,source_handle],[destination,destination_handle]] = connection;
         // if (this.engine.connectNodes(source,destination,source_handle,destination_handle)){
         //     this.connections = [...this.connections,{connectionDefinition:connection,display:[[0,0],[0,0]]}];
         //     this.emitChangeConnections();
         // }
-
-        // TODO: fix this (this.engine.connectNodes throws exception)
         this.connections = [...this.connections,{connectionDefinition:connection,display:[[0,0],[0,0]]}];
         this.emitChangeConnections();
         // Store state only update Nodes, connection is between nodes

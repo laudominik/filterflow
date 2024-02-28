@@ -4,20 +4,20 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {Button, FormSelect} from 'react-bootstrap';
 import { FilterStoreContext } from '../../stores/simpleFilterStore';
 import { GUID } from '../../engine/engine';
+import { nodeStoreContext } from '../../stores/context';
+import { previewStoreContext } from '../../stores/context';
 
-export default function PointComponent({guid, parametrized}: {guid: GUID, parametrized: boolean}){
-    const filterContext = useContext(FilterStoreContext)
+export default function PointComponent({guid, parametrized}: {guid: GUID, parametrized: boolean}){    
+    const nodeContext = useContext(nodeStoreContext);
+    const node = useSyncExternalStore(nodeContext.subscribeNode(guid), nodeContext.getNode(guid));
 
-    const transform = useSyncExternalStore(filterContext.subscribe(guid) as any, filterContext.getTransform.bind(filterContext, guid))
-    const [argument, setArgument] = useState(transform.getParams()["argument"]);
+    const [argument, setArgument] = useState(node.value.getParams()["argument"]);
 
     const handleInputChange = (value: string) => {
         setArgument(value)
-        filterContext.updateParams(guid,{
+        node.value.updateParams({
             "argument": value
         })
-
-        filterContext.applyTransforms()
     };
 
     if(parametrized){

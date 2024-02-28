@@ -1,3 +1,4 @@
+import 'reflect-metadata'
 import { useState, useEffect, StrictMode } from 'react';
 import { Button } from 'react-bootstrap';
 import { faList } from '@fortawesome/free-solid-svg-icons';

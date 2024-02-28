@@ -1,4 +1,4 @@
-import { Engine, GUID } from "./engine"
+import { IEngine, GUID } from "./iengine"
 import { NodeResponse, NodeResponseError, NodeResponseUpdated } from "./nodeResponse"
 
 
@@ -21,8 +21,8 @@ export function disconnect<T extends node<T>>(source: T, source_nr: number, dest
 }
 
 
-export type NodeInit = {
-    id: string, inputs: number, outputs: number, engine?: Engine
+export type NodeInit<T extends node<T>> = {
+    id: string, inputs: number, outputs: number, engine?: IEngine<T>
 }
 
 
@@ -36,12 +36,12 @@ export abstract class node<T extends node<T>>{
         inputs: number,
         tick: number
     }
-    engine: Engine
+    engine: IEngine<T>
     // TODO change to GUID
     inputs: Map<number, [GUID, number]>
     connected_to_outputs: Map<number, [GUID, number][]> // two way linked list
 
-    constructor(params: NodeInit) {
+    constructor(params: NodeInit<T>) {
         this.engine = params.engine!
         this.inputs = new Map<number, [GUID, number]>()
         this.connected_to_outputs = new Map<number, [GUID, number][]>()
@@ -60,14 +60,14 @@ export abstract class node<T extends node<T>>{
         if (this.connected_to_outputs.has(output_nr)) {
             this.connected_to_outputs.set(output_nr, [[self.meta.id, self_input_nr]])
         } else {
-            const prev = this.connected_to_outputs.get(output_nr)!;
+            const prev = this.connected_to_outputs.get(output_nr) ?? [];
             this.connected_to_outputs.set(output_nr, [...prev, [self.meta.id, self_input_nr]])
         }
     }
 
     public disconnect_output(output_nr: number, self: T, self_input_nr: number) {
         if (this.connected_to_outputs.has(output_nr)) {
-            let prev = this.connected_to_outputs.get(output_nr)!;
+            let prev = this.connected_to_outputs.get(output_nr) ?? [];
             let searched_id = prev.findIndex(([child, child_nr]) => child == self.meta.id && child_nr == self_input_nr)
             if (searched_id != -1) {
                 delete prev[searched_id];

@@ -18,6 +18,9 @@ type ColorMask = {red: boolean, green: boolean, blue: boolean};
 function Preview({ title, sourceId }: { title: string, sourceId: string }) {
 
     const [isFullscreen, setIsFullscreen] = useState(false);
+
+    // TODO: change API
+
     const filterStore = useContext(FilterStoreContext);
 
     const offscreen_canvas = useSyncExternalStore(filterStore.subscribe(sourceId) as any, filterStore.getView(sourceId));

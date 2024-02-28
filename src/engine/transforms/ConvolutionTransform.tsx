@@ -1,4 +1,3 @@
-
 import "reflect-metadata"
 import { jsonObject } from "typedjson";
 import KernelComponent from "../../components/transforms/KernelComponent";
@@ -52,9 +51,6 @@ const linearConvolutionShader = `
 
 @jsonObject
 class ConvolutionTransform extends Transform {
-    public _update_node(): void {
-        throw new Error("Method not implemented.");
-    }
     
     image?:string
     kernel: Array<Array<number>>
@@ -168,12 +164,6 @@ class ConvolutionTransform extends Transform {
 
             return this.canvas;
     }
-
-    // updateParams(params: KVParams): void {
-    //     this.params = params;
-    //     // this.name = "Custom kernel";
-    //     // console.log("changed name", this.name)
-    // }
 }
 
 export default ConvolutionTransform;
