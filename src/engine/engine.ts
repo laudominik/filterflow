@@ -72,6 +72,9 @@ export class Engine extends EventTarget{
         if(params.position){
             node.setPos(params.position);
         }
+        if(params.previewPosition){
+            node.setPreviewPos(params.previewPosition);
+        }
         const guid = node.meta.id;
         if (node.meta.input_size == 0){
             this.source_nodes.push(guid)

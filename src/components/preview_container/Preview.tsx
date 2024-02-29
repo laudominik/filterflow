@@ -5,30 +5,36 @@ import { Button } from 'react-bootstrap';
 import { Channel, FilterStoreContext, PreviewSelections } from '../../stores/simpleFilterStore';
 import { previewStoreContext } from '../../stores/context';
 
-export function InputPreview({ sourceId }: { sourceId: string }) {
+export function InputPreview({ sourceId, allowFullscreen = true }: { sourceId: string, allowFullscreen? : boolean }) {
 
-    return <Preview sourceId={sourceId} title="Input" />;
+    return <Preview sourceId={sourceId} title="Input" allowFullscreen={allowFullscreen}/>;
 }
 
-export function OutputPreview({ sourceId }: { sourceId: string }) {
-    return <Preview sourceId={sourceId} title="Output" />;
+export function OutputPreview({ sourceId, allowFullscreen = true }: { sourceId: string, allowFullscreen?: boolean }) {
+    return <Preview sourceId={sourceId} title="Output" allowFullscreen={allowFullscreen}/>;
 }
 
 type ColorMask = {red: boolean, green: boolean, blue: boolean};
 
-function Preview({ title, sourceId }: { title: string, sourceId: string }) {
+function Preview({ title, sourceId, allowFullscreen }: { title: string, sourceId: string, allowFullscreen: boolean }) {
 
     const [isFullscreen, setIsFullscreen] = useState(false);
     return <div className="preview" style={componentStyle(isFullscreen)}>
         <div className="pipelineBar">
             <div>{title}</div>
-            <Button className="border-0 bg-transparent" onClick={() => setIsFullscreen(!isFullscreen)}>
-                <FontAwesomeIcon className="iconInCard" icon={isFullscreen ? faMagnifyingGlassMinus : faMagnifyingGlassPlus} />
-            </Button>
+            {
+                allowFullscreen ? 
+                <Button className="border-0 bg-transparent" onClick={() => setIsFullscreen(!isFullscreen)}>
+                    <FontAwesomeIcon className="iconInCard" icon={isFullscreen ? faMagnifyingGlassMinus : faMagnifyingGlassPlus} />
+                </Button> 
+                : 
+                <></>
+            }
+            
         </div>
         <div className="imageContainer">
             <div className='centeredImage'>
-                
+
             </div>
         </div>
     </div>

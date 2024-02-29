@@ -91,7 +91,7 @@ export default function SearchPopup({visible=true, handleResultClick: onResultCl
   }
 
   const handleSelect = (name : string) =>{
-    nodeStore.addTransform(name, {position: {x: position[0], y: position[1]}});
+    nodeStore.addTransform(name, {position: {x: position[0], y: position[1]}, previewPosition: {x: position[0] - 10, y: position[1] - 10}});
     onResultClick?.(name);
   }
 

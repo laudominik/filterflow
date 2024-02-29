@@ -5,7 +5,7 @@ import TransformGraphNode from "./TransformGraphNode";
 import { Button } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { connectionStoreContext, nodeStoreContext, previewStoreContext } from "../../stores/context";
-import { faImagePortrait, faL, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faDoorClosed, faDoorOpen, faImagePortrait, faL, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { GUID } from "../../engine/nodeResponse";
 import GraphEdge, { AnimationEdge, Edge, PreviewEdge } from "./GraphEdge";
 import PreviewContainer from "../preview_container/PreviewContainer";
@@ -365,12 +365,13 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         {children}
         </div>
     {highlightedGUID ? 
-        <div className='nodeContextMenu'>
-            GUID: {highlightedGUID} 
-            <Button onClick={handleNodeTrashIcon}><FontAwesomeIcon icon={faTrash}/></Button>
-            <Button onClick={handleNodePreviewIcon}><FontAwesomeIcon icon={faImagePortrait}/></Button>
-        </div>
+    <NodeContextMenu 
+    highlightedGUID={highlightedGUID} 
+    handleNodeTrashIcon={handleNodeTrashIcon} 
+    handleNodePreviewIcon={handleNodePreviewIcon} 
+    previewOpen={openedPreviews.find(el => el == highlightedGUID) != undefined} />
      : <></>}
+
     {highlightedEdgeGUIDPair[0] && highlightedEdgeGUIDPair[1] ? 
         <div className='nodeContextMenu'>
            {highlightedEdgeGUIDPair[0]} =- {highlightedEdgeGUIDPair[1]} <Button onClick={handleEdgeTrashIcon}><FontAwesomeIcon icon={faTrash}/></Button>
@@ -378,5 +379,26 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
      : <></>}
     </>    
 }
+
+
+function NodeContextMenu({ highlightedGUID, handleNodeTrashIcon, handleNodePreviewIcon, previewOpen } 
+    : {highlightedGUID : GUID, handleNodeTrashIcon: ()=> void, handleNodePreviewIcon: ()=>void, previewOpen: boolean}){
+
+    const nodeContext = useContext(nodeStoreContext);
+    const node = useSyncExternalStore(nodeContext.subscribeNode(highlightedGUID), nodeContext.getNode(highlightedGUID));
+    const previewIcon =   previewOpen ? <FontAwesomeIcon icon={faDoorClosed}/> : <FontAwesomeIcon icon={faDoorOpen}/>
+
+    return <div className='nodeContextMenu'>
+            {/* debug */}
+            GUID: {highlightedGUID} 
+            {/* end debug */}
+            <Button onClick={handleNodeTrashIcon}><FontAwesomeIcon icon={faTrash}/></Button>
+            {
+                node.value.name == "source" ? <></> : 
+                <Button onClick={handleNodePreviewIcon}>{previewIcon}</Button>
+            }
+    </div>
+}
+
 
 export const GraphSpace = forwardRef(GraphSpaceComponent);
