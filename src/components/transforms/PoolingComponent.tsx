@@ -5,32 +5,32 @@ import {Button, FormSelect} from 'react-bootstrap';
 import { FilterStoreContext } from '../../stores/simpleFilterStore';
 import ConvolutionTransform from '../../engine/transforms/ConvolutionTransform';
 import { GUID } from '../../engine/engine';
+import { nodeStoreContext } from '../../stores/context';
 
 export default function PoolingComponent({guid}: {guid: GUID}){
-    const filterContext = useContext(FilterStoreContext)
+    const nodeContext = useContext(nodeStoreContext);
+    const node = useSyncExternalStore(nodeContext.subscribeNode(guid), nodeContext.getNode(guid));
 
-    const transform = useSyncExternalStore(filterContext.subscribe(guid) as any, filterContext.getTransform.bind(filterContext, guid))
-    const [poolingSize, setPoolingSize] = useState<number>(transform.getParams()["pooling_size"])
-    const [poolingStep, setPoolingStep] = useState<number>(transform.getParams()["pooling_step"])
+
+    const [poolingSize, setPoolingSize] = useState<number>(node.value.getParams()["pooling_size"])
+    const [poolingStep, setPoolingStep] = useState<number>(node.value.getParams()["pooling_step"])
     const handleSizeChange = (newSize: number) => {
         setPoolingSize(newSize);
-        filterContext.updateParams(guid,
+        node.value.updateParams(
             {
                 "pooling_size": newSize,
                 "pooling_step": poolingStep
             }
         );
-        filterContext.applyTransforms()
     };
     const handleStepChange = (newStep: number) => {
         setPoolingStep(newStep);
-        filterContext.updateParams(guid,
+        node.value.updateParams(
             {
                 "pooling_size": poolingSize,
                 "pooling_step": newStep
             }
         );
-        filterContext.applyTransforms()
     };
 
     return <div className="grid">

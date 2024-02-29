@@ -16,17 +16,18 @@ export default class TransformRegistry {
 
     constructor(){
         this.registry = new Map()
-        this.registry.set("source", new TransformBuilder(SourceTransform))
         this.knownTypes = new Set();
         // TODO: better name; either for knownTypes or transformType (knownType referst to concrete transformations, transformType reffers to collections)
         this.knownTypes.add(SourceTransform)
         this.transformType = new Map([
+            ["source", []],
             ["linear", []],
             ["pooling", []],
             ["logical", []],
             ["point", []],
             ["morphologic", []]
         ])
+        this.declare("source", "source", SourceTransform)
     }
 
     private declare(type: string, name: string, transform: new ()=>Transform): TransformRegistry {

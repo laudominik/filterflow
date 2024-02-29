@@ -132,7 +132,6 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
     }
 
     function handleConnections(){
-        console.log(connectionCollection)
         return connectionCollection.map(connInf => {
             const connDef = connInf.connectionDefinition;
             const guid0 = connDef[0][0];

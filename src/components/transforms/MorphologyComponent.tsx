@@ -5,24 +5,22 @@ import {Button, FormSelect} from 'react-bootstrap';
 import { FilterStoreContext } from '../../stores/simpleFilterStore';
 import ConvolutionTransform from '../../engine/transforms/ConvolutionTransform';
 import { GUID } from '../../engine/engine';
+import { nodeStoreContext } from '../../stores/context';
 
 export default function MorphoLogicComponent({guid}: {guid: GUID}){
-    const filterContext = useContext(FilterStoreContext)
+    const nodeContext = useContext(nodeStoreContext);
+    const node = useSyncExternalStore(nodeContext.subscribeNode(guid), nodeContext.getNode(guid));    
+    // TODO: check if refresh component of selection change is needed
 
-    const transform = useSyncExternalStore(filterContext.subscribe(guid) as any, filterContext.getTransform.bind(filterContext, guid))
-    // NOTE: this (probably) forces entire component to reload, expertise is needed
-    const selection = useSyncExternalStore(filterContext.subscribeCanvasSelections.bind(filterContext) as any, filterContext.getPreviewSelections.bind(filterContext))
-
-    const [kernelSize, setKernelSize] = useState<[number, number]>(transform.getParams()["kernel_size"]);
+    const [kernelSize, setKernelSize] = useState<[number, number]>(node.value.getParams()["kernel_size"]);
 
     const handleKernelChange = (newKernelSize: [number, number]) => {
         setKernelSize(newKernelSize);
-        transform.updateParams(
+        node.value.updateParams(
             {
                 "kernel_size": newKernelSize
             }
         );
-        filterContext.applyTransforms()
     };
 
     return <div className="grid">

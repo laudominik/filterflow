@@ -38,7 +38,7 @@ export default function SearchPopup({visible=true, handleResultClick: onResultCl
   //#region TODO: figure out if react re-calculate this, or expose that
   const transformsPaths = Array.from(transformType())
     .map(val => val[1].map(name=>{return {group: val[0], name, full: `${val[0]}/${name}`}}))
-    .reduce((arr, val)=>{return arr.concat(val)}, []).concat({group: "", name: "source", full:"source"});
+    .reduce((arr, val)=>{return arr.concat(val)}, []).concat({group: "source", name: "source", full:"source"});
 
   const fuse = new Fuse(transformsPaths, {includeMatches: true, keys: ['full'], ignoreLocation: true, minMatchCharLength:1})
   //#endregion
@@ -55,6 +55,7 @@ export default function SearchPopup({visible=true, handleResultClick: onResultCl
     }
   }, [visible])
   
+  console.log(transformType())
   const defaultResult = ()=>{
     return <SearchResult>
       {Array.from(transformType()).map(v => {
