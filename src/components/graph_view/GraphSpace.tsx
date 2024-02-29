@@ -4,10 +4,12 @@ import ImportGraphNode from "./ImportGraphNode";
 import TransformGraphNode from "./TransformGraphNode";
 import { Button } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { connectionStoreContext, nodeStoreContext } from "../../stores/context";
-import { faL, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { connectionStoreContext, nodeStoreContext, previewStoreContext } from "../../stores/context";
+import { faImagePortrait, faL, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { GUID } from "../../engine/nodeResponse";
-import GraphEdge, { AnimationEdge, Edge } from "./GraphEdge";
+import GraphEdge, { AnimationEdge, Edge, PreviewEdge } from "./GraphEdge";
+import PreviewContainer from "../preview_container/PreviewContainer";
+import GraphPreview from "./GraphPreview";
 
 
 export interface GraphSpaceInterface{
@@ -36,6 +38,9 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
     const [addingEdgeAnimationComponent, setAddingEdgeAnimationComponent] = useState(<></>)
 
     const [connectionComponent, setConnectionComponent] = useState(handleConnections())
+
+    const [openedPreviews, setOpenedPreviews] = useState<Array<string>>([])
+    const [previewConnectionComponent, setPreviewConnectionComponent] = useState(handlePreviewConnections())
 
 
 
@@ -94,13 +99,22 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         dragTargetStartX = rect ? (window.scrollX + (rect.left - viewRect!.x)/scale) : 0;
         dragTargetStartY = rect ? (window.scrollY + (rect.top - viewRect!.y)/scale) : 0;
         // move to front
-        if(dragTarget){
-            setHighlightedGUID(dragTarget.id)
-            setHightlightedEdgeGUIDPair(["", ""])
-        }
-        
         window.addEventListener(isTouch ? 'touchmove' : 'mousemove', dragMove, {passive: false});
         window.addEventListener(isTouch ? 'touchend' : 'mouseup', dragStop, {passive: false});
+        if(!dragTarget) return;
+
+
+        if(dragTarget.classList.contains("transformNode")){
+            setHighlightedGUID(dragTarget.id)
+            setHightlightedEdgeGUIDPair(["", ""])
+            return;
+        }
+        if(dragTarget.classList.contains("previewNode")){
+            setHighlightedGUID(dragTarget.id.slice(2))
+            setHightlightedEdgeGUIDPair(["", ""])
+            return;
+        }
+        
     }
 
     function dragStop(e: MouseEvent | TouchEvent){
@@ -147,6 +161,20 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         })
     }
 
+    function handleNodePreviewIcon(){
+        if(openedPreviews.find(el => el == highlightedGUID)){
+            setOpenedPreviews(openedPreviews.filter(el => el != highlightedGUID))
+            return;
+        }
+
+        setOpenedPreviews([...openedPreviews, highlightedGUID]);
+    }
+
+    function handlePreviewConnections(){
+        return openedPreviews.map(guid => <PreviewEdge guid={guid}/>)
+    }
+
+
     function dragMove(e: MouseEvent | TouchEvent){
         if(dragTarget){
             e.preventDefault();
@@ -163,10 +191,17 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
             
             dragTarget.style.left = `${x}px`;
             dragTarget.style.top = `${y}px`;
-            if(nodeCollection.includes(dragTarget.id)){
+
+            if(dragTarget.classList.contains("transformNode")){
                 nodeContext.getNode(dragTarget.id)().value.setPos({x, y})
-                // hacky, but works
                 setConnectionComponent(handleConnections())
+                setPreviewConnectionComponent(handlePreviewConnections())
+            }
+
+            if(dragTarget.classList.contains("previewNode")){
+                nodeContext.getNode(dragTarget.id.slice(2))().value.setPreviewPos({x, y})
+                setConnectionComponent(handleConnections())
+                setPreviewConnectionComponent(handlePreviewConnections())
             }
         }
     }
@@ -243,10 +278,12 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
             setAddingOutputConnection(false);
             window.removeEventListener('mousemove', addMove);
         }
+        setOpenedPreviews(openedPreviews.filter(el => el != highlightedGUID))
 
         nodeContext.removeTransform(highlightedGUID)
         setHighlightedGUID("")
         setConnectionComponent(handleConnections())
+        setPreviewConnectionComponent(handleConnections())
     }
 
     function handleEdgeTrashIcon(){
@@ -295,7 +332,15 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
             handleConnections()
         }
         {addingInputConnection || addingOutputConnection ? handleAddingEdgeAnimation(): <></>}
-
+        
+        {
+            openedPreviews.map(guid => {
+                return <GraphPreview guid={guid} onBodyClick={dragStart} />
+            })
+        }
+        {
+            handlePreviewConnections()
+        }
 
         {/* END DEBUG */}
         {
@@ -321,7 +366,9 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         </div>
     {highlightedGUID ? 
         <div className='nodeContextMenu'>
-            GUID: {highlightedGUID} <Button onClick={handleNodeTrashIcon}><FontAwesomeIcon icon={faTrash}/></Button>
+            GUID: {highlightedGUID} 
+            <Button onClick={handleNodeTrashIcon}><FontAwesomeIcon icon={faTrash}/></Button>
+            <Button onClick={handleNodePreviewIcon}><FontAwesomeIcon icon={faImagePortrait}/></Button>
         </div>
      : <></>}
     {highlightedEdgeGUIDPair[0] && highlightedEdgeGUIDPair[1] ? 

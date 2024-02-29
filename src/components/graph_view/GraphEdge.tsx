@@ -8,7 +8,7 @@ import { nodeStoreContext } from "../../stores/context";
     edge is from pos0 to pos1 (i.e. pos0 -> pos1)
 */
 
-export function Edge({pos0, pos1, onClick, style}:{pos0: [number, number], pos1: [number, number], onClick?: ()=>void, style? : CSSProperties}){
+export function Edge({pos0, pos1, onClick, style, marker=true}:{pos0: [number, number], pos1: [number, number], onClick?: ()=>void, style? : CSSProperties, marker?: boolean}){
  
 
     const dx = pos1[0] - pos0[0];
@@ -34,7 +34,7 @@ export function Edge({pos0, pos1, onClick, style}:{pos0: [number, number], pos1:
             <marker id={arrowMarkUUID} viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill={style ? style.stroke : "hsl(260, 100%, 80%)"}><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
           
         </defs>
-        <line x1={x1} y1={y1} x2={x2} y2={y2} style={style ?? defaultStyle} markerEnd={markerEnd} onClick={onClick} pointerEvents='auto'/>
+        <line x1={x1} y1={y1} x2={x2} y2={y2} style={style ?? defaultStyle} markerEnd={marker ? markerEnd: ""} onClick={onClick} pointerEvents='auto'/>
  
     </svg>
 }
@@ -64,6 +64,23 @@ export function AnimationEdge({guid, isInput, mousePos}: {guid : GUID, isInput: 
     return <Edge pos0={[pos0.x, pos0.y]} pos1={[pos1.x, pos1.y]}/>
 }
 
+export function PreviewEdge({guid}: {guid: GUID}){
+    const nodeContext = useContext(nodeStoreContext);
+    const node = nodeContext.getNode(guid)().value;
+    const pos0 = node.getPreviewPos();
+    let pos1 = node.getPos();
+
+    const draggableTransform = document.getElementById(guid)!
+
+    const card = draggableTransform.getElementsByClassName("card")[0]!;
+
+    if(card instanceof HTMLElement){
+        pos1 = {x: pos1.x + card.offsetLeft, y: pos1.y + card.offsetTop}
+    }
+    
+    const style= {stroke: "orange", strokeWidth: 1, strokeDasharray: "10,5" };            
+    return <Edge pos0={[pos0.x, pos0.y]} pos1={[pos1.x, pos1.y]} style={style} marker={false}/>
+}
 
 
 export default function GraphEdge({guid0, guid1, highlighted, onClick} : {guid0 : GUID, guid1 : GUID, highlighted : boolean, onClick?: (guid0: GUID, guid1: GUID)=>void}){

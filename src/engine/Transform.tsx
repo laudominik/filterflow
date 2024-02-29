@@ -23,6 +23,7 @@ abstract class Transform extends node<Transform> {
         this.gl = this.canvas.getContext("webgl", {preserveDrawingBuffer: true})!;
         this.hash = crypto.randomUUID();
         this.pos = {x: 0, y: 0}
+        this.prevPos = {x: 0, y: 0}
     }
 
     public _update_node(): void {
@@ -99,8 +100,16 @@ abstract class Transform extends node<Transform> {
         return this.pos
     }
 
+    public getPreviewPos(): {x: number, y: number}{
+        return this.prevPos;
+    }
+
     public setPos(pos: {x: number, y: number}){
         this.pos = pos
+    }
+
+    public setPreviewPos(pos: {x: number, y: number}){
+        this.prevPos = pos;
     }
 
     async setImageString(image: string) {
@@ -146,6 +155,8 @@ abstract class Transform extends node<Transform> {
 
     @jsonMember
     pos: {x: number, y:number}
+    @jsonMember
+    prevPos: {x: number, y:number}
     @jsonMember(String)
     color: string;
     @jsonMember(String)
