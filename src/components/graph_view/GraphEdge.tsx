@@ -96,8 +96,12 @@ export default function GraphEdge({guid0, guid1, inputNumber, highlighted, onCli
     const style= {stroke: highlighted ? "blue" : "hsl(260, 100%, 80%)", strokeWidth: 2 }
 
     // TODO: check if it doesn't break sometimes (multiple elements with the same id)
-    const draggable0 = document.getElementById(guid0)!
-    const draggable1 = document.getElementById(guid1)!
+    const draggable0 = document.getElementById(guid0)
+    const draggable1 = document.getElementById(guid1)
+
+    if(!draggable0 || !draggable1){
+        return <></>
+    }
     
     const output = draggable0.getElementsByClassName("circle-bottom")[0]!
     const input = draggable1.getElementsByClassName("circle-top")[inputNumber]!;

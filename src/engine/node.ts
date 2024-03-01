@@ -101,7 +101,16 @@ export abstract class node<T extends node<T>>{
 
     public remove() {
         this.inputs.forEach(([parent, parent_nr], key) => {
-            this.engine.getNode(parent)!.disconnect_output(parent_nr, this as any, key)
+            // TODO: here it sometimes crashes (no parent, this.inputs most likely not updated), find why's that, for now adding check
+            const parentNode = this.engine.getNode(parent)
+            if(!parentNode){
+                console.log("[WARNING] missing parent in node.ts::remove()")
+                console.trace()
+                console.log(this.engine)
+                return;
+            }
+
+            parentNode.disconnect_output(parent_nr, this as any, key)
             this.engine.dispatchEvent(new CustomEvent("connection_remove",{detail:[[parent,parent_nr],[this.meta.id,key]]}))
         })
         this.connected_to_outputs.forEach((childrens, key) => {

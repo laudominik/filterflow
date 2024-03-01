@@ -257,23 +257,6 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
     //#endregion
 
     function handleNodeTrashIcon(){
-        for(const guid of nodeCollection){            
-            for(let i = 0; i < nodeContext.getNode(guid)().value.meta.input_size; i++){
-                connectionContext.disconnectNodes([
-                    [highlightedGUID, 0],
-                    [guid, i]
-                 ])
-            }
-
-            for(let i = 0; i < nodeContext.getNode(highlightedGUID)().value.meta.input_size; i++){
-                connectionContext.disconnectNodes([
-                    [guid, 0],
-                    [highlightedGUID, i]
-                ])
-            }
-          
-        }
-
         if((addingInputConnection || addingOutputConnection) && addingGUID == highlightedGUID){
             setAddingInputConnection(false);
             setAddingOutputConnection(false);
@@ -292,7 +275,6 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
             [highlightedEdge.guid0, 0],
             [highlightedEdge.guid1, highlightedEdge.inputNo]
          ])
-         console.log(connectionCollection)
          setHightlightedEdge({guid0: "", guid1: "", inputNo: 0})
          setConnectionComponent(handleConnections())
     }

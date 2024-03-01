@@ -55,7 +55,6 @@ export default function SearchPopup({visible=true, handleResultClick: onResultCl
     }
   }, [visible])
   
-  console.log(transformType())
   const defaultResult = ()=>{
     return <SearchResult>
       {Array.from(transformType()).map(v => {
