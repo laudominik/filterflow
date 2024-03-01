@@ -5,6 +5,7 @@ import { Conn4LaplaceTransform, Conn8LaplaceTransform } from "./transforms/convo
 import { SobelXTransform, SobelYTransform } from "./transforms/convolution/SobelTransform"
 import DilatationTransform from "./transforms/morphologic/DilatationTransform"
 import ErosionTransform from "./transforms/morphologic/ErosionTransform"
+import MuxTransform from "./transforms/other/MuxTransform"
 import { AndTransform } from "./transforms/point/AndTransform"
 import { BrightnessTransform } from "./transforms/point/BrightnessTransform"
 import { GrayscaleTransform } from "./transforms/point/GrayscaleTransform"
@@ -43,6 +44,7 @@ export default function declareOps(){
     .declarePoint("from YCbCr", FromYCbCrTransform)
     .declareMorphologic("erosion", ErosionTransform)
     .declareMorphologic("dilatation", DilatationTransform)
+    .declareOther("mux", MuxTransform)
 }
 
  

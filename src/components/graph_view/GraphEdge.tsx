@@ -39,14 +39,14 @@ export function Edge({pos0, pos1, onClick, style, marker=true}:{pos0: [number, n
     </svg>
 }
 
-export function AnimationEdge({guid, isInput, mousePos}: {guid : GUID, isInput: boolean, mousePos: {x: number, y: number}}){
+export function AnimationEdge({guid, isInput, mousePos, inputNo}: {guid : GUID, isInput: boolean, mousePos: {x: number, y: number}, inputNo: number}){
     const nodeContext = useContext(nodeStoreContext);
     let pos0 = nodeContext.getNode(guid)().value.getPos();
     let pos1 = {x: pos0.x, y: pos0.y};
 
     if(isInput){
         const draggable = document.getElementById(guid)!
-        const input = draggable.getElementsByClassName("circle-top")[0]!;
+        const input = draggable.getElementsByClassName("circle-top")[inputNo]!;
         if(input instanceof HTMLElement){
             pos1 = {x: pos1.x + input.offsetLeft, y: pos1.y + input.offsetTop}
             pos0 = mousePos
@@ -83,7 +83,7 @@ export function PreviewEdge({guid}: {guid: GUID}){
 }
 
 
-export default function GraphEdge({guid0, guid1, highlighted, onClick} : {guid0 : GUID, guid1 : GUID, highlighted : boolean, onClick?: (guid0: GUID, guid1: GUID)=>void}){
+export default function GraphEdge({guid0, guid1, inputNumber, highlighted, onClick} : {guid0 : GUID, guid1 : GUID, inputNumber: number, highlighted : boolean, onClick?: (guid0: GUID, guid1: GUID, inputNo: number)=>void}){
     
     const nodeContext = useContext(nodeStoreContext);
     let pos0 = nodeContext.getNode(guid0)().value.getPos();
@@ -91,7 +91,7 @@ export default function GraphEdge({guid0, guid1, highlighted, onClick} : {guid0 
 
     const onClickWrapper = () => {
         if(!onClick) return;
-        onClick(guid0, guid1);
+        onClick(guid0, guid1, inputNumber);
     }
     const style= {stroke: highlighted ? "blue" : "hsl(260, 100%, 80%)", strokeWidth: 2 }
 
@@ -100,7 +100,7 @@ export default function GraphEdge({guid0, guid1, highlighted, onClick} : {guid0 
     const draggable1 = document.getElementById(guid1)!
     
     const output = draggable0.getElementsByClassName("circle-bottom")[0]!
-    const input = draggable1.getElementsByClassName("circle-top")[0]!;
+    const input = draggable1.getElementsByClassName("circle-top")[inputNumber]!;
     
     if(output instanceof HTMLElement){
         pos0 = {x: pos0.x + output.offsetLeft, y: pos0.y + output.offsetTop}

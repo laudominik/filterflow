@@ -27,11 +27,12 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
 
     const [debSpaceSize, setDebSpaceSize] = useState({x:0, y:0})
 
-    const [highlightedEdgeGUIDPair, setHightlightedEdgeGUIDPair] = useState<[GUID, GUID]>(["", ""])
+    const [highlightedEdge, setHightlightedEdge] = useState<{guid0: GUID, guid1: GUID, inputNo: number}>({guid0: "", guid1: "", inputNo: 0})
     const [highlightedGUID, setHighlightedGUID] = useState("")
 
     let [addingGUID, setAddingGUID] = useState("");
     const [addingInputConnection, setAddingInputConnection] = useState(false);
+    const [addingInputNo, setAddingInputNo] = useState(0);
     const [addingOutputConnection, setAddingOutputConnection] = useState(false);
 
     const [addMovePos, setAddMovePos] = useState({x: 0, y:0})
@@ -106,12 +107,12 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
 
         if(dragTarget.classList.contains("transformNode")){
             setHighlightedGUID(dragTarget.id)
-            setHightlightedEdgeGUIDPair(["", ""])
+            setHightlightedEdge({guid0: "", guid1: "", inputNo: 0})
             return;
         }
         if(dragTarget.classList.contains("previewNode")){
             setHighlightedGUID(dragTarget.id.slice(2))
-            setHightlightedEdgeGUIDPair(["", ""])
+            setHightlightedEdge({guid0: "", guid1: "", inputNo: 0})
             return;
         }
         
@@ -150,14 +151,14 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
             const connDef = connInf.connectionDefinition;
             const guid0 = connDef[0][0];
             const guid1 = connDef[1][0];
+            const inputNumber = connDef[1][1];
 
-            const onEdgeClick = (guid0 : GUID, guid1 : GUID) => {
+            const onEdgeClick = (guid0 : GUID, guid1 : GUID, inputNo: number) => {
                 setHighlightedGUID("")
-                setHightlightedEdgeGUIDPair([guid0, guid1])
+                setHightlightedEdge({guid0: guid0, guid1: guid1, inputNo: inputNo})
             }
-
-            const highlighted = highlightedEdgeGUIDPair[0] === guid0 && highlightedEdgeGUIDPair[1] === guid1;
-            return <GraphEdge key={guid0+"-"+guid1} guid0={guid0} guid1={guid1} highlighted={highlighted} onClick={onEdgeClick} />
+            const highlighted = highlightedEdge.guid0 === guid0 && highlightedEdge.guid1 === guid1 && highlightedEdge.inputNo === inputNumber;
+            return <GraphEdge key={guid0+"-"+guid1} guid0={guid0} guid1={guid1} inputNumber={inputNumber} highlighted={highlighted} onClick={onEdgeClick} />
         })
     }
 
@@ -208,7 +209,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
     //#endregion
     //#region input/output MouseEvents
 
-    function connectionToggle(e: React.SyntheticEvent, myGUID: GUID){
+    function connectionToggle(e: React.SyntheticEvent, myGUID: GUID, inputNo: number){
         if(!(e.nativeEvent.target instanceof HTMLElement)) return;
         
         let closest = e.nativeEvent.target;
@@ -216,18 +217,12 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         
         const input = closest.classList.contains("circle-top");
 
-        if((addingInputConnection && input) || (addingOutputConnection && !input)){
-            addingGUID = myGUID;
-            return;
-        }
-
         if(addingInputConnection && !input && addingGUID != myGUID){
             setAddingInputConnection(false);
-            // TODO: connectionStore.addConnection(addingGUID, myGUID);
             console.log("added connection ", myGUID, " -> ", addingGUID);
             connectionContext.connectNodes([
-                [myGUID, 1],
-                [addingGUID, 1]
+                [myGUID, 0],
+                [addingGUID, addingInputNo]
             ])
             window.removeEventListener('mousemove', addMove);
             return;
@@ -235,11 +230,10 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
 
         if(addingOutputConnection && input && addingGUID != myGUID){
             setAddingOutputConnection(false);
-            // TODO: connectionStore.addConnection(myGUID, addingGUID);
             console.log("added connection ", addingGUID, " -> ", myGUID);
             connectionContext.connectNodes([
-                [addingGUID, 1],
-                [myGUID, 1]
+                [addingGUID, 0],
+                [myGUID, inputNo]
             ])
             window.removeEventListener('mousemove', addMove);
             return;
@@ -247,6 +241,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
 
         setAddingInputConnection(input);
         setAddingOutputConnection(!input);
+        setAddingInputNo(inputNo);
         setAddingGUID(myGUID);
         window.addEventListener('mousemove', addMove, {passive: false});
         const rectum = closest.getBoundingClientRect();
@@ -262,15 +257,21 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
     //#endregion
 
     function handleNodeTrashIcon(){
-        for(const guid of nodeCollection){
-            connectionContext.disconnectNodes([
-                [highlightedGUID, 1],
-                [guid, 1]
-             ])
-            connectionContext.disconnectNodes([
-                [guid, 1],
-                [highlightedGUID, 1]
-            ])
+        for(const guid of nodeCollection){            
+            for(let i = 0; i < nodeContext.getNode(guid)().value.meta.input_size; i++){
+                connectionContext.disconnectNodes([
+                    [highlightedGUID, 0],
+                    [guid, i]
+                 ])
+            }
+
+            for(let i = 0; i < nodeContext.getNode(highlightedGUID)().value.meta.input_size; i++){
+                connectionContext.disconnectNodes([
+                    [guid, 0],
+                    [highlightedGUID, i]
+                ])
+            }
+          
         }
 
         if((addingInputConnection || addingOutputConnection) && addingGUID == highlightedGUID){
@@ -288,20 +289,22 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
 
     function handleEdgeTrashIcon(){
         connectionContext.disconnectNodes([
-            [highlightedEdgeGUIDPair[0], 1],
-            [highlightedEdgeGUIDPair[1], 1]
+            [highlightedEdge.guid0, 0],
+            [highlightedEdge.guid1, highlightedEdge.inputNo]
          ])
-         setHightlightedEdgeGUIDPair(["", ""])
+         console.log(connectionCollection)
+         setHightlightedEdge({guid0: "", guid1: "", inputNo: 0})
+         setConnectionComponent(handleConnections())
     }
 
     function handleAddingEdgeAnimation(){
         const mouseInGraphSpace = {x: (-offset.x + addMovePos.x) / scale, y: (-offset.y + addMovePos.y) / scale}
-        return <AnimationEdge guid={addingGUID} isInput={addingInputConnection} mousePos={mouseInGraphSpace}/> 
+        return <AnimationEdge guid={addingGUID} isInput={addingInputConnection} mousePos={mouseInGraphSpace} inputNo={addingInputNo}/> 
     }
 
     function handleUnhighlightAll(){
         setHighlightedGUID("")
-        setHightlightedEdgeGUIDPair(["", ""])
+        setHightlightedEdge({guid0: "", guid1: "", inputNo: 0})
 
         if(addingInputConnection || addingOutputConnection){
             setAddingInputConnection(false)
@@ -372,9 +375,9 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
     previewOpen={openedPreviews.find(el => el == highlightedGUID) != undefined} />
      : <></>}
 
-    {highlightedEdgeGUIDPair[0] && highlightedEdgeGUIDPair[1] ? 
+    {highlightedEdge.guid0 && highlightedEdge.guid1 ? 
         <div className='nodeContextMenu'>
-           {highlightedEdgeGUIDPair[0]} =- {highlightedEdgeGUIDPair[1]} <Button onClick={handleEdgeTrashIcon}><FontAwesomeIcon icon={faTrash}/></Button>
+           {highlightedEdge.guid0} =- {highlightedEdge.guid1} ({highlightedEdge.inputNo}) <Button onClick={handleEdgeTrashIcon}><FontAwesomeIcon icon={faTrash}/></Button>
         </div>
      : <></>}
     </>    

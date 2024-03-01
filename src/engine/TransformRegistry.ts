@@ -25,7 +25,8 @@ export default class TransformRegistry {
             ["pooling", []],
             ["logical", []],
             ["point", []],
-            ["morphologic", []]
+            ["morphologic", []],
+            ["other", []]
         ])
         this.declare("source", "source", SourceTransform)
     }
@@ -67,6 +68,10 @@ export default class TransformRegistry {
 
     declareMorphologic(name: string, transform: new ()=>Transform) {
         return this.declare("morphologic", name, transform)
+    }
+
+    declareOther(name: string, transform: new ()=>Transform){
+        return this.declare("other", name, transform);
     }
 
     build(name: string){

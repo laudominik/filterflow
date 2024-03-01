@@ -13,7 +13,7 @@ interface NodeBodyProps {
 }
 
 type NodeMouseEvent = React.MouseEvent;
-export type IOFunctionType = (e: React.SyntheticEvent, myGUID: GUID) => void;
+export type IOFunctionType = (e: React.SyntheticEvent, myGUID: GUID, inputNo: number) => void;
 
 
 interface NodeProps {
@@ -46,12 +46,12 @@ const GraphNode: React.FC<NodeProps> = ({ children,
     const inputs = <div className="circle-container">
         {
             [...Array(node.value.meta.input_size)].map(
-                (_,i) => <div key={i}  className="circle circle-top" onMouseDown={(e) => ioFunction ? ioFunction(e, guid) : {}}></div>
+                (_,i) => <div key={i}  className="circle circle-top" onMouseDown={(e) => ioFunction ? ioFunction(e, guid, i) : {}}></div>
             )
         }
     </div>
     
-    const outputs = <div className="circle-container"><div className="circle circle-bottom" onMouseDown={(e) => ioFunction ? ioFunction(e, guid) : {}}></div></div>
+    const outputs = <div className="circle-container"><div className="circle circle-bottom" onMouseDown={(e) => ioFunction ? ioFunction(e, guid, 0) : {}}></div></div>
     return  <div className="draggable transformNode" id={guid} key={guid} style={{left: node.value.getPos().x, top: node.value.getPos().y}}>
             {inputs}
             <div className="graphNode" id={guid} onMouseDown={onBodyClick}>   
