@@ -8,6 +8,8 @@ export function connect<T extends node<T>>(source: T, source_nr: number, destina
     }
     source.connect_output(source_nr, destination, destination_nr)
     destination.connect_input(destination_nr, source, source_nr)
+    source.dispatch_update();
+    // destination._update_node();
     return true;
 }
 
@@ -15,8 +17,9 @@ export function disconnect<T extends node<T>>(source: T, source_nr: number, dest
     if (!destination.inputs.has(destination_nr)){
         return false;
     }
-    source.disconnect_output(source_nr, destination, destination_nr)
     destination.disconnect_input(destination_nr, source, source_nr)
+    source.dispatch_update();
+    source.disconnect_output(source_nr, destination, destination_nr)
     return true;
 }
 
@@ -119,7 +122,7 @@ export abstract class node<T extends node<T>>{
                 this.engine.dispatchEvent(new CustomEvent("connection_remove",{detail:[[this.meta.id,key],[child,child_nr]]}))
             })
         })
-
+        this.dispatch_update();
         this.inputs.clear();
         this.connected_to_outputs.clear();
     }

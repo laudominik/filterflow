@@ -20,7 +20,7 @@ export default function KernelComponent({guid}: {guid: GUID}){
         setKernelN(newKernelN);
         const newGridValues = Array(newKernelN).fill(0).map(() => new Array(newKernelN).fill(0))
         setGridValues(newGridValues)
-        node.value.updateParams({
+        nodeContext.updateParam(guid,{
             "kernel" : newGridValues
         })
     };
@@ -29,10 +29,9 @@ export default function KernelComponent({guid}: {guid: GUID}){
         const newGridValues = [...gridValues];
         newGridValues[row][col] = parseInt(value);
         setGridValues(newGridValues);
-        node.value.updateParams({
-                "kernel": newGridValues
-            }
-        );
+        nodeContext.updateParam(guid, {
+            "kernel": newGridValues
+        })
     };
 
     return <div className="grid">

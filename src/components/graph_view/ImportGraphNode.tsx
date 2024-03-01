@@ -4,10 +4,14 @@ import { Card, CardBody, CardHeader, CardTitle, Form } from "react-bootstrap";
 import "../preview_container/Preview.css"
 import "./GraphNode.css"
 import GraphNode, { IOFunctionType } from "./GraphNode";
+import { nodeStoreContext } from "../../stores/context";
 
 // todo: same component as regular GraphNode
 export default function ImportGraphNode({ guid, style, onBodyClick, ioFunction }: { guid: GUID, style: React.CSSProperties, onBodyClick?: (e : React.MouseEvent)=>void, ioFunction?: IOFunctionType }){    
-    const [imageDataUrl, setImageDataUrl] = useState("")
+    const nodeContext = useContext(nodeStoreContext);    
+    const node = useSyncExternalStore(nodeContext.subscribeNode(guid), nodeContext.getNode(guid));
+
+    const [imageDataUrl, setImageDataUrl] = useState(node.value.getImageString())
     const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) {
@@ -16,7 +20,7 @@ export default function ImportGraphNode({ guid, style, onBodyClick, ioFunction }
 
         const reader = new FileReader();
         reader.onload = (event) => {
-            setImageDataUrl(event.target?.result as string)
+            nodeContext.updateParam(guid,{image: event.target?.result as string})
             // TODO: graph context set source node with that guid
         }
         

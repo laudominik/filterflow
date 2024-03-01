@@ -16,21 +16,17 @@ export default function PoolingComponent({guid}: {guid: GUID}){
     const [poolingStep, setPoolingStep] = useState<number>(node.value.getParams()["pooling_step"])
     const handleSizeChange = (newSize: number) => {
         setPoolingSize(newSize);
-        node.value.updateParams(
-            {
-                "pooling_size": newSize,
-                "pooling_step": poolingStep
-            }
-        );
+        nodeContext.updateParam(guid,  {
+            "pooling_size": newSize,
+            "pooling_step": poolingStep
+        })
     };
     const handleStepChange = (newStep: number) => {
         setPoolingStep(newStep);
-        node.value.updateParams(
-            {
-                "pooling_size": poolingSize,
-                "pooling_step": newStep
-            }
-        );
+        nodeContext.updateParam(guid,  {
+            "pooling_size": poolingSize,
+            "pooling_step": newStep
+        })
     };
 
     return <div className="grid">

@@ -44,6 +44,7 @@ export default class SourceTransform extends Transform{
         this.drawImage(image)
 
         this.hash = crypto.randomUUID();
+        this.dispatch_update();
     }
 
     drawImage(input: HTMLImageElement) {
@@ -121,7 +122,9 @@ export default class SourceTransform extends Transform{
     }
 
     updateParams(params: { [key: string]: any; }): void {
-        this.image = params["image"];
+        if (params["image"]){
+            this.setImageString(params["image"])
+        }
     }
     paramView() {
         return <></>

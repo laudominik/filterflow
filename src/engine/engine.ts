@@ -51,11 +51,11 @@ export class Engine extends EventTarget{
         }
         this.nodes = new Map()
         this.source_nodes = []
-        this.internal.addEventListener("info",this.handleInternalInfo as any)
-        this.internal.addEventListener("connection_remove",this.handleInternalConnectionsRemove as any)
+        this.internal.addEventListener("info",this.handleInternalInfo.bind(this) as any)
+        this.internal.addEventListener("connection_remove",this.handleInternalConnectionsRemove.bind(this) as any)
     }
 
-    public async updateNodeParams(node:GUID,params:KVParams){
+    public updateNodeParams(node:GUID,params:KVParams): void{
         const transform = this.nodes.get(node)
         if (transform === undefined){
             // TODO think about some error handling
@@ -64,7 +64,7 @@ export class Engine extends EventTarget{
         // if found add to pending
         this.batchState.pendingUpdates.add(node)
         transform.updateParams(params);
-
+        transform._update_node();
     }
 
     public addNode(transformation: string, params: any): GUID{

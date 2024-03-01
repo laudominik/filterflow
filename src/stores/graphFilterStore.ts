@@ -15,7 +15,7 @@ export class GraphFilterStore extends PreviewStores{
         this.connectionsListener = [];
         this.connections = [];
 
-        this.engine.addEventListener("update",this.handleEngineInfo as any)
+        this.engine.addEventListener("update",this.handleEngineInfo.bind(this) as any)
     }
 
     private handleEngineInfo(event:CustomEvent<ExternalEngineResponse>){

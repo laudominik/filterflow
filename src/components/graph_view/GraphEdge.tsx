@@ -10,7 +10,8 @@ import { nodeStoreContext } from "../../stores/context";
 
 export function Edge({pos0, pos1, onClick, style, marker=true}:{pos0: [number, number], pos1: [number, number], onClick?: ()=>void, style? : CSSProperties, marker?: boolean}){
  
-
+    const margin = 25;
+    const arrowHead = [10, 10]
     const dx = pos1[0] - pos0[0];
     const dy = pos1[1] - pos0[1];
 
@@ -25,16 +26,16 @@ export function Edge({pos0, pos1, onClick, style, marker=true}:{pos0: [number, n
     const arrowMarkUUID = crypto.randomUUID();
     const markerEnd = `url(#${arrowMarkUUID})`
 
-    const defaultStyle = {stroke: "hsl(260, 100%, 80%)", strokeWidth: 2}
+    const defaultStyle = {stroke: "hsl(260, 100%, 80%)", strokeWidth: 4}
 
 
-    return <svg className="arrows" style={{pointerEvents: 'none', position: 'absolute', top: top, left: left, width: Math.abs(dx) + 50, height: Math.abs(dy) + 50}}>
+    return <svg className="arrows" style={{pointerEvents: 'none', position: 'absolute', top: top-margin, left: left-margin, width: Math.abs(dx) + 2*margin, height: Math.abs(dy) + 2 * margin}}>
         <defs>
             {/* from https://webgl2fundamentals.org/webgl/lessons/resources/webgl-state-diagram.html#no-help */}
-            <marker id={arrowMarkUUID} viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill={style ? style.stroke : "hsl(260, 100%, 80%)"}><path d="M 0 0 L 10 5 L 0 10 z"></path></marker>
+            <marker id={arrowMarkUUID} viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill={style ? style.stroke : "hsl(260, 100%, 80%)"}><path d={`M 0 0 L ${arrowHead[0]} ${arrowHead[1]/2} L 0 ${arrowHead[1]} z`}></path></marker>
           
         </defs>
-        <line x1={x1} y1={y1} x2={x2} y2={y2} style={style ?? defaultStyle} markerEnd={marker ? markerEnd: ""} onClick={onClick} pointerEvents='auto'/>
+        <line x1={x1+margin} y1={y1+margin} x2={x2+margin} y2={y2+margin} style={style ?? defaultStyle} markerEnd={marker ? markerEnd: ""} onClick={onClick} pointerEvents='auto'/>
  
     </svg>
 }
@@ -48,14 +49,14 @@ export function AnimationEdge({guid, isInput, mousePos, inputNo}: {guid : GUID, 
         const draggable = document.getElementById(guid)!
         const input = draggable.getElementsByClassName("circle-top")[inputNo]!;
         if(input instanceof HTMLElement){
-            pos1 = {x: pos1.x + input.offsetLeft, y: pos1.y + input.offsetTop}
+            pos1 = {x: pos1.x + input.offsetLeft + input.offsetWidth/2, y: pos1.y + input.offsetTop + input.offsetHeight/2}
             pos0 = mousePos
         }
     } else {
         const draggable = document.getElementById(guid)!
         const output = draggable.getElementsByClassName("circle-bottom")[0]!
         if(output instanceof HTMLElement){
-            pos0 = {x: pos0.x + output.offsetLeft, y: pos0.y + output.offsetTop}
+            pos0 = {x: pos0.x + output.offsetLeft + output.offsetWidth/2, y: pos0.y + output.offsetTop + output.offsetHeight/2}
             pos1 = mousePos
         }
     }
@@ -93,7 +94,7 @@ export default function GraphEdge({guid0, guid1, inputNumber, highlighted, onCli
         if(!onClick) return;
         onClick(guid0, guid1, inputNumber);
     }
-    const style= {stroke: highlighted ? "blue" : "hsl(260, 100%, 80%)", strokeWidth: 2 }
+    const style= {stroke: highlighted ? "blue" : "hsl(260, 100%, 80%)", strokeWidth: 4 }
 
     // TODO: check if it doesn't break sometimes (multiple elements with the same id)
     const draggable0 = document.getElementById(guid0)
@@ -107,11 +108,11 @@ export default function GraphEdge({guid0, guid1, inputNumber, highlighted, onCli
     const input = draggable1.getElementsByClassName("circle-top")[inputNumber]!;
     
     if(output instanceof HTMLElement){
-        pos0 = {x: pos0.x + output.offsetLeft, y: pos0.y + output.offsetTop}
+        pos0 = {x: pos0.x + output.offsetLeft + output.offsetWidth/2, y: pos0.y + output.offsetTop + output.offsetHeight/2}
     }
 
     if(input instanceof HTMLElement){
-        pos1 = {x: pos1.x + input.offsetLeft, y: pos1.y + input.offsetTop}
+        pos1 = {x: pos1.x + input.offsetLeft + input.offsetWidth/2, y: pos1.y + input.offsetTop + input.offsetHeight/2}
     }
 
     // for now top left corner connects to top left corner

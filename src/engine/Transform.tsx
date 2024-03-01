@@ -28,9 +28,12 @@ abstract class Transform extends node<Transform> {
 
     public _update_node(): void {
         // based on input connections perform calculations
-        let [parent,nr] = this.inputs.get(0)!;
-        let input = this.engine.getNode(parent)?.canvas;
-        this.apply(input);
+        if (this.inputs.has(0)){
+            let [parent,nr] = this.inputs.get(0)!;
+            let input = this.engine.getNode(parent)?.canvas;
+            this.apply(input);
+        }
+
     }
 
     abstract paramView(guid: GUID): ReactElement;
@@ -43,11 +46,14 @@ abstract class Transform extends node<Transform> {
     async apply(input:OffscreenCanvas|undefined): Promise<OffscreenCanvas|undefined>{
         if(!this.enabled || input === undefined) {
             return input;
+            // this.dispatch_update();
         }
 
         // TODO: remove setting state in transform?
         this.hash = crypto.randomUUID();
-        return await this._apply(input);
+        const ret = await this._apply(input);
+        this.dispatch_update();
+        return ret;
     }
 
     async _apply(input:OffscreenCanvas): Promise<OffscreenCanvas> {
@@ -133,11 +139,11 @@ abstract class Transform extends node<Transform> {
     }
 
     updateParams(params: KVParams): void {
-        this.params = params;
+        this.params = {...this.params,...params};
         if (this.edited == false){
             this.name =  `${this.name}[edited]`
-            this.hash = crypto.randomUUID();
         }
+        this.hash = crypto.randomUUID();
         this.edited = true;
     }
 

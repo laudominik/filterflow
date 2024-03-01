@@ -24,7 +24,8 @@ export default function GraphPreview({guid, onBodyClick}: {guid: GUID, onBodyCli
                     <div>{node.value.name} Preview</div> 
                     {noInputs == 1 ? <></> : <InputSelection selectedInput={selectedInput} setSelectedInput={setSelectedInput} noInputs={noInputs}/>}
                 </div>
-                {node.value.inputs.get(selectedInput - 1) ?  <InputPreview sourceId={node.value.inputs.get(selectedInput - 1)![0]} allowFullscreen={false}/> : <></>}
+                {node.value.inputs.get(selectedInput - 1) ?
+                <div><InputPreview sourceId={node.value.inputs.get(selectedInput - 1)![0]} allowFullscreen={false}/></div> : <></>}
                 <OutputPreview sourceId={guid} allowFullscreen={false}/>
             </div>
          </div>

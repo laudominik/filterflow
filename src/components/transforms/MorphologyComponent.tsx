@@ -16,7 +16,8 @@ export default function MorphoLogicComponent({guid}: {guid: GUID}){
 
     const handleKernelChange = (newKernelSize: [number, number]) => {
         setKernelSize(newKernelSize);
-        node.value.updateParams(
+
+        nodeContext.updateParam(guid,
             {
                 "kernel_size": newKernelSize
             }

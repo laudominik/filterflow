@@ -15,8 +15,8 @@ export default function PointComponent({guid, parametrized}: {guid: GUID, parame
 
     const handleInputChange = (value: string) => {
         setArgument(value)
-        node.value.updateParams({
-            "argument": value
+        nodeContext.updateParam(guid, {
+            "argument" : value
         })
     };
 
