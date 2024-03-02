@@ -6,7 +6,7 @@ import MuxComponent from "../../../components/transforms/MuxComponent";
 @jsonObject
 export default class MuxTransform extends Transform {
     constructor(name?: string) {
-        super("Mux", '#E6F4E2');
+        super("Mux", '#F8B195');
         this.selected = 0;
         this.meta.input_size = 2;
         this.params = {...this.params, "selected" : this.selected, "muxedInputs": this.meta.input_size};

@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { useState, useEffect, StrictMode } from 'react';
-import { Button } from 'react-bootstrap';
+import { Button, Tab } from 'react-bootstrap';
 import { faList } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import BrandNavBar from './components/brand_nav_bar/BrandNavBar'
@@ -28,6 +28,11 @@ export default function App() {
     window.addEventListener('storage', viewModeHandler, false);
   }, [])
 
+  const notebooks = sessionStorage.getItem("notebooks");
+  if(!notebooks){
+    sessionStorage.setItem("notebooks", '["new"]');
+  }
+
   const splitPane = (  
     <SplitPane expanded={expanded}>
       <SplitPane.Left>
@@ -49,6 +54,8 @@ export default function App() {
   )
 
   const view = modeGraph ? <GraphView /> : <>{expanded ? <></> : expandButton} {splitPane}</>
+  // TODO: get selected notebook
+  
   return (
     <StrictMode>
       <div className="App">

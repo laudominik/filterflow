@@ -34,7 +34,7 @@ void main() {
 abstract class BinaryTransform extends Transform {
     fragment_shader: string
     constructor(name: string = "Binary transform", shader?: string) {
-        super(name, '#F4E2F4');
+        super(name, '#E2F0F4');
         this.meta.input_size = 2;
         this.gl = this.canvas.getContext('webgl', {preserveDrawingBuffer: true})!;
         this.fragment_shader = shader ?? default_fs;

@@ -21,7 +21,7 @@ export default function ImportGraphNode({ guid, style, onBodyClick, ioFunction }
         const reader = new FileReader();
         reader.onload = (event) => {
             nodeContext.updateParam(guid,{image: event.target?.result as string})
-            // TODO: graph context set source node with that guid
+            setImageDataUrl(event.target?.result as string)
         }
         
         reader.readAsDataURL(file);
