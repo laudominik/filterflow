@@ -347,7 +347,8 @@ class simpleFilterStore {
         const image = this.engine.getNode(this.source)?.getCanvas();
         
         const reducer = async(image: Promise<OffscreenCanvas | undefined>, guid: GUID): Promise<OffscreenCanvas | undefined> => {
-            return this.engine.getNode(guid)?.apply(await image);
+            const out = await image;
+            return this.engine.getNode(guid)?.apply(out ? [out] : []);
         }
         this.sequence.reduce(reducer, Promise.resolve(image)).then(_ => {
             this.emitChange(this.lastNode())

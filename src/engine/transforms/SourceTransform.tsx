@@ -11,7 +11,7 @@ export default class SourceTransform extends Transform{
         super("source","#HEX", 0);
     }
 
-    async apply(input: OffscreenCanvas | undefined): Promise<OffscreenCanvas | undefined> {
+    async apply(input: Array<OffscreenCanvas> | undefined): Promise<OffscreenCanvas | undefined> {
         // for the source node we ignore inputs
 
         if(this.image === undefined || this.image === null || this.image === "") return undefined;

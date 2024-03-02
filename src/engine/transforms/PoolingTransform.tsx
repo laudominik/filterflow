@@ -77,24 +77,11 @@ class PoolingTransform extends Transform {
         return [Math.floor(positon[0] / step), Math.floor(positon[1] / step)];
     }
 
-    // public fromPositionToSelection(position: [number, number]): CanvasSelection {
-    //     const poolingSize = this.params["pooling_size"];
-    
-    //     const posNormalizedX = Math.floor(position[0] / poolingSize) 
-    //     const posNormalizedY = Math.floor(position[1] / poolingSize)
-
-    //     return {start: [posNormalizedX, posNormalizedY], size: [1, 1], center: [posNormalizedX, posNormalizedY]}
-    // }
-
-    // public fromPositionToSelection(position: [number, number]): CanvasSelection{
-    //     //return {start: [0, 0], size:[1,1], center: [0,0]}
-    // }
-
     paramView(guid: GUID) {
         return <PoolingComponent guid={guid}/>
     }
 
-    async _apply(input: OffscreenCanvas): Promise<OffscreenCanvas> {
+    async _apply(input: Array<OffscreenCanvas>): Promise<OffscreenCanvas> {
         this.poolingSize = this.params["pooling_size"]
         this.poolingStep = this.params["pooling_step"]
         const vertexShaderSource = `
@@ -108,8 +95,8 @@ class PoolingTransform extends Transform {
             `;
 
             // formula: https://pytorch.org/docs/stable/generated/torch.nn.MaxPool2d.html
-            this.canvas.width = Math.floor((input.width - 1)/this.poolingStep + 1);
-            this.canvas.height = Math.floor((input.height - 1)/this.poolingStep + 1);
+            this.canvas.width = Math.floor((input[0].width - 1)/this.poolingStep + 1);
+            this.canvas.height = Math.floor((input[0].height - 1)/this.poolingStep + 1);
 
             const gl = this.gl
             gl.viewport(0,0, this.canvas.width, this.canvas.height);
@@ -144,13 +131,13 @@ class PoolingTransform extends Transform {
             const texture = gl.createTexture();
                 gl.bindTexture(gl.TEXTURE_2D, texture);
 
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, input);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, input[0]);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         
             const imageDimsLocation = gl.getUniformLocation(program, 'u_image_dims');
-                gl.uniform2fv(imageDimsLocation, [input.width, input.height]);
+                gl.uniform2fv(imageDimsLocation, [input[0].width, input[0].height]);
 
             const poolingStepLocation = gl.getUniformLocation(program, 'u_pooling_step');
                 gl.uniform1i(poolingStepLocation, this.poolingSize);

@@ -31,7 +31,7 @@ abstract class Transform extends node<Transform> {
         if (this.inputs.has(0)){
             let [parent,nr] = this.inputs.get(0)!;
             let input = this.engine.getNode(parent)?.canvas;
-            this.apply(input);
+            this.apply(input ? [input] : []);
         }
 
     }
@@ -43,9 +43,12 @@ abstract class Transform extends node<Transform> {
     };
 
     // TODO add meta to promise (about color)
-    async apply(input:OffscreenCanvas|undefined): Promise<OffscreenCanvas|undefined>{
-        if(!this.enabled || input === undefined) {
-            return input;
+    async apply(input:Array<OffscreenCanvas>): Promise<OffscreenCanvas|undefined>{
+        if(!this.enabled){
+            return input[0];
+        }
+        if(!input.length) {
+            return undefined
             // this.dispatch_update();
         }
 
@@ -56,8 +59,8 @@ abstract class Transform extends node<Transform> {
         return ret;
     }
 
-    async _apply(input:OffscreenCanvas): Promise<OffscreenCanvas> {
-        return input;
+    async _apply(input:Array<OffscreenCanvas>): Promise<OffscreenCanvas> {
+        return input[0];
     }
 
     // TODO: better naming?

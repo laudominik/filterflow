@@ -113,7 +113,7 @@ class MorphologicTransform extends Transform {
         return <></>
     }
 
-    async _apply(input: OffscreenCanvas): Promise<OffscreenCanvas> {
+    async _apply(input: Array<OffscreenCanvas>): Promise<OffscreenCanvas> {
         this.kernelSize = this.params["kernel_size"]
         const vertexShaderSource = `
                 attribute vec2 a_position;
@@ -126,8 +126,8 @@ class MorphologicTransform extends Transform {
             `;
 
 
-            this.canvas.width = input.width;
-            this.canvas.height = input.height;
+            this.canvas.width = input[0].width;
+            this.canvas.height = input[0].height;
 
             const gl = this.gl
             gl.viewport(0,0, this.canvas.width, this.canvas.height);
@@ -162,13 +162,13 @@ class MorphologicTransform extends Transform {
             const texture = gl.createTexture();
                 gl.bindTexture(gl.TEXTURE_2D, texture);
 
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, input);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, input[0]);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         
             const imageDimsLocation = gl.getUniformLocation(program, 'u_image_dims');
-                gl.uniform2fv(imageDimsLocation, [input.width, input.height]);
+                gl.uniform2fv(imageDimsLocation, [input[0].width, input[0].height]);
             
             const kernelSizeLocation = gl.getUniformLocation(program, 'u_kernel_size');
                 gl.uniform2iv(kernelSizeLocation, this.kernelSize);
