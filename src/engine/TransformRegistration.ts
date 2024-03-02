@@ -3,6 +3,9 @@ import ConvolutionTransform from "./transforms/ConvolutionTransform"
 import GaussianTransform from "./transforms/convolution/GaussianTransform"
 import { Conn4LaplaceTransform, Conn8LaplaceTransform } from "./transforms/convolution/LaplaceTransform"
 import { SobelXTransform, SobelYTransform } from "./transforms/convolution/SobelTransform"
+import BinaryAndTransform from "./transforms/logical/BinaryAndTransform"
+import BinaryOrTransform from "./transforms/logical/BinaryOrTransform"
+import BinaryXorTransform from "./transforms/logical/BinaryXorTransform"
 import DilatationTransform from "./transforms/morphologic/DilatationTransform"
 import ErosionTransform from "./transforms/morphologic/ErosionTransform"
 import MuxTransform from "./transforms/other/MuxTransform"
@@ -39,6 +42,9 @@ export default function declareOps(){
     .declareLogical("xor", XorTransform)
     .declareLogical("or", OrTransform)
     .declareLogical("and", AndTransform)
+    .declareLogical("binary and", BinaryAndTransform)
+    .declareLogical("binary or", BinaryOrTransform)
+    .declareLogical("binary xor", BinaryXorTransform)
     .declarePoint("brightness", BrightnessTransform)
     .declarePoint("threshold", ThresholdTransform)
     .declarePoint("grayscale", GrayscaleTransform)
