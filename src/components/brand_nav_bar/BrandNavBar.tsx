@@ -1,6 +1,8 @@
 import {Nav, Navbar} from "react-bootstrap";
-import { faFilm } from '@fortawesome/free-solid-svg-icons';
+import { faFilm, faProjectDiagram, faTimeline } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import DarkModeSwitch from "./DarkModeSwitch";
+import EngineModeSwitch from "./EngineModeSwitch";
 
 export default function BrandNavBar() {
     return <Navbar expand="lg" className="brandNav">
@@ -10,5 +12,9 @@ export default function BrandNavBar() {
                 <Navbar.Brand>
                     FilterFlow
                 </Navbar.Brand>
+                <Navbar.Collapse className="justify-content-end navModeBar">
+                    <DarkModeSwitch />
+                    <EngineModeSwitch />
+                </Navbar.Collapse>
            </Navbar>
   }

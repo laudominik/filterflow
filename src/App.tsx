@@ -1,4 +1,5 @@
-import {useState} from 'react';
+import 'reflect-metadata'
+import { useState, useEffect, StrictMode } from 'react';
 import { Button } from 'react-bootstrap';
 import { faList } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -9,9 +10,23 @@ import SplitPane from "./components/SplitPane";
 
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import GraphView from './components/graph_view/GraphView';
 
 export default function App() {
   const [expanded, setExpanded] = useState(true);
+  const [modeGraph, setModeGraph] = useState(false);
+
+  function viewModeHandler() {
+    let currentMode = sessionStorage.getItem("engineMode")
+    if(currentMode){
+        setModeGraph(currentMode === "graph")
+    }  
+  }
+
+  useEffect(()=>{
+    viewModeHandler()
+    window.addEventListener('storage', viewModeHandler, false);
+  }, [])
 
   const splitPane = (  
     <SplitPane expanded={expanded}>
@@ -33,11 +48,13 @@ export default function App() {
     </Button>
   )
 
+  const view = modeGraph ? <GraphView /> : <>{expanded ? <></> : expandButton} {splitPane}</>
   return (
+    <StrictMode>
       <div className="App">
         <BrandNavBar />
-        {expanded ? <></> : expandButton}
-        {splitPane}
-      </div>   
+        {view}
+      </div>
+    </StrictMode>
   );
 }

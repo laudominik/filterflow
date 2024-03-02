@@ -5,6 +5,9 @@ import PixelComponent, { ColorComponent } from "./PixelComponent"
 import AdnotateElement, { AdnotateText } from "./AdnotationComponent"
 
 export default function ConvolutionVisualizationComponent({guid}: {guid: GUID}) {
+
+    // TODO : change API
+
     const filterContext = useContext(FilterStoreContext)
     
     const preview = useSyncExternalStore(filterContext.subscribePreview.bind(filterContext) as any, filterContext.getPreview.bind(filterContext))

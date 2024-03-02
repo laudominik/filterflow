@@ -4,16 +4,14 @@ import { jsonObject } from "typedjson";
 
 @jsonObject
 export default class SourceTransform extends Transform{
-    public _update_node(): void {
-        throw new Error("Method not implemented.");
-    }
+
     image?: string
 
     constructor(){
-        super("source","#HEX");
+        super("source","#HEX", 0);
     }
 
-    async apply(input: OffscreenCanvas | undefined): Promise<OffscreenCanvas | undefined> {
+    async apply(input: Array<OffscreenCanvas> | undefined): Promise<OffscreenCanvas | undefined> {
         // for the source node we ignore inputs
 
         if(this.image === undefined || this.image === null || this.image === "") return undefined;
@@ -46,6 +44,7 @@ export default class SourceTransform extends Transform{
         this.drawImage(image)
 
         this.hash = crypto.randomUUID();
+        this.dispatch_update();
     }
 
     drawImage(input: HTMLImageElement) {
@@ -123,7 +122,9 @@ export default class SourceTransform extends Transform{
     }
 
     updateParams(params: { [key: string]: any; }): void {
-        this.image = params["image"];
+        if (params["image"]){
+            this.setImageString(params["image"])
+        }
     }
     paramView() {
         return <></>

@@ -6,6 +6,10 @@ import AdnotateElement, { AdnotateText } from "./AdnotationComponent"
 import './Matrix.css'
 
 export default function PoolingVisualizationComponent({guid, type, reduction}: {guid: GUID, type:string, reduction: (...values: number[]) => number}) {
+    
+    // TODO : change API
+
+
     const filterContext = useContext(FilterStoreContext)
     
     const preview = useSyncExternalStore(filterContext.subscribePreview.bind(filterContext) as any, filterContext.getPreview.bind(filterContext))
@@ -37,10 +41,10 @@ export default function PoolingVisualizationComponent({guid, type, reduction}: {
 
 function drawPixelValues(pixels: number[][], channel: Channel){
     return <table className="matrix">{
-        pixels.map(el =>{
-            return <tr>{
-                el.map(ell => {
-                    return <td>{ColorComponent(ell, channel)}</td>
+        pixels.map((el,key) =>{
+            return <tr key={key}>{
+                el.map((ell,key) => {
+                    return <td key={key}>{ColorComponent(ell, channel)}</td>
                 })
             }</tr>
         })

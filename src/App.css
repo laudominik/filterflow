@@ -1,3 +1,23 @@
+:root {
+  /* TODO: customize bootstrap dark/light mode paletes */
+
+  --background-color: var(--bs-secondary-bg);
+  --secondary-background-color: var(--bs-body-bg);
+
+  /* text, without accent */
+  --primary-color: var(--bs-primary-text-emphasis);
+  /* icons, and accent */
+  --secondary-color: var(--bs-secondary-text-emphasis);
+  --navbar-height: 3%;
+
+}
+
+
+html{
+  color: var(--primary-color);
+}
+
+
 .resizableContainer {
   display: flex;
 }
@@ -7,13 +27,24 @@
 }
 
 .App {
-  background-color: #F5F8FA;
+  background-color: var(--background-color);
   height: 100vh;
 }
 
 .brandNav {
-  background-color: white;
-  height: 3%;
+  z-index: 100;
+  background-color: var(--secondary-background-color);
+  height: var(--navbar-height);
+}
+
+.navModeButton {
+  padding: 0 20px;
+}
+
+
+.navModeButton:hover{
+  background-color: var(--secondary-color);
+  color: var(--secondary-background-color);
 }
 
 .pipelineBar {

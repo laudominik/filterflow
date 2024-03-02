@@ -1,5 +1,5 @@
 .centeredImage {
-  height: 90%;
+  height: 30vh;
   object-fit: contain;
   position: relative;
 
@@ -33,11 +33,11 @@ canvas{
   height: 100%;
   display: flex; 
   flex-direction: column;
-  background-color: #F5F8FA;
+  background-color: var(--background-color);
 }
 
 .preview {
-  background-color: white;
+  background-color: var(--secondary-background-color);
   height: 98%;
   width: 100%;
 }

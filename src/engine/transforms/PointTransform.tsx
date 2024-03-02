@@ -6,9 +6,7 @@ import { GUID } from "../engine";
 
 @jsonObject
 class PointTransform extends Transform {
-    public _update_node(): void {
-        throw new Error("Method not implemented.");
-    }
+
 
     image?:string
     fragmentShader: string;
@@ -45,7 +43,7 @@ class PointTransform extends Transform {
         return <></>
     }
 
-    async _apply(input: OffscreenCanvas): Promise<OffscreenCanvas> {
+    async _apply(input: Array<OffscreenCanvas>): Promise<OffscreenCanvas> {
         const vertexShaderSource = `
                 attribute vec2 a_position;
                 varying vec2 v_texCoord;
@@ -57,8 +55,8 @@ class PointTransform extends Transform {
             `;
 
             // for now copy-paste, will change later
-            this.canvas.width = input.width;
-            this.canvas.height = input.height;
+            this.canvas.width = input[0].width;
+            this.canvas.height = input[0].height;
 
             const gl = this.gl
             gl.viewport(0,0, this.canvas.width, this.canvas.height);
@@ -93,7 +91,7 @@ class PointTransform extends Transform {
             const texture = gl.createTexture();
                 gl.bindTexture(gl.TEXTURE_2D, texture);
 
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, input);
+                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, input[0]);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);

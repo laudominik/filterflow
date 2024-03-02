@@ -4,40 +4,34 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {Button, FormSelect} from 'react-bootstrap';
 import { FilterStoreContext } from '../../stores/simpleFilterStore';
 import ConvolutionTransform from '../../engine/transforms/ConvolutionTransform';
-import { GUID } from '../../engine/engine';
+import {GUID} from "../../engine/iengine";
+import { nodeStoreContext } from '../../stores/context';
+
 
 export default function KernelComponent({guid}: {guid: GUID}){
-    const filterContext = useContext(FilterStoreContext)
+    const nodeContext = useContext(nodeStoreContext);
+    const node = useSyncExternalStore(nodeContext.subscribeNode(guid), nodeContext.getNode(guid));
 
-    const transform = useSyncExternalStore(filterContext.subscribe(guid) as any, filterContext.getTransform.bind(filterContext, guid))
-    // NOTE: this (probably) forces entire component to reload, expertise is needed
-    const selection = useSyncExternalStore(filterContext.subscribeCanvasSelections.bind(filterContext) as any, filterContext.getPreviewSelections.bind(filterContext))
-
-    const [gridValues, setGridValues] = useState<number[][]>(transform.getParams()["kernel"]);
+    // TODO: check if refresh component of selection change is needed
+   
+    const [gridValues, setGridValues] = useState<number[][]>(node.value.getParams()["kernel"]);
     const [kernelN, setKernelN] = useState(gridValues.length);
     const handleKernelChange = (newKernelN: number) => {
         setKernelN(newKernelN);
         const newGridValues = Array(newKernelN).fill(0).map(() => new Array(newKernelN).fill(0))
         setGridValues(newGridValues)
-        filterContext.updateParams(guid,
-            {
-                "kernel": newGridValues
-            }
-        );
-        filterContext.applyTransforms()
+        nodeContext.updateParam(guid,{
+            "kernel" : newGridValues
+        })
     };
 
     const handleInputChange = (row: number, col: number, value: string) => {
         const newGridValues = [...gridValues];
-        console.log(newGridValues)
         newGridValues[row][col] = parseInt(value);
-        setGridValues(newGridValues)
-        filterContext.updateParams(guid,
-            {
-                "kernel": newGridValues
-            }
-        )
-        filterContext.applyTransforms()
+        setGridValues(newGridValues);
+        nodeContext.updateParam(guid, {
+            "kernel": newGridValues
+        })
     };
 
     return <div className="grid">

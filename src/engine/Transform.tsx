@@ -1,18 +1,18 @@
-import 'reflect-metadata'
 import { ReactElement, ReactNode } from 'react'
-import { GUID } from './engine'
 import { AnyT, jsonMember, jsonObject } from 'typedjson';
 import { node } from './node';
-import { CanvasSelection } from '../stores/simpleFilterStore';
 
+type CanvasPosition = [number,number]; 
+type CanvasSelection = {start: CanvasPosition, size: CanvasPosition, center: CanvasPosition}
+type GUID = string;
 export interface KVParams {
     [key: string]: any
 }
 
 @jsonObject
 abstract class Transform extends node<Transform> {
-    constructor(name: string, color: string){
-        super({id:crypto.randomUUID(),inputs:1,outputs:1,channel:new EventTarget()});
+    constructor(name: string, color: string, inputs?: number){
+        super({id:crypto.randomUUID(),inputs: inputs ?? 1,outputs:1});
         this.color = color;
         this.name = name;
         this.params = {};
@@ -22,6 +22,18 @@ abstract class Transform extends node<Transform> {
         this.canvas = new OffscreenCanvas(1,1);
         this.gl = this.canvas.getContext("webgl", {preserveDrawingBuffer: true})!;
         this.hash = crypto.randomUUID();
+        this.pos = {x: 0, y: 0}
+        this.prevPos = {x: 0, y: 0}
+    }
+
+    public _update_node(): void {
+        // based on input connections perform calculations
+        if (this.inputs.has(0)){
+            let [parent,nr] = this.inputs.get(0)!;
+            let input = this.engine.getNode(parent)?.canvas;
+            this.apply(input ? [input] : []);
+        }
+
     }
 
     abstract paramView(guid: GUID): ReactElement;
@@ -31,23 +43,29 @@ abstract class Transform extends node<Transform> {
     };
 
     // TODO add meta to promise (about color)
-    async apply(input:OffscreenCanvas|undefined): Promise<OffscreenCanvas|undefined>{
-        if(!this.enabled || input === undefined) {
-            return input;
+    async apply(input:Array<OffscreenCanvas>): Promise<OffscreenCanvas|undefined>{
+        if(!this.enabled){
+            return input[0];
+        }
+        if(!input.length) {
+            return undefined
+            // this.dispatch_update();
         }
 
         // TODO: remove setting state in transform?
         this.hash = crypto.randomUUID();
-        return await this._apply(input);
+        const ret = await this._apply(input);
+        this.dispatch_update();
+        return ret;
     }
 
-    async _apply(input:OffscreenCanvas): Promise<OffscreenCanvas> {
-        return input;
+    async _apply(input:Array<OffscreenCanvas>): Promise<OffscreenCanvas> {
+        return input[0];
     }
 
     // TODO: better naming?
-    public fromDestinationToSourcePosition(positon: [number, number]): [number, number] {
-        return positon
+    public fromDestinationToSourcePosition(position: [number, number]): [number, number] {
+        return position
     }
 
     public fromSourceToDestinationPosition(positon: [number, number]): [number, number] {
@@ -87,6 +105,22 @@ abstract class Transform extends node<Transform> {
         return this.hash
     }
 
+    public getPos(): {x: number, y: number}{
+        return this.pos
+    }
+
+    public getPreviewPos(): {x: number, y: number}{
+        return this.prevPos;
+    }
+
+    public setPos(pos: {x: number, y: number}){
+        this.pos = pos
+    }
+
+    public setPreviewPos(pos: {x: number, y: number}){
+        this.prevPos = pos;
+    }
+
     async setImageString(image: string) {
         this.image = image;
     }
@@ -108,11 +142,11 @@ abstract class Transform extends node<Transform> {
     }
 
     updateParams(params: KVParams): void {
-        this.params = params;
+        this.params = {...this.params,...params};
         if (this.edited == false){
             this.name =  `${this.name}[edited]`
-            this.hash = crypto.randomUUID();
         }
+        this.hash = crypto.randomUUID();
         this.edited = true;
     }
 
@@ -128,6 +162,10 @@ abstract class Transform extends node<Transform> {
         return this.name;
     }
 
+    @jsonMember
+    pos: {x: number, y:number}
+    @jsonMember
+    prevPos: {x: number, y:number}
     @jsonMember(String)
     color: string;
     @jsonMember(String)

@@ -10,8 +10,8 @@ export default function PreviewContainer() {
     
     const preview = useSyncExternalStore(filterContext.subscribePreview.bind(filterContext), filterContext.getPreview.bind(filterContext));
     return <div className="previewContainer">
-        <div style={{ flex: 1, height: '50%' }}><InputPreview sourceId={preview.start} /> </div>
-        <div style={{ flex: 1, height: '50%' }}><OutputPreview sourceId={preview.end} /> </div>
+        {/* <div style={{ flex: 1, height: '50%' }}><InputPreview sourceId={preview.start} /> </div> */}
+        {/* <div style={{ flex: 1, height: '50%' }}><OutputPreview sourceId={preview.end} /> </div> */}
     </div>
 
 }
