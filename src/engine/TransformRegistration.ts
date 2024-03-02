@@ -8,6 +8,8 @@ import ErosionTransform from "./transforms/morphologic/ErosionTransform"
 import MuxTransform from "./transforms/other/MuxTransform"
 import { AndTransform } from "./transforms/point/AndTransform"
 import { BrightnessTransform } from "./transforms/point/BrightnessTransform"
+import ChannelCombinationTransform from "./transforms/point/ChannelCombinationTransform"
+import { BChannelExtractionTransform, GChannelExtractionTransform, RChannelExtractionTransform } from "./transforms/point/ChannelExtractionTransform"
 import { GrayscaleTransform } from "./transforms/point/GrayscaleTransform"
 import { OrTransform } from "./transforms/point/OrTransform"
 import { ThresholdTransform } from "./transforms/point/ThresholdTransform"
@@ -42,6 +44,10 @@ export default function declareOps(){
     .declarePoint("grayscale", GrayscaleTransform)
     .declarePoint("to YCbCr", ToYCbCrTransform)
     .declarePoint("from YCbCr", FromYCbCrTransform)
+    .declarePoint("R channel", RChannelExtractionTransform)
+    .declarePoint("G channel", GChannelExtractionTransform)
+    .declarePoint("B channel", BChannelExtractionTransform)
+    .declarePoint("Channel combination", ChannelCombinationTransform)
     .declareMorphologic("erosion", ErosionTransform)
     .declareMorphologic("dilatation", DilatationTransform)
     .declareOther("mux", MuxTransform)

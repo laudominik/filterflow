@@ -43,18 +43,18 @@ abstract class Transform extends node<Transform> {
     };
 
     // TODO add meta to promise (about color)
-    async apply(input:Array<OffscreenCanvas>): Promise<OffscreenCanvas|undefined>{
+    async apply(input:Array<OffscreenCanvas | undefined>): Promise<OffscreenCanvas|undefined>{
         if(!this.enabled){
             return input[0];
         }
-        if(!input.length) {
+        if(!input.length || input.includes(undefined)) {
             return undefined
             // this.dispatch_update();
         }
 
         // TODO: remove setting state in transform?
         this.hash = crypto.randomUUID();
-        const ret = await this._apply(input);
+        const ret = await this._apply(input as Array<OffscreenCanvas>);
         this.dispatch_update();
         return ret;
     }
