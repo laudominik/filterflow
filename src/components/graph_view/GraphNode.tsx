@@ -51,10 +51,10 @@ const GraphNode: React.FC<NodeProps> = ({ children,
         }
     </div>
 
-    if(style){
-        style.backgroundColor = node.value.getColor();
-        style.color = "black";
-    }
+    // if(style){
+    //     style.backgroundColor = node.value.getColor();
+    //     style.color = "black";
+    // }
 
     const outputs = <div className="circle-container"><div className="circle circle-bottom" onMouseDown={(e) => ioFunction ? ioFunction(e, guid, 0) : {}}></div></div>
     return  <div className="draggable transformNode" id={guid} key={guid} style={{left: node.value.getPos().x, top: node.value.getPos().y}}>

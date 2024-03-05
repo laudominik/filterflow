@@ -335,9 +335,11 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
                 const style = guid == highlightedGUID ? {
                         borderStyle: "solid",
                         borderWidth: "3px",
-                        borderColor: "blue"
+                        borderColor: "blue",
+                        backgroundColor: trf.getColor(),
                     } : {
-                        borderWitdh: "0px"
+                        borderWitdh: "0px",
+                        backgroundColor: trf.getColor(),
                     }
                 return (trf.name == "source" ? 
                () => <ImportGraphNode key={guid} guid={guid} style={style} onBodyClick={dragStart} ioFunction={connectionToggle}/> : 
