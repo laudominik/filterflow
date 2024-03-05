@@ -6,10 +6,11 @@ export function connect<T extends node<T>>(source: T, source_nr: number, destina
     if (destination.inputs.has(destination_nr)){
         return false;
     }
-    source.connect_output(source_nr, destination, destination_nr)
-    destination.connect_input(destination_nr, source, source_nr)
-    source.dispatch_update();
-    // destination._update_node();
+    source._connect_output(source_nr, destination, destination_nr)
+    destination._connect_input(destination_nr, source, source_nr)
+    // INFO: CHECK HERE: This event is not required for this in case of adding only one connection it could be usesfull in the future.
+    // destination.update_node();
+    source.engine.dispatchEvent(new CustomEvent("connection_added",{detail:[[source.meta.id,source_nr],[destination.meta.id,destination_nr]]}))
     return true;
 }
 
@@ -17,9 +18,11 @@ export function disconnect<T extends node<T>>(source: T, source_nr: number, dest
     if (!destination.inputs.has(destination_nr)){
         return false;
     }
-    destination.disconnect_input(destination_nr, source, source_nr)
-    source.dispatch_update();
-    source.disconnect_output(source_nr, destination, destination_nr)
+    destination._disconnect_input(destination_nr, source, source_nr)
+    // source.update_node();
+    source._disconnect_output(source_nr, destination, destination_nr)
+    source.engine.dispatchEvent(new CustomEvent("connection_remove",{detail:[[source.meta.id,source_nr],[destination.meta.id,destination_nr]]}))
+    
     return true;
 }
 
@@ -59,7 +62,7 @@ export abstract class node<T extends node<T>>{
         }
     }
 
-    public connect_output(output_nr: number, self: T, self_input_nr: number) {
+    public _connect_output(output_nr: number, self: T, self_input_nr: number) {
         if (this.connected_to_outputs.has(output_nr)) {
             this.connected_to_outputs.set(output_nr, [[self.meta.id, self_input_nr]])
         } else {
@@ -68,7 +71,7 @@ export abstract class node<T extends node<T>>{
         }
     }
 
-    public disconnect_output(output_nr: number, self: T, self_input_nr: number) {
+    public _disconnect_output(output_nr: number, self: T, self_input_nr: number) {
         if (this.connected_to_outputs.has(output_nr)) {
             let prev = this.connected_to_outputs.get(output_nr) ?? [];
             let searched_id = prev.findIndex(([child, child_nr]) => child == self.meta.id && child_nr == self_input_nr)
@@ -85,7 +88,7 @@ export abstract class node<T extends node<T>>{
     }
 
 
-    public connect_input(input_nr: number, parent: T, parent_output_nr: number) {
+    public _connect_input(input_nr: number, parent: T, parent_output_nr: number) {
         if (this.inputs.has(input_nr)) {
             console.log("Logic error reconnecting input without disconnecting first")
             this.inputs.set(input_nr, [parent.meta.id, parent_output_nr])
@@ -94,7 +97,7 @@ export abstract class node<T extends node<T>>{
         }
     }
 
-    public disconnect_input(input_nr: number, parent: T, parent_output_nr: number) {
+    public _disconnect_input(input_nr: number, parent: T, parent_output_nr: number) {
         if (this.inputs.has(input_nr)) {
             this.inputs.delete(input_nr)
         } else {
@@ -112,19 +115,17 @@ export abstract class node<T extends node<T>>{
                 console.log(this.engine)
                 return;
             }
-
-            parentNode.disconnect_output(parent_nr, this as any, key)
-            this.engine.dispatchEvent(new CustomEvent("connection_remove",{detail:[[parent,parent_nr],[this.meta.id,key]]}))
+            disconnect(parentNode,parent_nr,this.engine.getNode(this.meta.id)!,key);
         })
         this.connected_to_outputs.forEach((childrens, key) => {
             childrens.forEach(([child, child_nr]) => {
-                this.engine.getNode(child)!.disconnect_input(child_nr, this as any, key)
-                this.engine.dispatchEvent(new CustomEvent("connection_remove",{detail:[[this.meta.id,key],[child,child_nr]]}))
+                disconnect(this.engine.getNode(this.meta.id)!,key,this.engine.getNode(child)!,child_nr);
             })
         })
-        this.dispatch_update();
-        this.inputs.clear();
-        this.connected_to_outputs.clear();
+        this.inputs.clear(); // all inputs are now unnconnected
+        this.connected_to_outputs.clear(); // remove later to 
+        this.update_node(); // invalidate node
+        // children are invalidated by disconnecting
     }
 
     // CRUD
@@ -135,36 +136,57 @@ export abstract class node<T extends node<T>>{
     // update (on child element)
     
     /**
-     * Update internal state
-     * This must return immediately make it async or dispatch function(type annotation prohibit use of async and abstract) 
+     * This function should update internal state (canvas, meta,...) and return true if update resulted in stable and proper state 
+     * if return false node will be invalidated 
+    */
+    public abstract _update_node(): Promise<boolean>;
+    
+    /**
+     * return true if all required connections are present
      */
-    public abstract _update_node(): void;
-
+    public could_update(): boolean {
+        return this.inputs.size >= this.meta.input_size
+    }
+    /**
+     * Call update prequisities will be check
+     * call _update and depending on return return type dispatch updated succesfully or error
+     */
+    public async update_node(): Promise<void> {
+        if(this.could_update()){
+            if (await this._update_node()){
+                this.dispatch_updated_successfully();
+            }else{
+                this.dispatch_updated_error("Transforming error");
+            }
+        }else{
+            this.dispatch_updated_error("Not all required connections connected");
+        }
+    }
     /**
      * Update node handle checking connection perquisites
      * Return is if update by connection has started
+     * Should only by called by engine
      */
-    public update_node(tick: number): boolean {
+    public dispatch_update(tick: number): boolean {
         if (this.dependency.tick != tick) {
             this.dependency.tick = tick;
             this.dependency.inputs = 1;
         } else {
             this.dependency.inputs += 1;
         }
-        if (this.inputs.size < this.meta.input_size){
-            // TODO make in into internal check in _update_node
-            // some inputs can be optional
-            this.dispatch_error("Not all inputs connected");
+        if (!this.could_update()){
+            this.dispatch_updated_error("Not all inputs connected");
             return true;
         }
-        if (this.dependency.inputs >= this.inputs.size) { // using this in case some input are optional(if all are needed handle it by returning error to engine)
-            this._update_node();
+        if (this.dependency.inputs >= this.inputs.size) { 
+            // using this in case some input are optional(if all are needed handle it by returning error to engine)
+            this.update_node();
             return true;
         }
         return false;
     }
 
-    public dispatch_update() {
+    private dispatch_updated_successfully() {
         let updates: GUID[] = []
 
         this.connected_to_outputs.forEach((childrens, _) => {
@@ -180,7 +202,7 @@ export abstract class node<T extends node<T>>{
         this.engine.internal.dispatchEvent(new CustomEvent<NodeResponse>("info", { detail: msg }))
     }
 
-    public dispatch_error(err: string) {
+    public dispatch_updated_error(err: string) {
         let updates: GUID[] = []
 
         this.connected_to_outputs.forEach((childrens, _) => {

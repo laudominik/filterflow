@@ -11,7 +11,7 @@ export default class MuxTransform extends Transform {
         this.meta.input_size = 2;
         this.params = {...this.params, "selected" : this.selected, "muxedInputs": this.meta.input_size};
     }
-    public _update_node(): void {
+    public async _update_node(): Promise<boolean> {
         // based on input connections perform calculations
         this.meta.input_size = this.params["muxedInputs"]
         console.log(this.meta.input_size)
@@ -21,7 +21,7 @@ export default class MuxTransform extends Transform {
             if(!pair) return undefined;
             return this.engine.getNode(pair[0])?.canvas
         })
-        this.apply(input);
+        return await this.apply(input)!= undefined;
     }
 
 

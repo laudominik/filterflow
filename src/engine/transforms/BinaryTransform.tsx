@@ -40,14 +40,14 @@ abstract class BinaryTransform extends Transform {
         this.fragment_shader = shader ?? default_fs;
     }
 
-    public _update_node(): void {
+    public async _update_node(): Promise<boolean> {
         // based on input connections perform calculations
         let [parent1, _] = this.inputs.get(0)!;
         let [parent2, __] = this.inputs.get(1)!;
 
         let input0 = this.engine.getNode(parent1)?.canvas;
         let input1 = this.engine.getNode(parent2)?.canvas;
-        this.apply([input0, input1])
+        return await this.apply([input0, input1]) != undefined;
     }
 
     visualizationView(guid: string) {

@@ -26,14 +26,14 @@ abstract class Transform extends node<Transform> {
         this.prevPos = {x: 0, y: 0}
     }
 
-    public _update_node(): void {
+    public async _update_node(): Promise<boolean> {
         // based on input connections perform calculations
         if (this.inputs.has(0)){
             let [parent,nr] = this.inputs.get(0)!;
             let input = this.engine.getNode(parent)?.canvas;
-            this.apply(input ? [input] : []);
+            return await this.apply(input ? [input] : []) != undefined;
         }
-
+        return false;
     }
 
     abstract paramView(guid: GUID): ReactElement;
@@ -55,7 +55,7 @@ abstract class Transform extends node<Transform> {
         // TODO: remove setting state in transform?
         this.hash = crypto.randomUUID();
         const ret = await this._apply(input as Array<OffscreenCanvas>);
-        this.dispatch_update();
+        // this.update_node();
         return ret;
     }
 

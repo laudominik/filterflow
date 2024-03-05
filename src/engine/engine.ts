@@ -55,6 +55,10 @@ export class Engine extends EventTarget{
         this.internal.addEventListener("connection_remove",this.handleInternalConnectionsRemove.bind(this) as any)
     }
 
+    public async requestUpdate(node:GUID): Promise<void>{
+        // TODO: will be used in not full update
+    }
+
     public updateNodeParams(node:GUID,params:KVParams): void{
         const transform = this.nodes.get(node)
         if (transform === undefined){
@@ -64,7 +68,7 @@ export class Engine extends EventTarget{
         // if found add to pending
         this.batchState.pendingUpdates.add(node)
         transform.updateParams(params);
-        transform._update_node();
+        transform.update_node();
     }
 
     public addNode(transformation: string, params: any): GUID{
@@ -123,7 +127,7 @@ export class Engine extends EventTarget{
         }
 
         this.source_nodes.forEach((id) =>{
-            this.getNode(id)?.update_node(tick);
+            this.getNode(id)?.dispatch_update(tick);
         })
     }
 
@@ -133,7 +137,7 @@ export class Engine extends EventTarget{
             const msg = event.detail;
             msg.requestUpdates.forEach((id) =>{
                 this.batchState.pendingUpdates.add(id);
-                this.getNode(id)?.update_node(this.batchState.tick);
+                this.getNode(id)?.dispatch_update(this.batchState.tick);
             })
             this.batchState.response.node.updated.push(msg.nodeId);
             this.batchState.doneUpdates.add(msg.nodeId);
@@ -141,7 +145,7 @@ export class Engine extends EventTarget{
             const msg = event.detail;
             msg.invalidateChildrens.forEach((id) =>{
                 this.batchState.pendingUpdates.add(id);
-                this.getNode(id)?.update_node(this.batchState.tick);
+                this.getNode(id)?.dispatch_update(this.batchState.tick);
             })
             this.batchState.response.node.errors.push(msg.nodeId);
             this.batchState.doneUpdates.add(msg.nodeId);
@@ -149,6 +153,8 @@ export class Engine extends EventTarget{
         
         if (this.batchState.pendingUpdates.size == this.batchState.doneUpdates.size){
             this.dispatchEvent(new CustomEvent<ExternalEngineResponse>("update",{detail:this.batchState.response}))
+            this.batchState.response = {connection:{added:[],removed:[]},node:{added:[],removed:[],errors:[],updated:[]}};
+            console.log("batch reset"); // TODO: Remove this later
         }
     }
     
@@ -156,7 +162,16 @@ export class Engine extends EventTarget{
         this.batchState.response.connection.removed.push(event.detail);
         // kick node to recalculate state update in child node
         this.batchState.pendingUpdates.add(event.detail[1][0]);
-        this.getNode(event.detail[1][0])?.update_node(this.batchState.tick);
+        this.getNode(event.detail[1][0])?.dispatch_update(this.batchState.tick);
+        // dispatch will trigger when all child nodes will update ~1s
+        // this.dispatchEvent(new CustomEvent<ExternalEngineResponse>("update",{detail:this.batchState.response}))
+    }
+
+    private handleInternalConnectionsAdd(event: CustomEvent<[[GUID,number],[GUID,number]]>){
+        this.batchState.response.connection.added.push(event.detail);
+        // kick node to recalculate state update in child node
+        this.batchState.pendingUpdates.add(event.detail[1][0]);
+        this.getNode(event.detail[1][0])?.dispatch_update(this.batchState.tick);
         // dispatch will trigger when all child nodes will update ~1s
         // this.dispatchEvent(new CustomEvent<ExternalEngineResponse>("update",{detail:this.batchState.response}))
     }

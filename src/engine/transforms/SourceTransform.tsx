@@ -14,6 +14,9 @@ export default class SourceTransform extends Transform{
     async apply(input: Array<OffscreenCanvas | undefined>): Promise<OffscreenCanvas | undefined> {
         // for the source node we ignore inputs
 
+        // TODO: For serialization purposes
+        // create canvas there if not exist and image string is set
+
         if(this.image === undefined || this.image === null || this.image === "") return undefined;
         
 
@@ -44,7 +47,7 @@ export default class SourceTransform extends Transform{
         this.drawImage(image)
 
         this.hash = crypto.randomUUID();
-        this.dispatch_update();
+        this.update_node();
     }
 
     drawImage(input: HTMLImageElement) {
