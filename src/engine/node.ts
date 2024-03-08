@@ -8,9 +8,9 @@ export function connect<T extends node<T>>(source: T, source_nr: number, destina
     }
     source._connect_output(source_nr, destination, destination_nr)
     destination._connect_input(destination_nr, source, source_nr)
-    // INFO: CHECK HERE: This event is not required for this in case of adding only one connection it could be usesfull in the future.
-    // destination.update_node();
     source.engine.dispatchEvent(new CustomEvent("connection_added",{detail:[[source.meta.id,source_nr],[destination.meta.id,destination_nr]]}))
+
+    destination.engine.requestUpdate(destination.meta.id);
     return true;
 }
 
@@ -19,10 +19,9 @@ export function disconnect<T extends node<T>>(source: T, source_nr: number, dest
         return false;
     }
     destination._disconnect_input(destination_nr, source, source_nr)
-    // source.update_node();
     source._disconnect_output(source_nr, destination, destination_nr)
     source.engine.dispatchEvent(new CustomEvent("connection_remove",{detail:[[source.meta.id,source_nr],[destination.meta.id,destination_nr]]}))
-    
+    destination.engine.requestUpdate(destination.meta.id);
     return true;
 }
 
@@ -124,7 +123,7 @@ export abstract class node<T extends node<T>>{
         })
         this.inputs.clear(); // all inputs are now unnconnected
         this.connected_to_outputs.clear(); // remove later to 
-        this.update_node(); // invalidate node
+        this.engine.requestUpdate(this.meta.id); // invalidate node
         // children are invalidated by disconnecting
     }
 

@@ -2,6 +2,7 @@
 export type GUID = string;
 
 export interface IEngine<T> extends EventTarget {
+    requestUpdate(id: string): void;
     updateNodeParams(node:GUID,params:any):void
     addNode(transformation: string, params: any): GUID
     removeNode(guid:GUID): void

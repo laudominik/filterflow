@@ -5,7 +5,7 @@ import { connect, disconnect } from './node';
 import { NodeResponse } from './nodeResponse';
 
 export type GUID = string;
-
+// TODO: add mechanism to detect locked state (count if any procces is executing)
 // FLOW
 // node get updatedParams
 // node request to update self
@@ -31,7 +31,8 @@ export class Engine extends EventTarget{
        response: ExternalEngineResponse
        pendingUpdates: Set<GUID> // basicly open updates, that wait for return
        doneUpdates: Set<GUID>,
-       tick: number
+       tick: number,
+       concurent_updates: number;
     }
 
 
@@ -48,6 +49,7 @@ export class Engine extends EventTarget{
             response: new ExternalEngineResponse(),
             pendingUpdates: new Set(),
             doneUpdates: new Set(),
+            concurent_updates: 0
         }
         this.nodes = new Map()
         this.source_nodes = []
@@ -55,8 +57,28 @@ export class Engine extends EventTarget{
         this.internal.addEventListener("connection_remove",this.handleInternalConnectionsRemove.bind(this) as any)
     }
 
-    public async requestUpdate(node:GUID): Promise<void>{
-        // TODO: will be used in not full update
+    public requestUpdate(node:GUID): void{
+        this.batchState.pendingUpdates.add(node);
+    }
+
+    public async startUpdate(): Promise<void>{
+        this.source_nodes.forEach((id) =>{
+            if (this.getNode(id)?.dispatch_update(this.batchState.tick)){
+                this.batchState.concurent_updates+=1;
+            };
+        })
+    }
+
+    private flushUpdate():void{
+        this.dispatchEvent(new CustomEvent<ExternalEngineResponse>("update",{detail:this.batchState.response}))
+        const tick = this.batchState.tick + 1;
+        this.batchState = {
+            doneUpdates: new Set(),
+            pendingUpdates: new Set(this.source_nodes),
+            response: new ExternalEngineResponse(),
+            tick: tick,
+            concurent_updates: 0
+        }
     }
 
     public updateNodeParams(node:GUID,params:KVParams): void{
@@ -68,7 +90,8 @@ export class Engine extends EventTarget{
         // if found add to pending
         this.batchState.pendingUpdates.add(node)
         transform.updateParams(params);
-        transform.update_node();
+        this.requestUpdate(transform.meta.id);
+        this.startUpdate();
     }
 
     public addNode(transformation: string, params: any): GUID{
@@ -85,22 +108,26 @@ export class Engine extends EventTarget{
         }
         node.engine = this;
         this.nodes.set(guid,node)
-        this.batchState.response.node.added.push(guid); 
+        this.batchState.response.node.added.push(guid);
+        this.requestUpdate(guid);
+        this.startUpdate(); 
         return guid
     }
 
     public removeNode(guid:GUID){
         let node = this.getNode(guid);
-        node?.remove();
+        node?.remove(); // this will not trigger update, only request them
         this.nodes.delete(guid);
         this.batchState.response.node.removed.push(guid);
         this.source_nodes = this.source_nodes.filter((v) => v!= guid);
+        this.startUpdate();
     }
 
     public connectNodes(source:GUID,destination:GUID,source_handle: number,destination_handle:number): boolean{
         let ok = connect(this.nodes.get(source)!,source_handle,this.nodes.get(destination)!,destination_handle)
         if (ok){
             this.batchState.response.connection.added.push([[source,source_handle],[destination,destination_handle]]);
+            this.startUpdate();
         }
         return ok;
     }
@@ -109,6 +136,7 @@ export class Engine extends EventTarget{
         let ok = disconnect(this.nodes.get(source)!,source_handle,this.nodes.get(destination)!,destination_handle)
         if (ok){
             this.batchState.response.connection.removed.push([[source,source_handle],[destination,destination_handle]]);
+            this.startUpdate();
         }
         return ok;
     }
@@ -118,17 +146,8 @@ export class Engine extends EventTarget{
     }
 
     public update_all(){
-        const tick = this.batchState.tick + 1;
-        this.batchState = {
-            doneUpdates: new Set(),
-            pendingUpdates: new Set(this.source_nodes),
-            response: new ExternalEngineResponse(),
-            tick: tick,
-        }
-
-        this.source_nodes.forEach((id) =>{
-            this.getNode(id)?.dispatch_update(tick);
-        })
+        this.flushUpdate();
+        this.startUpdate();
     }
 
     private handleInternalInfo(event: CustomEvent<NodeResponse>) {
@@ -137,24 +156,32 @@ export class Engine extends EventTarget{
             const msg = event.detail;
             msg.requestUpdates.forEach((id) =>{
                 this.batchState.pendingUpdates.add(id);
-                this.getNode(id)?.dispatch_update(this.batchState.tick);
+                if (this.getNode(id)?.dispatch_update(this.batchState.tick)){this.batchState.concurent_updates+=1;};
             })
             this.batchState.response.node.updated.push(msg.nodeId);
             this.batchState.doneUpdates.add(msg.nodeId);
+            this.batchState.concurent_updates-=1;
         }else if (event.detail.status == "error"){
             const msg = event.detail;
             msg.invalidateChildrens.forEach((id) =>{
                 this.batchState.pendingUpdates.add(id);
-                this.getNode(id)?.dispatch_update(this.batchState.tick);
+                if(this.getNode(id)?.dispatch_update(this.batchState.tick)){this.batchState.concurent_updates+=1;};
             })
             this.batchState.response.node.errors.push(msg.nodeId);
             this.batchState.doneUpdates.add(msg.nodeId);
+            this.batchState.concurent_updates-=1;
         }
         
+        // Desired state all required nodes updated
         if (this.batchState.pendingUpdates.size == this.batchState.doneUpdates.size){
-            this.dispatchEvent(new CustomEvent<ExternalEngineResponse>("update",{detail:this.batchState.response}))
-            this.batchState.response = {connection:{added:[],removed:[]},node:{added:[],removed:[],errors:[],updated:[]}};
+            this.flushUpdate();
             console.log("batch reset"); // TODO: Remove this later
+        }
+
+        if(this.batchState.concurent_updates == 0){ // no update is running (deadlock)
+            // TODO: detect if deadlock is caused by loop or disconnected graph part
+            this.flushUpdate();
+            console.log("batch deadlock");
         }
     }
     
