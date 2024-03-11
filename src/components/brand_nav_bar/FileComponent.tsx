@@ -6,7 +6,7 @@ export default function FileComponent() {
     const [notebooks, setNotebooks] = useSessionStorage<Array<string>>("notebooks", [])
 
     function handleNewNotebook(){
-        let name = "New notebook";
+        let name = "New_notebook";
         if(notebooks.includes(name)){
             name += "("
             let count = 1; 

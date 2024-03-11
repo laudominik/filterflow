@@ -30,7 +30,7 @@ export default function App() {
 
   const notebooks = sessionStorage.getItem("notebooks");
   if(!notebooks){
-    sessionStorage.setItem("notebooks", '["New notebook"]');
+    sessionStorage.setItem("notebooks", '["New_notebook"]');
     sessionStorage.setItem("selectedTabIx", "0");
   }
 
