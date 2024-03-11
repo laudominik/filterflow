@@ -397,7 +397,7 @@ function NodeContextMenu({ highlightedGUID, handleNodeTrashIcon, handleNodePrevi
     const form = <Form style={{display: "none"}}>       
         <Form.Group controlId="formFile" className="mb-3">
             <Form.Label>Choose an image</Form.Label>
-            <Form.Control id={"preview_chooser" + highlightedGUID} type="file" onChange={handleImageChange} />
+            <Form.Control id={"preview_chooser" + highlightedGUID} type="file" accept=".png,.jpg,.bmp,.jpeg" onChange={handleImageChange} />
         </Form.Group>
     </Form>
 

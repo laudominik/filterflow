@@ -117,7 +117,7 @@ export default function ImportGraphNode({ guid, style, onBodyClick, ioFunction }
     const form = <Form>       
         <Form.Group controlId="formFile" className="mb-3">
             <Form.Label>Choose an image</Form.Label>
-            <Form.Control type="file" onChange={handleImageChange} />
+            <Form.Control type="file" accept=".png,.jpg,.bmp,.jpeg" onChange={handleImageChange} />
         </Form.Group>
     </Form>
 
