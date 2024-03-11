@@ -250,7 +250,9 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
 
 
     function addMove(e: MouseEvent ){
-        setAddMovePos({x: (e as MouseEvent).pageX, y: (e as MouseEvent).pageY})
+        const rectum = document.getElementById("graphSpace")!.getClientRects()[0];
+        
+        setAddMovePos({x: (e as MouseEvent).pageX, y: (e as MouseEvent).pageY - rectum.y})
         setAddingEdgeAnimationComponent(handleAddingEdgeAnimation())
     }
 
