@@ -71,6 +71,7 @@ export default function TabsComponent() {
                     style={{border: 0, borderBottom: "0.1vw", borderStyle: "solid", height: "var(--navbar-height)", whiteSpace: "pre-wrap"}}
                     onInput={(e) => handleRenameNotebook(ix, e)}
                     dir="ltr"
+                    suppressContentEditableWarning={true}
                     >
                     {el}
                     </span> 
