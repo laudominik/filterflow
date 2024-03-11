@@ -30,7 +30,8 @@ export default function App() {
 
   const notebooks = sessionStorage.getItem("notebooks");
   if(!notebooks){
-    sessionStorage.setItem("notebooks", '["new"]');
+    sessionStorage.setItem("notebooks", '["New notebook"]');
+    sessionStorage.setItem("selectedTabIx", "0");
   }
 
   const splitPane = (  

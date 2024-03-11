@@ -1,15 +1,20 @@
 import { ChangeEvent } from "react";
 import { Form, Nav, Navbar } from "react-bootstrap";
+import { useSessionStorage } from "usehooks-ts";
 
 export default function FileComponent() {
+    const [notebooks, setNotebooks] = useSessionStorage<Array<string>>("notebooks", [])
 
     function handleNewNotebook(){
-        const nbs = sessionStorage.getItem("notebooks");
-        if(!nbs) return;
-        const nbsArray = JSON.parse(nbs);
-
-        // add serialization of engine
-        sessionStorage.setItem("notebooks", JSON.stringify([...nbsArray, "New notebook"]))
+        let name = "New notebook";
+        if(notebooks.includes(name)){
+            name += "("
+            let count = 1; 
+            while(notebooks.includes(name + count + ")")) count++
+            name += count + ")"
+        }
+        
+        setNotebooks([...notebooks, name])        
     }
 
     function handleSaveNotebook(e: ChangeEvent<HTMLInputElement>){
@@ -43,7 +48,7 @@ export default function FileComponent() {
                 style={{ display: 'none' }}
                 onChange={handleSaveNotebook}
             />
-            <Nav.Link onClick={() => {document.getElementById("loadNotebook")?.click()}} type="file">Save</Nav.Link>
+            <Nav.Link onClick={() => {document.getElementById("loadNotebook")?.click()}} type="file">Download</Nav.Link>
             <input
                 type="file"
                 id="loadNotebook"
