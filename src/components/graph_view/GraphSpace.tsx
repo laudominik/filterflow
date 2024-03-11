@@ -1,8 +1,8 @@
-import React, { ReactNode, Ref, forwardRef, useContext, useEffect, useImperativeHandle, useRef, useState, useSyncExternalStore } from "react";
+import React, { ChangeEvent, ReactNode, Ref, forwardRef, useContext, useEffect, useImperativeHandle, useRef, useState, useSyncExternalStore } from "react";
 import GraphNode from "./GraphNode";
 import ImportGraphNode from "./ImportGraphNode";
 import TransformGraphNode from "./TransformGraphNode";
-import { Button } from "react-bootstrap";
+import { Button, Form } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { connectionStoreContext, nodeStoreContext, previewStoreContext } from "../../stores/context";
 import { faDoorClosed, faDoorOpen, faImagePortrait, faL, faTrash } from "@fortawesome/free-solid-svg-icons";
@@ -337,9 +337,11 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
                         borderWidth: "3px",
                         borderColor: "blue",
                         backgroundColor: trf.getColor(),
+                        color: "black"
                     } : {
                         borderWitdh: "0px",
                         backgroundColor: trf.getColor(),
+                        color: "black"
                     }
                 return (trf.name == "source" ? 
                () => <ImportGraphNode key={guid} guid={guid} style={style} onBodyClick={dragStart} ioFunction={connectionToggle}/> : 
@@ -374,15 +376,44 @@ function NodeContextMenu({ highlightedGUID, handleNodeTrashIcon, handleNodePrevi
     const nodeContext = useContext(nodeStoreContext);
     const node = useSyncExternalStore(nodeContext.subscribeNode(highlightedGUID), nodeContext.getNode(highlightedGUID));
     const previewIcon =   previewOpen ? <FontAwesomeIcon icon={faDoorClosed}/> : <FontAwesomeIcon icon={faDoorOpen}/>
+    const chooseImageIcon = <FontAwesomeIcon icon={faImagePortrait} />
+
+    const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) {
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            nodeContext.updateParam(highlightedGUID, {image: event.target?.result as string})
+        }
+        
+        reader.readAsDataURL(file);
+    }
+
+    const form = <Form style={{display: "none"}}>       
+        <Form.Group controlId="formFile" className="mb-3">
+            <Form.Label>Choose an image</Form.Label>
+            <Form.Control id={"preview_chooser" + highlightedGUID} type="file" onChange={handleImageChange} />
+        </Form.Group>
+    </Form>
 
     return <div className='nodeContextMenu'>
             {/* debug */}
             GUID: {highlightedGUID} 
             {/* end debug */}
-            <Button onClick={handleNodeTrashIcon}><FontAwesomeIcon icon={faTrash}/></Button>
+            <Button title="delete transformation" onClick={handleNodeTrashIcon}><FontAwesomeIcon icon={faTrash}/></Button>
             {
-                node.value.name == "source" ? <></> : 
-                <Button onClick={handleNodePreviewIcon}>{previewIcon}</Button>
+                node.value.name == "source" ?  <></> : 
+                <Button title="preview" onClick={handleNodePreviewIcon}>{previewIcon}</Button>
+            }
+            {
+                node.value.name == "source" && node.value.canvas.height != 1 && node.value.canvas.width != 1 ? 
+                <>
+                    {form}
+                    <Button title="choose image" onClick={() => document.getElementById("preview_chooser" + highlightedGUID)?.click()}>{chooseImageIcon}</Button>
+                </> : <></>
             }
     </div>
 }
