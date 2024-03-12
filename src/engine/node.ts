@@ -62,7 +62,7 @@ export abstract class node<T extends node<T>>{
     }
 
     public _connect_output(output_nr: number, self: T, self_input_nr: number) {
-        if (this.connected_to_outputs.has(output_nr)) {
+        if (!this.connected_to_outputs.has(output_nr)) {
             this.connected_to_outputs.set(output_nr, [[self.meta.id, self_input_nr]])
         } else {
             const prev = this.connected_to_outputs.get(output_nr) ?? [];
@@ -72,15 +72,13 @@ export abstract class node<T extends node<T>>{
 
     public _disconnect_output(output_nr: number, self: T, self_input_nr: number) {
         if (this.connected_to_outputs.has(output_nr)) {
-            let prev = this.connected_to_outputs.get(output_nr) ?? [];
-            let searched_id = prev.findIndex(([child, child_nr]) => child == self.meta.id && child_nr == self_input_nr)
-            if (searched_id != -1) {
-                delete prev[searched_id];
-            } else {
+            let prev = this.connected_to_outputs.get(output_nr) || [];
+            let new_prev = prev.filter(([child, child_nr]) => child == self.meta.id && child_nr == self_input_nr)
+            this.connected_to_outputs.set(output_nr,new_prev);
+            if (prev.length == new_prev.length) {
                 console.log("Logic error disconnect output without connecting first")
                 return;
             }
-            this.connected_to_outputs.set(output_nr, prev)
         } else {
             console.log("Logic error disconnect output without connecting first")
         }
@@ -104,7 +102,7 @@ export abstract class node<T extends node<T>>{
         }
     }
 
-    public remove() {
+    public disconnect() {
         this.inputs.forEach(([parent, parent_nr], key) => {
             // TODO: here it sometimes crashes (no parent, this.inputs most likely not updated), find why's that, for now adding check
             const parentNode = this.engine.getNode(parent)
@@ -122,9 +120,8 @@ export abstract class node<T extends node<T>>{
             })
         })
         this.inputs.clear(); // all inputs are now unnconnected
-        this.connected_to_outputs.clear(); // remove later to 
-        this.engine.requestUpdate(this.meta.id); // invalidate node
-        // children are invalidated by disconnecting
+        this.connected_to_outputs.clear(); // remove later to
+        this.engine.requestUpdate(this.meta.id); // self invalidate
     }
 
     // CRUD

@@ -63,10 +63,18 @@ export class Engine extends EventTarget{
 
     public async startUpdate(): Promise<void>{
         this.source_nodes.forEach((id) =>{
-            if (this.getNode(id)?.dispatch_update(this.batchState.tick)){
-                this.batchState.concurent_updates+=1;
-            };
+            this.batchState.pendingUpdates.add(id);
+            this.batchState.concurent_updates+=1;
+            this.getNode(id)?.update_node()
         })
+        if (this.batchState.concurent_updates == 0){
+            console.log("dispatching pending (no source)")
+            this.deadLockForceUpdate();
+        }
+        if(this.batchState.concurent_updates == 0){
+            console.log("Empty update");
+            this.flushUpdate();
+        }
     }
 
     private flushUpdate():void{
@@ -74,11 +82,23 @@ export class Engine extends EventTarget{
         const tick = this.batchState.tick + 1;
         this.batchState = {
             doneUpdates: new Set(),
-            pendingUpdates: new Set(this.source_nodes),
+            pendingUpdates: new Set(),
             response: new ExternalEngineResponse(),
             tick: tick,
             concurent_updates: 0
         }
+    }
+
+    private deadLockForceUpdate(): void{
+        this.batchState.pendingUpdates.forEach(v =>{
+            if (!this.batchState.doneUpdates.has(v)){
+                const node = this.getNode(v);
+                if (node){
+                    this.batchState.concurent_updates +=1;
+                    node.update_node();
+                }
+            }
+        })
     }
 
     public updateNodeParams(node:GUID,params:KVParams): void{
@@ -116,7 +136,7 @@ export class Engine extends EventTarget{
 
     public removeNode(guid:GUID){
         let node = this.getNode(guid);
-        node?.remove(); // this will not trigger update, only request them
+        node?.disconnect(); // this will not trigger update, only request them
         this.nodes.delete(guid);
         this.batchState.response.node.removed.push(guid);
         this.source_nodes = this.source_nodes.filter((v) => v!= guid);
@@ -156,19 +176,26 @@ export class Engine extends EventTarget{
             const msg = event.detail;
             msg.requestUpdates.forEach((id) =>{
                 this.batchState.pendingUpdates.add(id);
-                if (this.getNode(id)?.dispatch_update(this.batchState.tick)){this.batchState.concurent_updates+=1;};
+                if (this.getNode(id)?.dispatch_update(this.batchState.tick)){
+                    this.batchState.concurent_updates+=1;
+                };
             })
             this.batchState.response.node.updated.push(msg.nodeId);
-            this.batchState.doneUpdates.add(msg.nodeId);
-            this.batchState.concurent_updates-=1;
         }else if (event.detail.status == "error"){
             const msg = event.detail;
             msg.invalidateChildrens.forEach((id) =>{
                 this.batchState.pendingUpdates.add(id);
-                if(this.getNode(id)?.dispatch_update(this.batchState.tick)){this.batchState.concurent_updates+=1;};
+                if(this.getNode(id)?.dispatch_update(this.batchState.tick)){
+                    this.batchState.concurent_updates+=1;
+                };
             })
-            this.batchState.response.node.errors.push(msg.nodeId);
-            this.batchState.doneUpdates.add(msg.nodeId);
+            this.batchState.response.node.errors.push(event.detail.nodeId);
+
+        }else{
+            console.log("undefined msg type");
+        }
+        if (!this.batchState.doneUpdates.has(event.detail.nodeId)){
+            this.batchState.doneUpdates.add(event.detail.nodeId);
             this.batchState.concurent_updates-=1;
         }
         
@@ -176,20 +203,25 @@ export class Engine extends EventTarget{
         if (this.batchState.pendingUpdates.size == this.batchState.doneUpdates.size){
             this.flushUpdate();
             console.log("batch reset"); // TODO: Remove this later
+            return;
         }
 
         if(this.batchState.concurent_updates == 0){ // no update is running (deadlock)
             // TODO: detect if deadlock is caused by loop or disconnected graph part
-            this.flushUpdate();
+            this.deadLockForceUpdate();
             console.log("batch deadlock");
         }
+        console.debug(this);
+        console.debug(event);
     }
     
     private handleInternalConnectionsRemove(event: CustomEvent<[[GUID,number],[GUID,number]]>){
         this.batchState.response.connection.removed.push(event.detail);
         // kick node to recalculate state update in child node
-        this.batchState.pendingUpdates.add(event.detail[1][0]);
-        this.getNode(event.detail[1][0])?.dispatch_update(this.batchState.tick);
+        // this.batchState.pendingUpdates.add(event.detail[1][0]);
+        const child_guid = event.detail[1][0];
+        this.requestUpdate(child_guid);
+        // this.getNode()?.req(this.batchState.tick);
         // dispatch will trigger when all child nodes will update ~1s
         // this.dispatchEvent(new CustomEvent<ExternalEngineResponse>("update",{detail:this.batchState.response}))
     }
