@@ -8,8 +8,8 @@ export abstract class PreviewStores extends BaseFilterStore implements IPreviewS
     previewStores: Map<string,IPreviewStore>
     previewListeners: CallableFunction[]
 
-    constructor(fileName: string,engine: IEngine<Transform> ){
-        super(fileName,engine);
+    constructor(engine: IEngine<Transform> ){
+        super(engine);
         this.previewStores = new Map();
         this.previewListeners = [];
     }

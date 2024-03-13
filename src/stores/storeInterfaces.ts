@@ -84,3 +84,12 @@ export interface IPreviewStore{
     subscribeContext(listener: Func): Func
 
 }
+
+export interface IPersistentStore {
+
+    save(): string
+    saveToIndex(notebookIndex: number): void 
+    loadFromIndex(notebookIndex: number): void 
+    loadFromSerialized(serialized: string): void
+
+}

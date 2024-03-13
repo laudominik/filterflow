@@ -1,17 +1,18 @@
 import { Engine, ExternalEngineResponse } from "../engine/engine"
 import { ConnectionDefinition, ConnectionInfo } from "./storeInterfaces";
 import { PreviewStores } from "./previewStore";
-
-
-
+import { TypedJSON } from "typedjson";
+import Transform from "../engine/Transform";
+import { IEngine } from "../engine/iengine"
 
 
 export class GraphFilterStore extends PreviewStores{
+ 
     connectionsListener: CallableFunction[]
     connections: ConnectionInfo[]
 
     constructor() {
-        super("graph",new Engine());
+        super(new Engine());
         this.connectionsListener = [];
         this.connections = [];
 
@@ -72,11 +73,73 @@ export class GraphFilterStore extends PreviewStores{
     //#endregion
     
     //#region Persistence
-    public saveAs(name: string): void {
-        // TODO 
+    public save(): string {
+        const serializer = new TypedJSON<IEngine<Transform>>(Engine)
+        
+        const toSerialize = {
+            "engine" : serializer.stringify(this.engine),
+            "nodeCollection": JSON.stringify(this.nodeCollection)
+        }
+        // TODO: rest of the stuff
+        return JSON.stringify(toSerialize)
     }
-    public load(name: string): void {
-        // TODO 
+
+    public saveToIndex(notebookIndex: number) {
+        const allSaved = sessionStorage.getItem("engines")
+        if(!allSaved ) return;
+        const allSavedParsed = JSON.parse(allSaved)
+        allSavedParsed[notebookIndex] = this.save();
+        sessionStorage.setItem("engines", JSON.stringify(allSavedParsed))
     }
+    
+    public loadFromIndex(notebookIndex: number): void {
+        // construct fresh everything 
+        this.engine = new Engine()
+        this.connections = []
+        
+
+        const allSaved = sessionStorage.getItem("engines")
+        if(!allSaved ) return;
+        const allSavedParsed = JSON.parse(allSaved)
+    
+        const thisSaved = allSavedParsed[notebookIndex]
+        if(!thisSaved) return;
+        this.loadFromSerialized(thisSaved)
+
+        // emit everything
+    }
+
+    public loadFromSerialized(serialized: string): void {
+        const thisSaved = JSON.parse(serialized)
+        
+        const savedEngine = thisSaved["engine"]
+        const savedNodeCollection = thisSaved["nodeCollection"]
+        
+        if(!savedEngine || !savedNodeCollection) return;
+        const serializer = new TypedJSON<IEngine<Transform>>(Engine)
+
+        const parsedEngine = serializer.parse(savedEngine) // TODO: nodes not parsed ftw
+        console.log(parsedEngine)
+        if(!parsedEngine) return
+        this.engine = parsedEngine 
+
+        // TODO: parse rest of the props
+
+    }
+
+    public rollback(){
+
+        const selectedIndex = sessionStorage.getItem("selectedTabIx")
+        if(!selectedIndex) return 
+        this.loadFromIndex(JSON.parse(selectedIndex))
+    }
+
+    public commit(): string {
+        const selectedIndex = sessionStorage.getItem("selectedTabIx")
+        if(!selectedIndex) return ""
+        this.saveToIndex(JSON.parse(selectedIndex))
+        return ""
+    }
+
     //#endregion
 }

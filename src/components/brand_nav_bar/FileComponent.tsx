@@ -1,12 +1,16 @@
-import { ChangeEvent } from "react";
+import { ChangeEvent, useContext } from "react";
 import { Form, Nav, Navbar } from "react-bootstrap";
 import { useSessionStorage } from "usehooks-ts";
+import { persistenceContext } from "../../stores/context";
+import { serialize } from "v8";
 
 export default function FileComponent() {
     const [notebooks, setNotebooks] = useSessionStorage<Array<string>>("notebooks", [])
+    const [engines, setEngines] = useSessionStorage<Array<string>>("engines", [])
     const [selectedTabIx, setSelectedTabIx] = useSessionStorage<number>("selectedTabIx", 0)
+    const persistence = useContext(persistenceContext)
 
-    function handleNewNotebook(name: string = "New_notebook"){
+    function handleNewNotebook(name: string = "New_notebook", serialized: string = ""){
         if(notebooks.includes(name)){
             name += "("
             let count = 1; 
@@ -15,10 +19,11 @@ export default function FileComponent() {
         }
         
         setNotebooks([...notebooks, name])        
+        setEngines([...engines, serialized])
     }
 
     function handleSaveNotebook(){
-        const data = "https://www.youtube.com/watch?v=oHg5SJYRHA0" // TODO: change that to serialized engine
+        const data = persistence.save()
         const blob = new Blob([data], {type:""})
         const url = URL.createObjectURL(blob);
         
@@ -37,9 +42,10 @@ export default function FileComponent() {
         }
         const reader = new FileReader();
         reader.onload = (event) => {
-            // TODO: deserialize engine and add it to storage
+            const serialized = event.target?.result as string
+            if(!serialized) return;
             const fileName = file.name.split('.').slice(0, -1).join('.');
-            handleNewNotebook(fileName)
+            handleNewNotebook(fileName, serialized)
         }
         reader.readAsText(file);
     }

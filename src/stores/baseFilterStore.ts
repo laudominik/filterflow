@@ -7,7 +7,6 @@ import { INodeStore } from "./storeInterfaces";
 type MarkedListener = CallableFunction & { id: GUID }
 
 export abstract class BaseFilterStore implements INodeStore{
-    filename: string
     engine: IEngine<Transform>
 
     // listen on node change
@@ -18,8 +17,7 @@ export abstract class BaseFilterStore implements INodeStore{
     nodeCollectionListener: CallableFunction[]
     nodeCollection: GUID[]
 
-    constructor(filename: string, engine: IEngine<Transform>){
-        this.filename = filename;
+    constructor(engine: IEngine<Transform>){
         this.engine = engine;
         this.nodeListeners = [];
         this.nodeWrappers = new Map();
@@ -95,7 +93,7 @@ export abstract class BaseFilterStore implements INodeStore{
         const guid = this.engine.addNode(name, params);
         this.nodeCollection = [...this.nodeCollection,guid];
         this.emitChangeNodeCollection();
-        this.save();
+        this.commit();
         return this.engine.getNode(guid)!;
     }
 
@@ -103,14 +101,13 @@ export abstract class BaseFilterStore implements INodeStore{
         this.engine.removeNode(id);
         this.nodeCollection = this.nodeCollection.filter(v => v != id);
         this.emitChangeNodeCollection();
-        this.save();
+        this.commit();
     }
 
     // #endregion 
 
     //#region Persistence
-    public save():void{this.saveAs(this.filename);}
-    public abstract saveAs(name: string): void;
-    public abstract load(name: string):void;
+    public abstract commit(): string;
+    public abstract rollback():void;
     // #endregion
 }

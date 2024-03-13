@@ -1,22 +1,27 @@
 import { faCancel, faClose, faCross } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Nav, Navbar } from "react-bootstrap";
 import { useSessionStorage } from 'usehooks-ts'
 
 import "./TabsComponent.css"
+import { persistenceContext } from "../../stores/context";
 
 export default function TabsComponent() {
     const [notebooks, setNotebooks] = useSessionStorage<Array<string>>("notebooks", [])
+    const [engines, setEngines] = useSessionStorage<Array<string>>("engines", [])
     const [selectedTabIx, setSelectedTabIx] = useSessionStorage<number>("selectedTabIx",0);
+    const persistence = useContext(persistenceContext)
 
     function handleSelectNotebook(ix: number){
-        setSelectedTabIx(ix)
+        persistence.saveToIndex(selectedTabIx)
+        setSelectedTabIx(ix) 
+        persistence.loadFromIndex(ix)
     }
 
     function handleCloseNotebook(ix: number){
-        // TODO: we should also remove serialized engines from session storage
         let newNotebooks = notebooks.slice(0, ix).concat(notebooks.slice(ix + 1))
+        let newEngines = engines.slice(0, ix).concat(engines.slice(ix + 1))
         let newSelectedTabIx = selectedTabIx
 
         if(ix == selectedTabIx){
@@ -26,10 +31,12 @@ export default function TabsComponent() {
         }
 
         if (newNotebooks.length == 0){
-            newNotebooks = [...newNotebooks, "New_notebook"]   
+            newNotebooks = ["New_notebook"]   
+            newEngines = ["{}"]
         }
 
         setNotebooks(newNotebooks)
+        setEngines(newEngines)
         setSelectedTabIx(newSelectedTabIx)
     }
 

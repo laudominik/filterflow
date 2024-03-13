@@ -33,6 +33,7 @@ export default function App() {
   if(!notebooks){
     sessionStorage.setItem("notebooks", '["New_notebook"]');
     sessionStorage.setItem("selectedTabIx", "0");
+    sessionStorage.setItem("engines", '["{}"]')
   }
 
   const splitPane = (  
