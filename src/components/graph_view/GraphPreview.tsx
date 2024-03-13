@@ -51,7 +51,6 @@ export default function GraphPreview({guid, onBodyClick}: {guid: GUID, onBodyCli
                     </div>
                     </center>
                     {previewSelections.channel != Channel.NONE ? node.value.visualizationView(guid) : <></>}
-               
             </div>
          </div>
 }

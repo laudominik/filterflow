@@ -3,24 +3,29 @@ import { GUID } from "../../engine/engine"
 import { Channel, ChannelValue, FilterStoreContext } from "../../stores/simpleFilterStore"
 import PixelComponent, { ColorComponent } from "./PixelComponent"
 import AdnotateElement, { AdnotateText } from "./AdnotationComponent"
+import { nodeStoreContext, previewStoreContext } from "../../stores/context"
 
 export default function ConvolutionVisualizationComponent({guid}: {guid: GUID}) {
+    const nodeContext = useContext(nodeStoreContext);
+        
+    const node = useSyncExternalStore(nodeContext.subscribeNode(guid), nodeContext.getNode(guid));
+    const previewContext = useContext(previewStoreContext);
+    const previewStore = previewContext.getPreviewStore(guid)!;
+    const selection = useSyncExternalStore(previewStore.subscribeSelection.bind(previewStore), previewStore.getSelection.bind(previewStore));
 
-    // TODO : change API
+    const input = node.value.inputs.get(0)
+    let inputId = guid;
+    if(input){
+        inputId = input[0]
+    }
 
-    const filterContext = useContext(FilterStoreContext)
-    
-    const preview = useSyncExternalStore(filterContext.subscribePreview.bind(filterContext) as any, filterContext.getPreview.bind(filterContext))
-    const transform = useSyncExternalStore(filterContext.subscribe(guid) as any, filterContext.getTransform.bind(filterContext, guid))
-    const selection = useSyncExternalStore(filterContext.subscribeCanvasSelections.bind(filterContext) as any, filterContext.getPreviewSelections.bind(filterContext))
+    const inputNode =  useSyncExternalStore(nodeContext.subscribeNode(inputId), nodeContext.getNode(inputId));
+    const pixels = inputNode.value.getPixels(selection.preview.source.start, selection.preview.source.size);
+    const res_pixel = node.value.getPixels(selection.preview.destination.start, selection.preview.destination.size);
+    const channelOffset = ChannelValue[selection.channel]
 
-    // TODO: optimalize pixels, remove boilerplate
-    const pixels = filterContext.getTransform(preview.start).getPixels(selection.source.start, selection.source.size)
-    const res_pixel = transform.getPixels(selection.destination.start, selection.destination.size)
-    const channelOffset = ChannelValue[preview.visualizationChannel]
-
-    const kernel: number[][] = transform.params["kernel"]
-    const kernelWeight = transform.params["weigth"] ?? 1
+    const kernel: number[][] = node.value.params["kernel"]
+    const kernelWeight = node.value.params["weigth"] ?? 1
 
     const rowsN = kernel.length;
     const colsN = kernel[0].length
@@ -34,10 +39,10 @@ export default function ConvolutionVisualizationComponent({guid}: {guid: GUID}) 
 
     return <>
         <hr/>
-        {drawPixelValues(pixels, kernel, preview.visualizationChannel)}
+        {drawPixelValues(pixels, kernel, selection.channel)}
         = {AdnotateText(`${sum}`, "sum", "under")}
         <br/>
-        {AdnotateText(`${sum}`, "sum", "under")} / {AdnotateText(`${kernelWeight}`, "kernel weight", "under")} = {Math.trunc(sum/kernelWeight)} → {AdnotateElement(ColorComponent(res_pixel[channelOffset], preview.visualizationChannel), "result", "under")}
+        {AdnotateText(`${sum}`, "sum", "under")} / {AdnotateText(`${kernelWeight}`, "kernel weight", "under")} = {Math.trunc(sum/kernelWeight)} → {AdnotateElement(ColorComponent(res_pixel[channelOffset], selection.channel), "result", "under")}
     </>    
 }
 
