@@ -42,7 +42,6 @@ export default function TabsComponent() {
 
     function handleRenameNotebook(ix: number, event: React.FormEvent<HTMLInputElement>){
         const newText = event.currentTarget.value; 
-        console.log(newText)
         if(!newText) return;
         
         const updatedNotebooks = [

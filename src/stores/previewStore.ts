@@ -3,6 +3,7 @@ import { BaseFilterStore } from "./baseFilterStore";
 import { CanvasPointer, CanvasPosition, GUID, IPreviewStore, IPreviewStores, PreviewSelections } from "./storeInterfaces";
 import { Channel } from "./storeInterfaces";
 import Transform from "../engine/Transform";
+
 export abstract class PreviewStores extends BaseFilterStore implements IPreviewStores{
     
     previewStores: Map<string,IPreviewStore>
@@ -33,7 +34,7 @@ export abstract class PreviewStores extends BaseFilterStore implements IPreviewS
         return this.previewStores.get(name);
     }
     addPreviewStore(name: string,inputs: GUID[],output: GUID): void {
-        this.previewStores.set(name,new PreviewStore(inputs,output));
+        this.previewStores.set(name, new PreviewStore(inputs,output));
         this.emitChangePreviews()
     }
     removePreviewStore(name: string): void {
@@ -45,7 +46,8 @@ export abstract class PreviewStores extends BaseFilterStore implements IPreviewS
 export class PreviewStore implements IPreviewStore{
     context: {
         inputs: GUID[]
-        output: GUID
+        output: GUID,
+        visualizationEnabled: boolean
     }
 
     selection: {
@@ -57,14 +59,12 @@ export class PreviewStore implements IPreviewStore{
     selectionListener: CallableFunction[]
     contextListener: CallableFunction[]
     selectionLocked: boolean
-    visualizationEnabled: boolean
 
     constructor(inputs: GUID[],output:GUID){
-        this.context = {inputs,output};
+        this.context = {inputs, output, visualizationEnabled: false};
         this.selectionListener = [];
         this.contextListener = [];
         this.selectionLocked = false;
-        this.visualizationEnabled = false;
         this.selection = {
             pointer: {destination: [0,0],source:[0,0]},
             preview: {destination: {center:[0,0],size:[0,0],start: [0,0]},source:{center:[0,0],size:[0,0],start: [0,0]}},
@@ -88,8 +88,8 @@ export class PreviewStore implements IPreviewStore{
         this.selectionListener.forEach(v => v())
     }
     
-    updateContext(inputs: GUID[],output: GUID){
-        this.context = {inputs,output};
+    updateContext(inputs: GUID[],output: GUID, visualization: boolean){
+        this.context = {inputs,output, visualizationEnabled: visualization};
         this.contextListener.forEach( v => v());
     }
 
@@ -110,15 +110,5 @@ export class PreviewStore implements IPreviewStore{
         return () => {
             this.contextListener = this.contextListener.filter( v => v != listener)
         }
-    }
-
-    updateVisualizationEnabled(enabled: boolean): void {
-        this.visualizationEnabled = enabled
-        this.contextListener.forEach(v => v())
-        this.selectionListener.forEach(v => v())
-    }
-
-    getVisualizationEnabled(): boolean {
-        return this.visualizationEnabled
     }
 }

@@ -75,12 +75,10 @@ export interface IPreviewStore{
     }
     subscribeSelection(listener: Func): Func
     updateSelection(pointer: CanvasPointer, preview: PreviewSelections, channel: Channel): void
-    updateContext(inputs: GUID[],output: GUID): void
+    updateContext(inputs: GUID[],output: GUID, visualization: boolean): void
     updateSelectionLocked(locked: boolean): void
-    updateVisualizationEnabled(enabled: boolean): void
-    getVisualizationEnabled(): boolean
     getSelectionLocked() : boolean
-    getContext(): {inputs: GUID[],output: GUID}
+    getContext(): {inputs: GUID[],output: GUID, visualizationEnabled: boolean}
     subscribeContext(listener: Func): Func
 
 }
@@ -91,5 +89,6 @@ export interface IPersistentStore {
     saveToIndex(notebookIndex: number): void 
     loadFromIndex(notebookIndex: number): void 
     loadFromSerialized(serialized: string): void
-
+    rollback(): void
+    commit(): string
 }

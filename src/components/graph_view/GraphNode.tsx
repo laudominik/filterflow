@@ -6,7 +6,7 @@ import { faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import './GraphNode.css';
-import { nodeStoreContext } from "../../stores/context";
+import { nodeStoreContext, persistenceContext } from "../../stores/context";
 
 interface NodeBodyProps {
     children: ReactNode;
@@ -35,12 +35,15 @@ const GraphNode: React.FC<NodeProps> = ({ children,
     onBodyClick,
     ioFunction
     }) => {
+    const persistence = useContext(persistenceContext)
     const nodeContext = useContext(nodeStoreContext) 
     const node = useSyncExternalStore(nodeContext.subscribeNode(guid), nodeContext.getNode(guid));
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(node.value.getExpanded());
     
     const handleOpenClick = () => {
+        node.value.setExpanded(!open)
         setOpen(!open)
+        persistence.commit()
     }
     
     const inputs = <div className="circle-container">
@@ -50,7 +53,6 @@ const GraphNode: React.FC<NodeProps> = ({ children,
             )
         }
     </div>
-
     const outputs = <div className="circle-container"><div className="circle circle-bottom" onMouseDown={(e) => ioFunction ? ioFunction(e, guid, 0) : {}}></div></div>
     return  <div className="draggable transformNode" id={guid} key={guid} style={{left: node.value.getPos().x, top: node.value.getPos().y}}>
             {inputs}
@@ -70,8 +72,6 @@ const GraphNode: React.FC<NodeProps> = ({ children,
                     </Card.Header>
                     <Collapse in={open}>
                         <Card.Body>
-                            {/* {children} */}
-                            {/* TODO: render node parameters */}
                             {children ?? node.value.paramView(guid)}
                         </Card.Body>
                     </Collapse>

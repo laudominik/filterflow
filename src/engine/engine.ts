@@ -1,11 +1,11 @@
-import { jsonMapMember, jsonObject } from "typedjson";
+import { jsonArrayMember, jsonMapMember, jsonMember, jsonObject } from "typedjson";
 import Transform, { KVParams } from "./Transform";
 import mapToTransform, {knownTypes} from "./TransformDeclarations";
 import { connect, disconnect } from './node';
 import { NodeResponse } from './nodeResponse';
 
 export type GUID = string;
-// TODO: add mechanism to detect locked state (count if any procces is executing)
+// TODO: add mechanism to detect locked state (count if any process is executing)
 // FLOW
 // node get updatedParams
 // node request to update self
@@ -18,7 +18,7 @@ export type GUID = string;
 // engine decide that its time to notify parent that internal state changed 
 
 
-// Engine send events to parent element (logic decupling)
+// Engine sends events to parent element (logic decupling)
 @jsonObject({knownTypes: Array.from(knownTypes())})
 export class Engine extends EventTarget{
     // internal is comunication from graph components to graph components, with information collection by engine
@@ -39,6 +39,7 @@ export class Engine extends EventTarget{
     @jsonMapMember(String, Transform)
     nodes: Map<GUID,Transform>
 
+    @jsonArrayMember(String)
     source_nodes: GUID[]
 
     constructor(){
@@ -79,6 +80,7 @@ export class Engine extends EventTarget{
 
     private flushUpdate():void{
         this.dispatchEvent(new CustomEvent<ExternalEngineResponse>("update",{detail:this.batchState.response}))
+        this.batchState.response.node.removed.forEach(v => this.nodes.delete(v));
         const tick = this.batchState.tick + 1;
         this.batchState = {
             doneUpdates: new Set(),
@@ -137,7 +139,7 @@ export class Engine extends EventTarget{
     public removeNode(guid:GUID){
         let node = this.getNode(guid);
         node?.disconnect(); // this will not trigger update, only request them
-        this.nodes.delete(guid);
+        // this.nodes.delete(guid);
         this.batchState.response.node.removed.push(guid);
         this.source_nodes = this.source_nodes.filter((v) => v!= guid);
         this.startUpdate();
@@ -157,6 +159,8 @@ export class Engine extends EventTarget{
         if (ok){
             this.batchState.response.connection.removed.push([[source,source_handle],[destination,destination_handle]]);
             this.startUpdate();
+        } else {
+            console.log("didn't delete it")
         }
         return ok;
     }
@@ -233,6 +237,10 @@ export class Engine extends EventTarget{
         this.getNode(event.detail[1][0])?.dispatch_update(this.batchState.tick);
         // dispatch will trigger when all child nodes will update ~1s
         // this.dispatchEvent(new CustomEvent<ExternalEngineResponse>("update",{detail:this.batchState.response}))
+    }
+
+    public fixSerialization():void{
+        this.nodes.forEach(n => n.engine = this);
     }
 }
 

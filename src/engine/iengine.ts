@@ -1,4 +1,3 @@
-
 export type GUID = string;
 
 export interface IEngine<T> extends EventTarget {
@@ -11,4 +10,5 @@ export interface IEngine<T> extends EventTarget {
     getNode(node:GUID): T | undefined;
     update_all(): void
     internal: EventTarget;
+    fixSerialization(): void;
 }

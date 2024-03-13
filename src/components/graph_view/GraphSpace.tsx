@@ -4,12 +4,14 @@ import ImportGraphNode from "./ImportGraphNode";
 import TransformGraphNode from "./TransformGraphNode";
 import { Button, Form } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { connectionStoreContext, nodeStoreContext, previewStoreContext } from "../../stores/context";
+import { connectionStoreContext, nodeStoreContext, persistenceContext, previewStoreContext } from "../../stores/context";
 import { faAnkh, faComment, faCommentDots, faDoorClosed, faDoorOpen, faImagePortrait, faL, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { GUID } from "../../engine/nodeResponse";
 import GraphEdge, { AnimationEdge, Edge, PreviewEdge } from "./GraphEdge";
 import PreviewContainer from "../preview_container/PreviewContainer";
 import GraphPreview from "./GraphPreview";
+import { useSessionStorage } from "usehooks-ts";
+import { PreviewStore } from "../../stores/previewStore";
 
 
 export interface GraphSpaceInterface{
@@ -19,6 +21,7 @@ export interface GraphSpaceInterface{
 
 export default function GraphSpaceComponent({children=undefined, scale, offset}: {children?: ReactNode, scale: number, offset: {x: number, y: number}}, forwardedRef: Ref<GraphSpaceInterface>){
 
+    const persistence = useContext(persistenceContext);
     const viewRef = useRef<HTMLDivElement>(null);
     const nodeContext = useContext(nodeStoreContext);
     const nodeCollection = useSyncExternalStore(nodeContext.subscribeNodeCollection.bind(nodeContext), nodeContext.getNodeCollection.bind(nodeContext));
@@ -45,6 +48,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
     const [connectionComponent, setConnectionComponent] = useState(handleConnections())
 
     const [previewConnectionComponent, setPreviewConnectionComponent] = useState(handlePreviewConnections())
+    const [selectedTabIx, setSelectedTabIx] = useSessionStorage<number>("selectedTabIx", 0)
 
 
 
@@ -146,6 +150,8 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
                     clientY: dragMouseStartY
                 }))
             }
+
+            persistence.saveToIndex(selectedTabIx)
         }
     }
 
@@ -161,7 +167,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
                 setHightlightedEdge({guid0: guid0, guid1: guid1, inputNo: inputNo})
             }
             const highlighted = highlightedEdge.guid0 === guid0 && highlightedEdge.guid1 === guid1 && highlightedEdge.inputNo === inputNumber;
-            return <GraphEdge guid0={guid0} guid1={guid1} inputNumber={inputNumber} highlighted={highlighted} onClick={onEdgeClick} />
+            return <GraphEdge key={`${guid0}-${guid1}-${inputNumber}`} guid0={guid0} guid1={guid1} inputNumber={inputNumber} highlighted={highlighted} onClick={onEdgeClick} />
         })
     }
 
@@ -173,18 +179,18 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         }
 
         previewContext.addPreviewStore(highlightedGUID, [], highlightedGUID)
-        previewContext.getPreviewStore(highlightedGUID)!.updateVisualizationEnabled(false);
+        previewContext.getPreviewStore(highlightedGUID)!.updateContext([], "",false);
         setOpenedPreviewsState(crypto.randomUUID())
     }
 
     function handleNodeVisualizationIcon(){
         if(Array.from(openedPreviews.keys()).find(el => el == highlightedGUID)){
             const preview = previewContext.getPreviewStore(highlightedGUID)!
-            preview.updateVisualizationEnabled(!preview.getVisualizationEnabled())
+            preview.updateContext([], "",!preview.getContext().visualizationEnabled)
             return;
         }
         previewContext.addPreviewStore(highlightedGUID, [], highlightedGUID)
-        previewContext.getPreviewStore(highlightedGUID)!.updateVisualizationEnabled(true);
+        previewContext.getPreviewStore(highlightedGUID)!.updateContext([], "", true);
         setOpenedPreviewsState(crypto.randomUUID())
     }
 
@@ -236,7 +242,6 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
 
         if(addingInputConnection && !input && addingGUID != myGUID){
             setAddingInputConnection(false);
-            console.log("added connection ", myGUID, " -> ", addingGUID);
             connectionContext.connectNodes([
                 [myGUID, 0],
                 [addingGUID, addingInputNo]
@@ -247,7 +252,6 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
 
         if(addingOutputConnection && input && addingGUID != myGUID){
             setAddingOutputConnection(false);
-            console.log("added connection ", addingGUID, " -> ", myGUID);
             connectionContext.connectNodes([
                 [addingGUID, 0],
                 [myGUID, inputNo]
@@ -268,7 +272,6 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
 
     function addMove(e: MouseEvent ){
         const rectum = document.getElementById("brandNav")!.getClientRects()[0];
-        console.log(rectum.y)
         setAddMovePos({x: (e as MouseEvent).pageX, y: (e as MouseEvent).pageY - rectum.height * scale})
         setAddingEdgeAnimationComponent(handleAddingEdgeAnimation())
     }
@@ -409,10 +412,14 @@ function NodeContextMenu({ highlightedGUID,
     const node = useSyncExternalStore(nodeContext.subscribeNode(highlightedGUID), nodeContext.getNode(highlightedGUID));
   
     const previewContext = useContext(previewStoreContext);
-    const previewStore = previewContext.getPreviewStore(highlightedGUID)
+    let previewStore = previewContext.getPreviewStore(highlightedGUID)
+    if(!previewStore){
+        previewStore = new PreviewStore([], "")
+    }
+    const context = useSyncExternalStore(previewStore?.subscribeContext.bind(previewStore) as any, previewStore?.getContext.bind(previewStore) as any)
     
     const previewIcon = <FontAwesomeIcon icon={previewOpen ? faDoorClosed : faDoorOpen}/>
-    const visualizationIcon = <FontAwesomeIcon icon={previewStore && previewStore.getVisualizationEnabled() ? faComment : faCommentDots} />
+    const visualizationIcon = <FontAwesomeIcon icon={previewStore && previewStore.getContext().visualizationEnabled ? faComment : faCommentDots} />
     const chooseImageIcon = <FontAwesomeIcon icon={faImagePortrait} />
 
     const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {

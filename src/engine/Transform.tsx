@@ -1,5 +1,5 @@
 import { ReactElement, ReactNode } from 'react'
-import { AnyT, jsonMember, jsonObject } from 'typedjson';
+import { AnyT, jsonMapMember, jsonMember, jsonObject } from 'typedjson';
 import { node } from './node';
 
 type CanvasPosition = [number,number]; 
@@ -7,6 +7,19 @@ type CanvasSelection = {start: CanvasPosition, size: CanvasPosition, center: Can
 type GUID = string;
 export interface KVParams {
     [key: string]: any
+}
+
+@jsonObject
+class point {
+    @jsonMember(Number)
+    public x: number = 0
+    @jsonMember(Number)
+    public y: number = 0
+
+    constructor(x: number, y: number){
+        this.x = x
+        this.y = y
+    }
 }
 
 @jsonObject
@@ -22,8 +35,8 @@ abstract class Transform extends node<Transform> {
         this.canvas = new OffscreenCanvas(1,1);
         this.gl = this.canvas.getContext("webgl", {preserveDrawingBuffer: true})!;
         this.hash = crypto.randomUUID();
-        this.pos = {x: 0, y: 0}
-        this.prevPos = {x: 0, y: 0}
+        this.pos = new point(0, 0)
+        this.prevPos = new point(0, 0)
     }
 
     public async _update_node(): Promise<boolean> {
@@ -114,11 +127,11 @@ abstract class Transform extends node<Transform> {
     }
 
     public setPos(pos: {x: number, y: number}){
-        this.pos = pos
+        this.pos = new point(pos.x, pos.y)
     }
 
     public setPreviewPos(pos: {x: number, y: number}){
-        this.prevPos = pos;
+        this.prevPos = new point(pos.x, pos.y);
     }
 
     async setImageString(image: string) {
@@ -162,10 +175,10 @@ abstract class Transform extends node<Transform> {
         return this.name;
     }
 
-    @jsonMember
-    pos: {x: number, y:number}
-    @jsonMember
-    prevPos: {x: number, y:number}
+    @jsonMember(point)
+    pos: point
+    @jsonMember(point)
+    prevPos: point
     @jsonMember(String)
     color: string;
     @jsonMember(String)

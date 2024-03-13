@@ -4,6 +4,8 @@ import { PreviewStores } from "./previewStore";
 import { TypedJSON } from "typedjson";
 import Transform from "../engine/Transform";
 import { IEngine } from "../engine/iengine"
+import { knownTypes } from "../engine/TransformDeclarations";
+import declareOps from "../engine/TransformRegistration";
 
 
 export class GraphFilterStore extends PreviewStores{
@@ -49,7 +51,6 @@ export class GraphFilterStore extends PreviewStores{
     public disconnectNodes(connection: ConnectionDefinition){
         const [[source,source_handle],[destination,destination_handle]] = connection;
         if (this.engine.disconnectNodes(source,destination,source_handle,destination_handle)){
-            console.log("thehee");
             this.connections = this.connections.filter((info) => !(
                 info.connectionDefinition[0][0] === connection[0][0] && 
                 info.connectionDefinition[1][0] === connection[1][0] &&
@@ -74,16 +75,18 @@ export class GraphFilterStore extends PreviewStores{
     
     //#region Persistence
     public save(): string {
-        const serializer = new TypedJSON<IEngine<Transform>>(Engine)
+        const serializer = new TypedJSON(Engine)
         
         const toSerialize = {
+            // @ts-ignore
             "engine" : serializer.stringify(this.engine),
-            "nodeCollection": JSON.stringify(this.nodeCollection)
+            "nodeCollection": JSON.stringify(this.nodeCollection),
+            "connectionCollection": JSON.stringify(this.connections),
+            "previewStores": JSON.stringify(Array.from(this.previewStores.entries()))
         }
         // TODO: rest of the stuff
         return JSON.stringify(toSerialize)
     }
-
     public saveToIndex(notebookIndex: number) {
         const allSaved = sessionStorage.getItem("engines")
         if(!allSaved ) return;
@@ -114,15 +117,34 @@ export class GraphFilterStore extends PreviewStores{
         
         const savedEngine = thisSaved["engine"]
         const savedNodeCollection = thisSaved["nodeCollection"]
-        
-        if(!savedEngine || !savedNodeCollection) return;
-        const serializer = new TypedJSON<IEngine<Transform>>(Engine)
+        const savedConnectionCollection = thisSaved["connectionCollection"]
+        const savedPreviewStores = thisSaved["previewStores"]
 
-        const parsedEngine = serializer.parse(savedEngine) // TODO: nodes not parsed ftw
-        console.log(parsedEngine)
-        if(!parsedEngine) return
-        this.engine = parsedEngine 
+        if(!savedEngine || !savedNodeCollection || !savedConnectionCollection) return;
 
+
+        const serializer = new TypedJSON(Engine, {knownTypes: Array.from(knownTypes())})
+        // const previewSerializer = new TypedJSON()
+        // deserialize
+        const parsedEngine = serializer.parse(savedEngine)
+        const parsedNodeCollection = JSON.parse(savedNodeCollection)
+        const parsedConnectionCollection = JSON.parse(savedConnectionCollection)
+        const parsedPreviewStores = JSON.parse(savedPreviewStores)
+
+        if(!parsedEngine || !parsedNodeCollection) return
+
+        this.engine = parsedEngine  
+        this.nodeCollection = parsedNodeCollection
+        this.connections = parsedConnectionCollection as any
+        // this.previewStores = new Map(parsedPreviewStores)
+        console.log("obobobobo", this.previewStores)
+
+        this.engine.fixSerialization();
+
+        this.emitChangeConnections()
+        this.emitChangePreviews()
+        this.emitChangeNodeCollection()
+        //this.emitChangeConnections()
         // TODO: parse rest of the props
 
     }

@@ -23,7 +23,8 @@ export default function GraphPreview({guid, onBodyClick}: {guid: GUID, onBodyCli
     const previewContext = useContext(previewStoreContext);
     const previewStore = previewContext.getPreviewStore(guid)!;
     const previewSelections = useSyncExternalStore(previewStore.subscribeSelection.bind(previewStore) as any, previewStore.getSelection.bind(previewStore))
-
+    const context = useSyncExternalStore(previewStore.subscribeContext.bind(previewStore) as any, previewStore.getContext.bind(previewStore))
+    
     function handleChooseChannel(channel: Channel){
         const selection = previewStore.getSelection()
         if(selection.channel == channel){
@@ -36,14 +37,14 @@ export default function GraphPreview({guid, onBodyClick}: {guid: GUID, onBodyCli
             <div className="previewNode">
                 <div className="pipelineBar">
                     <div>{node.value.name} Preview</div> 
-                    {noInputs == 1 && previewStore.getVisualizationEnabled() ? <></> : <InputSelection selectedInput={selectedInput} setSelectedInput={setSelectedInput} noInputs={noInputs}/>}
+                    {noInputs == 1 && previewStore.getContext().visualizationEnabled ? <></> : <InputSelection selectedInput={selectedInput} setSelectedInput={setSelectedInput} noInputs={noInputs}/>}
                 </div>
                 
-                {previewStore.getVisualizationEnabled() && node.value.inputs.get(selectedInput - 1) ?
+                {previewStore.getContext().visualizationEnabled && node.value.inputs.get(selectedInput - 1) ?
                 <div><InputPreview sourceId={node.value.inputs.get(selectedInput - 1)![0]} previewName={guid} allowFullscreen={false}/></div> : <></>}
                 <OutputPreview sourceId={guid} allowFullscreen={false}/>
                 {
-                    previewStore.getVisualizationEnabled() ? 
+                    previewStore.getContext().visualizationEnabled ? 
                         <>
                         <center>
                             <div className='border-0 bg-transparent'>

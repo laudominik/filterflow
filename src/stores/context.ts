@@ -1,6 +1,9 @@
+import declareOps from '../engine/TransformRegistration';
 import { createContext } from "react";
 import { GraphFilterStore } from "./graphFilterStore";
 import { IConnectionStore, INodeStore, IPreviewStores, IPersistentStore } from "./storeInterfaces";
+
+declareOps();
 
 const graphStore = new GraphFilterStore()
 export const nodeStoreContext = createContext<INodeStore>(graphStore)
