@@ -3,6 +3,7 @@ import Transform, { KVParams } from "./Transform";
 import mapToTransform, {knownTypes} from "./TransformDeclarations";
 import { connect, disconnect } from './node';
 import { NodeResponse } from './nodeResponse';
+import { IEngine } from "./iengine";
 
 export type GUID = string;
 // TODO: add mechanism to detect locked state (count if any process is executing)
@@ -20,7 +21,7 @@ export type GUID = string;
 
 // Engine sends events to parent element (logic decupling)
 @jsonObject({knownTypes: Array.from(knownTypes())})
-export class Engine extends EventTarget{
+export class Engine extends EventTarget implements IEngine<Transform>{
     // internal is comunication from graph components to graph components, with information collection by engine
     // this enable better batching of updates
     internal: EventTarget // i'm not sure if this is sequence stable for now batches

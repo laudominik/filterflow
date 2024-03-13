@@ -1,3 +1,4 @@
+import { AnyT, jsonMapMember, jsonMember, jsonObject } from "typedjson";
 import { IEngine, GUID } from "./iengine"
 import { NodeResponse, NodeResponseError, NodeResponseUpdated } from "./nodeResponse"
 
@@ -30,8 +31,9 @@ export type NodeInit<T extends node<T>> = {
     id: string, inputs: number, outputs: number, engine?: IEngine<T>
 }
 
-
+@jsonObject
 export abstract class node<T extends node<T>>{
+    @jsonMember(AnyT)
     meta: {
         id: string,
         input_size: number,
@@ -43,7 +45,9 @@ export abstract class node<T extends node<T>>{
     }
     engine: IEngine<T>
     // TODO change to GUID
+    @jsonMapMember(Number, AnyT)
     inputs: Map<number, [GUID, number]>
+    @jsonMapMember(Number, AnyT)
     connected_to_outputs: Map<number, [GUID, number][]> // two way linked list
 
     constructor(params: NodeInit<T>) {

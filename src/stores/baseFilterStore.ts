@@ -1,13 +1,17 @@
 // Engine core functionalities
 
+import { jsonArrayMember, jsonMember, jsonObject } from "typedjson";
 import Transform, { KVParams } from "../engine/Transform";
 import { IEngine, GUID } from "../engine/iengine"
 import { INodeStore } from "./storeInterfaces";
+import { Engine } from "../engine/engine";
 
 type MarkedListener = CallableFunction & { id: GUID }
 
+@jsonObject
 export abstract class BaseFilterStore implements INodeStore{
-    engine: IEngine<Transform>
+    @jsonMember(() => Engine)
+    engine: Engine
 
     // listen on node change
     nodeListeners: {listener: CallableFunction,id: GUID}[] 
@@ -15,9 +19,10 @@ export abstract class BaseFilterStore implements INodeStore{
     nodeWrappers:  Map<GUID,{value: Transform,hash: string}>
     
     nodeCollectionListener: CallableFunction[]
+    @jsonArrayMember(String)
     nodeCollection: GUID[]
 
-    constructor(engine: IEngine<Transform>){
+    constructor(engine: Engine){
         this.engine = engine;
         this.nodeListeners = [];
         this.nodeWrappers = new Map();

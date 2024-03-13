@@ -1,15 +1,19 @@
 import { IEngine } from "../engine/iengine";
 import { BaseFilterStore } from "./baseFilterStore";
-import { CanvasPointer, CanvasPosition, GUID, IPreviewStore, IPreviewStores, PreviewSelections } from "./storeInterfaces";
+import type { CanvasPointer, CanvasPosition, GUID, IPreviewStore, IPreviewStores, PreviewSelections } from "./storeInterfaces";
 import { Channel } from "./storeInterfaces";
 import Transform from "../engine/Transform";
+import { Engine } from "../engine/engine";
+import { AnyT, jsonMapMember, jsonMember, jsonObject } from "typedjson";
 
+@jsonObject
 export abstract class PreviewStores extends BaseFilterStore implements IPreviewStores{
     
+    @jsonMapMember(String,() => PreviewStore)
     previewStores: Map<string,IPreviewStore>
     previewListeners: CallableFunction[]
 
-    constructor(engine: IEngine<Transform> ){
+    constructor(engine: Engine){
         super(engine);
         this.previewStores = new Map();
         this.previewListeners = [];
@@ -43,13 +47,16 @@ export abstract class PreviewStores extends BaseFilterStore implements IPreviewS
 
 }
 
+@jsonObject
 export class PreviewStore implements IPreviewStore{
+    @jsonMember(AnyT)
     context: {
         inputs: GUID[]
         output: GUID,
         visualizationEnabled: boolean
     }
 
+    @jsonMember(AnyT)
     selection: {
         pointer: CanvasPointer
         preview: PreviewSelections
@@ -58,6 +65,7 @@ export class PreviewStore implements IPreviewStore{
 
     selectionListener: CallableFunction[]
     contextListener: CallableFunction[]
+    @jsonMember(Boolean)
     selectionLocked: boolean
 
     constructor(inputs: GUID[],output:GUID){

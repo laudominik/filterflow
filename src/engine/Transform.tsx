@@ -24,6 +24,29 @@ class point {
 
 @jsonObject
 abstract class Transform extends node<Transform> {
+    @jsonMember(point)
+    pos: point
+    @jsonMember(point)
+    prevPos: point
+    @jsonMember(String)
+    color: string;
+    @jsonMember(String)
+    name: string;
+    @jsonMember(String)
+    image?: string;
+    @jsonMember(Boolean)
+    edited: boolean;
+    @jsonMember(Boolean)
+    enabled: boolean;
+    @jsonMember(Boolean)
+    expanded: boolean;
+    @jsonMember(AnyT)
+    params: KVParams;
+    @jsonMember(String)
+    hash: GUID;
+    canvas: OffscreenCanvas;
+    gl: WebGLRenderingContext;
+    
     constructor(name: string, color: string, inputs?: number){
         super({id:crypto.randomUUID(),inputs: inputs ?? 1,outputs:1});
         this.color = color;
@@ -174,28 +197,6 @@ abstract class Transform extends node<Transform> {
     getName(): string {
         return this.name;
     }
-
-    @jsonMember(point)
-    pos: point
-    @jsonMember(point)
-    prevPos: point
-    @jsonMember(String)
-    color: string;
-    @jsonMember(String)
-    name: string;
-    @jsonMember(String)
-    image?: string;
-    @jsonMember(Boolean)
-    edited: boolean;
-    @jsonMember(Boolean)
-    enabled: boolean;
-    @jsonMember(Boolean)
-    expanded: boolean;
-    @jsonMember(AnyT)
-    params: KVParams;
-    hash: GUID;
-    canvas: OffscreenCanvas;
-    gl: WebGLRenderingContext;
 }
 
 export default Transform

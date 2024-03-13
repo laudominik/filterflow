@@ -1,16 +1,17 @@
 import { Engine, ExternalEngineResponse } from "../engine/engine"
 import { ConnectionDefinition, ConnectionInfo } from "./storeInterfaces";
 import { PreviewStores } from "./previewStore";
-import { TypedJSON } from "typedjson";
+import { AnyT, TypedJSON, jsonArrayMember, jsonMember, jsonObject } from "typedjson";
 import Transform from "../engine/Transform";
 import { IEngine } from "../engine/iengine"
 import { knownTypes } from "../engine/TransformDeclarations";
 import declareOps from "../engine/TransformRegistration";
 
-
+@jsonObject
 export class GraphFilterStore extends PreviewStores{
  
     connectionsListener: CallableFunction[]
+    @jsonArrayMember(AnyT)
     connections: ConnectionInfo[]
 
     constructor() {
