@@ -22,9 +22,7 @@ function Preview({ title, sourceId, allowFullscreen, previewName }: { title: str
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     const previewContext = useContext(previewStoreContext);
-
     const previewStore = previewContext.getPreviewStore(previewName)!;
-    
     const previewSelections = useSyncExternalStore(previewStore.subscribeSelection.bind(previewStore) as any, previewStore.getSelection.bind(previewStore))
     
     const drawImage = (input: OffscreenCanvas, destination: HTMLCanvasElement, mask: ColorMask) => {

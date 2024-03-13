@@ -18,6 +18,7 @@ export default function App() {
 
   function viewModeHandler() {
     let currentMode = sessionStorage.getItem("engineMode")
+    currentMode = "graph"
     if(currentMode){
         setModeGraph(currentMode === "graph")
     }  

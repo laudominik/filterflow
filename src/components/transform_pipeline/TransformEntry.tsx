@@ -10,6 +10,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Entry from './Entry';
 import { Channel, FilterStoreContext } from '../../stores/simpleFilterStore';
 import { GUID } from '../../engine/engine';
+import { CircleSwitch } from '../CircleSwitch';
 
 const SwitchModeSingle = true;
 
@@ -120,13 +121,4 @@ export default function TransformEntry({ guid }: { guid: GUID }){
                 </Entry.Icons>
             </Entry>
         </div>
-}
-
-export function CircleSwitch({color,state,toggleState}: {color:string,state: boolean,toggleState: Function}){
-
-    return <div className={`iconInCard switch-container ${state? "active": ""}`} onClick={(event) => {toggleState()}}>
-    <div className="switch-circle" style={{backgroundColor: color}}></div>
-    <div className="switch-circle-center" style={{backgroundColor: color}}></div>
-  
-  </div>
 }

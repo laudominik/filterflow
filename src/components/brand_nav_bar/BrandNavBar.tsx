@@ -20,7 +20,7 @@ export default function BrandNavBar() {
 
                 <Navbar.Collapse className="justify-content-end navModeBar">
                     <DarkModeSwitch />
-                    <EngineModeSwitch />
+                    {/* <EngineModeSwitch /> */}
                 </Navbar.Collapse>
            </Navbar>
   }
