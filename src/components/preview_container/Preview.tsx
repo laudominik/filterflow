@@ -6,35 +6,27 @@ import { Channel, FilterStoreContext, PreviewSelections } from '../../stores/sim
 import { nodeStoreContext, previewStoreContext } from '../../stores/context';
 import { PreviewStore } from '../../stores/previewStore';
 
-export function InputPreview({ sourceId, allowFullscreen = true }: { sourceId: string, allowFullscreen? : boolean }) {
-
-    return <Preview sourceId={sourceId} title="Input" allowFullscreen={allowFullscreen}/>;
+export function InputPreview({ sourceId, previewName, allowFullscreen = true }: { sourceId: string, previewName: string, allowFullscreen? : boolean }) {
+    return <Preview sourceId={sourceId} previewName={previewName} title="Input" allowFullscreen={allowFullscreen}/>;
 }
 
 export function OutputPreview({ sourceId, allowFullscreen = true }: { sourceId: string, allowFullscreen?: boolean }) {
-    return <Preview sourceId={sourceId} title="Output" allowFullscreen={allowFullscreen}/>;
+    return <Preview sourceId={sourceId} previewName={sourceId} title="Output" allowFullscreen={allowFullscreen}/>;
 }
 
 type ColorMask = [boolean, boolean, boolean];
 
-function Preview({ title, sourceId, allowFullscreen }: { title: string, sourceId: string, allowFullscreen: boolean }) {
+function Preview({ title, sourceId, allowFullscreen, previewName }: { title: string, sourceId: string, allowFullscreen: boolean, previewName: string}) {
     const nodeContext = useContext(nodeStoreContext);
     const node = useSyncExternalStore(nodeContext.subscribeNode(sourceId), nodeContext.getNode(sourceId));
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    // const previewContext = useContext(previewStoreContext);
-    // const previewStore = previewContext.getPreviewStore(sourceId)!;
+    const previewContext = useContext(previewStoreContext);
+
+    const previewStore = previewContext.getPreviewStore(previewName)!;
     
-    // const context = previewStore.getContext()
-    // const previewSelections = useSyncExternalStore(previewStore.subscribeSelection.bind(previewStore) as any, previewStore.getSelection.bind(previewStore))
-    // const input = context.inputs[0]
-    // const output = context.output;
-
-
-    // const preview = useSyncExternalStore(filterStore.subscribePreview.bind(filterStore), filterStore.getPreview.bind(filterStore))
-
-
-
+    const previewSelections = useSyncExternalStore(previewStore.subscribeSelection.bind(previewStore) as any, previewStore.getSelection.bind(previewStore))
+    
     const drawImage = (input: OffscreenCanvas, destination: HTMLCanvasElement, mask: ColorMask) => {
         const vertexShaderSource = `
                 attribute vec2 a_position;
@@ -128,16 +120,31 @@ function Preview({ title, sourceId, allowFullscreen }: { title: string, sourceId
 
         let x = (e.clientX - rect.x)*canvasRef.current.width/rect.width;
         let y = (rect.height - (e.clientY - rect.y))*canvasRef.current.height/rect.height;
-
-        // Math.floor() should be good enought for positive numbers
         
         let pos: [number, number] = [Math.floor(x), Math.floor(y)]
-        // TODO: redundant if we know on what node we are
-        // previewStore.updateSelection(pos, )
-        // if(preview.start === sourceId)
-        //     filterStore.setCanvasSourcePointer(pos)
-        // else if(preview.end === sourceId)
-        //     filterStore.setCanvasDestinationPointer(pos)
+        let selection = previewStore.getSelection()
+        
+        // if output
+        if(sourceId == previewName){
+            selection.pointer = {
+                source: node.value.fromDestinationToSourcePosition(pos),
+                destination: pos
+            }
+        } else {
+            selection.pointer = {
+                source: pos,
+                destination: node.value.fromSourceToDestinationPosition(pos)
+            }
+        }
+
+        previewStore.updateSelection(
+            selection.pointer,
+            {
+                source: node.value.fromPositionToSourceSelection(selection.pointer.source),
+                destination: node.value.fromPositionToSelection(selection.pointer.destination)
+            },
+            selection.channel
+        )
     }
 
     const overlayPos = (pos: PreviewSelections):CSSProperties => {
@@ -145,12 +152,15 @@ function Preview({ title, sourceId, allowFullscreen }: { title: string, sourceId
         return {}
         let res
 
-        // TODO: can be cleaner
+
         res = pos.destination;
-        // if(preview.start === sourceId)
-        //     res = pos.source
-        // else if (preview.end === sourceId)
-        //     res = pos.destination
+        console.log(res)
+              // if output
+        if(sourceId == previewName){
+            res = pos.destination
+        } else {
+            res = pos.source
+        }
 
         if(!res) return {}
 
@@ -168,29 +178,21 @@ function Preview({ title, sourceId, allowFullscreen }: { title: string, sourceId
         }
     }
 
-    // useEffect(()=>{
-    //     const offscreenCanvas = node.value.canvas;
-    //     if(offscreenCanvas && canvasRef.current){
-    //         let mask: ColorMask = [true, true, true]
-    //         // if (preview.previewChannels[0] != Channel.NONE && preview.previewChannels[0] != Channel.GRAY){
-    //         //     mask = {red: false,green: false, blue: false};
-    //         //     preview.previewChannels.forEach((value) =>{
-    //         //         switch(value){
-    //         //             case Channel.RED:
-    //         //                 mask.red = true;
-    //         //                 break;
-    //         //             case Channel.GREEN:
-    //         //                 mask.green = true;
-    //         //                 break;
-    //         //             case Channel.BLUE:
-    //         //                 mask.blue = true;
-    //         //                 break;
-    //         //         }
-    //         //     })
-    //         // }
-    //         drawImage(offscreenCanvas, canvasRef.current, mask)
-    //     }
-    // },[previewStore, node])
+    useEffect(()=>{
+        const offscreenCanvas = node.value.canvas;
+        if(offscreenCanvas && canvasRef.current){
+            let mask: ColorMask = [true, true, true]
+            
+            if (previewSelections.channel != Channel.NONE && previewSelections.channel != Channel.GRAY){
+                mask = [
+                    previewSelections.channel == Channel.RED,
+                    previewSelections.channel == Channel.GREEN,
+                    previewSelections.channel == Channel.BLUE
+                ]
+            }
+            drawImage(offscreenCanvas, canvasRef.current, mask)
+        }
+    },[previewStore, previewSelections, node])
 
 
     return <div className="preview" style={componentStyle(isFullscreen)}>
@@ -209,56 +211,10 @@ function Preview({ title, sourceId, allowFullscreen }: { title: string, sourceId
         <div className="imageContainer">
             <div className='centeredImage' onMouseMove={handleMouse}>
                     <canvas ref={canvasRef} />
-                    {/* <div className='overlay' style={overlayPos(previewSelections.preview)}></div> */}
-                    {/* {(preview.distance == 1 || preview.distance == 0) ? <div className='overlay' style={overlayPos(previewSelections)}></div> : <></>} */}
+                    <div className='overlay' style={overlayPos(previewSelections.preview)}></div>
             </div>
         </div>
     </div>
-
-
-    // TODO: change API
-
-    // const preview = useSyncExternalStore(previewStore.subscribeContext, previewStore.getContext);
-    // const inputId = preview.inputs[0];
-
-    // const node = useSyncExternalStore(nodeContext.subscribeNode(guid), nodeContext.getNode(guid));
-    // const inputNode = useSyncExternalStore(nodeContext.subscribeNode(inputId), nodeContext.getNode(inputId));
-    
-    
-    // const selection = useSyncExternalStore(previewStore.subscribeSelection, previewStore.getSelection);
-
-
-    // const filterStore = useContext(FilterStoreContext);
-
-    // const offscreen_canvas = useSyncExternalStore(filterStore.subscribe(sourceId) as any, filterStore.getView(sourceId));
-    // const canvas_hash = useSyncExternalStore(filterStore.subscribe(sourceId) as any, filterStore.getHash(sourceId));
-    
-    // const canvasRef = useRef<HTMLCanvasElement>(null);
-    // const previewSelections = useSyncExternalStore(filterStore.subscribeCanvasSelections.bind(filterStore) as any, filterStore.getPreviewSelections.bind(filterStore))
-
-    // const preview = useSyncExternalStore(filterStore.subscribePreview.bind(filterStore), filterStore.getPreview.bind(filterStore))
-    // TODO: decide whenever to visualize or not
-    
-
-
-
-
-
-    // return <div className="preview" style={componentStyle(isFullscreen)}>
-    //     <div className="pipelineBar">
-    //         <div>{title}</div>
-    //         <Button className="border-0 bg-transparent" onClick={() => setIsFullscreen(!isFullscreen)}>
-    //             <FontAwesomeIcon className="iconInCard" icon={isFullscreen ? faMagnifyingGlassMinus : faMagnifyingGlassPlus} />
-    //         </Button>
-    //     </div>
-    //     <div className="imageContainer">
-    //         <div className='centeredImage' onMouseMove={handleMouse} onClick={() => filterStore.previewMouseLocked = !filterStore.previewMouseLocked}>
-    //             {/* somehow onMouseMove on canvas don't works */}
-    //             <canvas ref={canvasRef}/>
-    //             {(preview.distance == 1 || preview.distance == 0) ? <div className='overlay' style={overlayPos(previewSelections)}></div> : <></>}
-    //         </div>
-    //     </div>
-    // </div>
 }
 
 function componentStyle(isFullscreen: Boolean): CSSProperties {
