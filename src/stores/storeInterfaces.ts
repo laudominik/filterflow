@@ -76,6 +76,8 @@ export interface IPreviewStore{
     subscribeSelection(listener: Func): Func
     updateSelection(pointer: CanvasPointer, preview: PreviewSelections, channel: Channel): void
     updateContext(inputs: GUID[],output: GUID): void
+    updateSelectionLocked(locked: boolean): void
+    getSelectionLocked() : boolean
     getContext(): {inputs: GUID[],output: GUID}
     subscribeContext(listener: Func): Func
 

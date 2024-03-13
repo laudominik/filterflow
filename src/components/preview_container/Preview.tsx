@@ -101,21 +101,12 @@ function Preview({ title, sourceId, allowFullscreen, previewName }: { title: str
             gl.deleteBuffer(positionBuffer);
             gl.deleteTexture(texture);
     }
-
-    useEffect(() =>{
-        const offscreenCanvas = node.value.canvas;
-        if (offscreenCanvas && canvasRef.current){
-                // copy here
-                drawImage(offscreenCanvas, canvasRef.current, [true, true, true])
-        }
-
-    },[node]);
-    
+   
     const [isFullscreen, setIsFullscreen] = useState(false);
 
     const handleMouse = (e : React.MouseEvent) => {
         if (!canvasRef.current) return;
-        //if (filterStore.previewMouseLocked) return; TODO: change it to new API
+        if (previewStore.getSelectionLocked()) return 
         let rect = e.currentTarget.getBoundingClientRect();
 
         let x = (e.clientX - rect.x)*canvasRef.current.width/rect.width;
@@ -152,10 +143,6 @@ function Preview({ title, sourceId, allowFullscreen, previewName }: { title: str
         return {}
         let res
 
-
-        res = pos.destination;
-        console.log(res)
-              // if output
         if(sourceId == previewName){
             res = pos.destination
         } else {
@@ -206,10 +193,9 @@ function Preview({ title, sourceId, allowFullscreen, previewName }: { title: str
                 : 
                 <></>
             }
-            
         </div>
         <div className="imageContainer">
-            <div className='centeredImage' onMouseMove={handleMouse}>
+            <div className='centeredImage' onMouseMove={handleMouse} onClick={() => previewStore.updateSelectionLocked(!previewStore.getSelectionLocked())}>
                     <canvas ref={canvasRef} />
                     <div className='overlay' style={overlayPos(previewSelections.preview)}></div>
             </div>
