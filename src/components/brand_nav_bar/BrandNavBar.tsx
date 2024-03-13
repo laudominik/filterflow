@@ -8,7 +8,7 @@ import FileComponent from "./FileComponent";
 
 export default function BrandNavBar() {
 
-    return <Navbar expand="lg" className="brandNav">
+    return <Navbar id="brandNav" expand="lg" className="brandNav">
                 <Navbar.Brand className="p-3">
                     <FontAwesomeIcon icon={faFilm} />
                 </Navbar.Brand>

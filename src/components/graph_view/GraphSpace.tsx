@@ -158,7 +158,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
                 setHightlightedEdge({guid0: guid0, guid1: guid1, inputNo: inputNo})
             }
             const highlighted = highlightedEdge.guid0 === guid0 && highlightedEdge.guid1 === guid1 && highlightedEdge.inputNo === inputNumber;
-            return <GraphEdge key={guid0+"-"+guid1} guid0={guid0} guid1={guid1} inputNumber={inputNumber} highlighted={highlighted} onClick={onEdgeClick} />
+            return <GraphEdge guid0={guid0} guid1={guid1} inputNumber={inputNumber} highlighted={highlighted} onClick={onEdgeClick} />
         })
     }
 
@@ -250,9 +250,9 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
 
 
     function addMove(e: MouseEvent ){
-        const rectum = document.getElementById("graphSpace")!.getClientRects()[0];
-        
-        setAddMovePos({x: (e as MouseEvent).pageX, y: (e as MouseEvent).pageY - rectum.y})
+        const rectum = document.getElementById("brandNav")!.getClientRects()[0];
+        console.log(rectum.y)
+        setAddMovePos({x: (e as MouseEvent).pageX, y: (e as MouseEvent).pageY - rectum.height * scale})
         setAddingEdgeAnimationComponent(handleAddingEdgeAnimation())
     }
 
@@ -395,7 +395,7 @@ function NodeContextMenu({ highlightedGUID, handleNodeTrashIcon, handleNodePrevi
     }
 
     const form = <Form style={{display: "none"}}>       
-        <Form.Group controlId="formFile" className="mb-3">
+        <Form.Group className="mb-3">
             <Form.Label>Choose an image</Form.Label>
             <Form.Control id={"preview_chooser" + highlightedGUID} type="file" accept=".png,.jpg,.bmp,.jpeg" onChange={handleImageChange} />
         </Form.Group>

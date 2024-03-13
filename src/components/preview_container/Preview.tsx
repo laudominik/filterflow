@@ -21,6 +21,10 @@ function Preview({ title, sourceId, allowFullscreen }: { title: string, sourceId
     const node = useSyncExternalStore(nodeContext.subscribeNode(sourceId), nodeContext.getNode(sourceId));
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
+    const previewContext = useContext(previewStoreContext);
+    const previewStore = previewContext.getPreviewStore(sourceId)!;
+
+
     const drawImage = (input: OffscreenCanvas, destination: HTMLCanvasElement, mask: ColorMask) => {
         const vertexShaderSource = `
                 attribute vec2 a_position;

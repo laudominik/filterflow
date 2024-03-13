@@ -59,7 +59,7 @@ export default function TabsComponent() {
     return <Navbar.Collapse id="basic-navbar-nav">
     <Nav className="mr-auto">
         {notebooks.map((el, ix) => {
-            return  <Nav.Link style={{cursor: "default"}}>
+            return  <Nav.Link key={ix} style={{cursor: "default"}}>
             <div  key={ix} style={tabStyle} onClick={() => handleSelectNotebook(ix)}>
                 {
                     ix == selectedTabIx ? 
