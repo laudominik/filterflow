@@ -6,21 +6,38 @@ import Transform from "../engine/Transform";
 export abstract class PreviewStores extends BaseFilterStore implements IPreviewStores{
     
     previewStores: Map<string,IPreviewStore>
+    previewListeners: CallableFunction[]
 
     constructor(fileName: string,engine: IEngine<Transform> ){
         super(fileName,engine);
         this.previewStores = new Map();
+        this.previewListeners = [];
     }
 
-    
+    public subscribePreviews(listener: CallableFunction) {
+        this.previewListeners = [...this.previewListeners, listener]
+        return () => {
+            this.previewListeners = this.previewListeners.filter(l => l != listener);
+        };
+    }
+
+    public emitChangePreviews(){
+        this.previewListeners.forEach((v) => v())
+    }
+
+    getPreviews(): Map<string, IPreviewStore> {
+        return this.previewStores;
+    }
+
     getPreviewStore(name: string): IPreviewStore | undefined {
         return this.previewStores.get(name);
     }
     addPreviewStore(name: string,inputs: GUID[],output: GUID): void {
         this.previewStores.set(name,new PreviewStore(inputs,output));
+        this.emitChangePreviews()
     }
     removePreviewStore(name: string): void {
-        this.previewStores.delete(name);
+        if(this.previewStores.delete(name)) this.emitChangePreviews()
     }
 
 }

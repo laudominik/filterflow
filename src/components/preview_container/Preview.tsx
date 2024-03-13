@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button } from 'react-bootstrap';
 import { Channel, FilterStoreContext, PreviewSelections } from '../../stores/simpleFilterStore';
 import { nodeStoreContext, previewStoreContext } from '../../stores/context';
+import { PreviewStore } from '../../stores/previewStore';
 
 export function InputPreview({ sourceId, allowFullscreen = true }: { sourceId: string, allowFullscreen? : boolean }) {
 
@@ -21,8 +22,17 @@ function Preview({ title, sourceId, allowFullscreen }: { title: string, sourceId
     const node = useSyncExternalStore(nodeContext.subscribeNode(sourceId), nodeContext.getNode(sourceId));
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    const previewContext = useContext(previewStoreContext);
-    const previewStore = previewContext.getPreviewStore(sourceId)!;
+    // const previewContext = useContext(previewStoreContext);
+    // const previewStore = previewContext.getPreviewStore(sourceId)!;
+    
+    // const context = previewStore.getContext()
+    // const previewSelections = useSyncExternalStore(previewStore.subscribeSelection.bind(previewStore) as any, previewStore.getSelection.bind(previewStore))
+    // const input = context.inputs[0]
+    // const output = context.output;
+
+
+    // const preview = useSyncExternalStore(filterStore.subscribePreview.bind(filterStore), filterStore.getPreview.bind(filterStore))
+
 
 
     const drawImage = (input: OffscreenCanvas, destination: HTMLCanvasElement, mask: ColorMask) => {
@@ -110,6 +120,79 @@ function Preview({ title, sourceId, allowFullscreen }: { title: string, sourceId
     },[node]);
     
     const [isFullscreen, setIsFullscreen] = useState(false);
+
+    const handleMouse = (e : React.MouseEvent) => {
+        if (!canvasRef.current) return;
+        //if (filterStore.previewMouseLocked) return; TODO: change it to new API
+        let rect = e.currentTarget.getBoundingClientRect();
+
+        let x = (e.clientX - rect.x)*canvasRef.current.width/rect.width;
+        let y = (rect.height - (e.clientY - rect.y))*canvasRef.current.height/rect.height;
+
+        // Math.floor() should be good enought for positive numbers
+        
+        let pos: [number, number] = [Math.floor(x), Math.floor(y)]
+        // TODO: redundant if we know on what node we are
+        // previewStore.updateSelection(pos, )
+        // if(preview.start === sourceId)
+        //     filterStore.setCanvasSourcePointer(pos)
+        // else if(preview.end === sourceId)
+        //     filterStore.setCanvasDestinationPointer(pos)
+    }
+
+    const overlayPos = (pos: PreviewSelections):CSSProperties => {
+        if (!canvasRef.current)
+        return {}
+        let res
+
+        // TODO: can be cleaner
+        res = pos.destination;
+        // if(preview.start === sourceId)
+        //     res = pos.source
+        // else if (preview.end === sourceId)
+        //     res = pos.destination
+
+        if(!res) return {}
+
+        let x = res.start[0]/canvasRef.current.width
+        let y = res.start[1]/canvasRef.current.height
+        let w = res.size[0]/canvasRef.current.width
+        let h = res.size[1]/canvasRef.current.height
+
+        // using css percent to skip container height retrieval
+        return {
+            left: `${x*100}%`,
+            top: `${(1-y-h)*100}%`,
+            width: `${w*100}%`,
+            height: `${h*100}%`,
+        }
+    }
+
+    // useEffect(()=>{
+    //     const offscreenCanvas = node.value.canvas;
+    //     if(offscreenCanvas && canvasRef.current){
+    //         let mask: ColorMask = [true, true, true]
+    //         // if (preview.previewChannels[0] != Channel.NONE && preview.previewChannels[0] != Channel.GRAY){
+    //         //     mask = {red: false,green: false, blue: false};
+    //         //     preview.previewChannels.forEach((value) =>{
+    //         //         switch(value){
+    //         //             case Channel.RED:
+    //         //                 mask.red = true;
+    //         //                 break;
+    //         //             case Channel.GREEN:
+    //         //                 mask.green = true;
+    //         //                 break;
+    //         //             case Channel.BLUE:
+    //         //                 mask.blue = true;
+    //         //                 break;
+    //         //         }
+    //         //     })
+    //         // }
+    //         drawImage(offscreenCanvas, canvasRef.current, mask)
+    //     }
+    // },[previewStore, node])
+
+
     return <div className="preview" style={componentStyle(isFullscreen)}>
         <div className="pipelineBar">
             <div>{title}</div>
@@ -124,14 +207,16 @@ function Preview({ title, sourceId, allowFullscreen }: { title: string, sourceId
             
         </div>
         <div className="imageContainer">
-            <div className='centeredImage'>
+            <div className='centeredImage' onMouseMove={handleMouse}>
                     <canvas ref={canvasRef} />
+                    {/* <div className='overlay' style={overlayPos(previewSelections.preview)}></div> */}
+                    {/* {(preview.distance == 1 || preview.distance == 0) ? <div className='overlay' style={overlayPos(previewSelections)}></div> : <></>} */}
             </div>
         </div>
     </div>
+
+
     // TODO: change API
-    // const previewContext = useContext(previewStoreContext);
-    // const previewStore = previewContext.getPreviewStore(guid)!;
 
     // const preview = useSyncExternalStore(previewStore.subscribeContext, previewStore.getContext);
     // const inputId = preview.inputs[0];
@@ -154,76 +239,9 @@ function Preview({ title, sourceId, allowFullscreen }: { title: string, sourceId
     // const preview = useSyncExternalStore(filterStore.subscribePreview.bind(filterStore), filterStore.getPreview.bind(filterStore))
     // TODO: decide whenever to visualize or not
     
-    // const handleMouse = (e : React.MouseEvent) => {
-    //     if (!canvasRef.current) return;
-    //     //if (filterStore.previewMouseLocked) return; TODO: change it to new API
-    //     let rect = e.currentTarget.getBoundingClientRect();
-
-    //     let x = (e.clientX - rect.x)*canvasRef.current.width/rect.width;
-    //     let y = (rect.height - (e.clientY - rect.y))*canvasRef.current.height/rect.height;
-
-    //     // Math.floor() should be good enought for positive numbers
-        
-    //     let pos: [number, number] = [Math.floor(x), Math.floor(y)]
-    //     // TODO: redundant if we know on what node we are
-    //     if(preview.start === sourceId)
-    //         filterStore.setCanvasSourcePointer(pos)
-    //     else if(preview.end === sourceId)
-    //         filterStore.setCanvasDestinationPointer(pos)
-    // }
-
-    // const overlayPos = (pos: PreviewSelections):CSSProperties => {
-    //     if (!canvasRef.current)
-    //     return {}
-    //     let res
-
-    //     // TODO: can be cleaner
-    //     if(preview.start === sourceId)
-    //         res = pos.source
-    //     else if (preview.end === sourceId)
-    //         res = pos.destination
-
-    //     if(!res) return {}
-
-    //     let x = res.start[0]/canvasRef.current.width
-    //     let y = res.start[1]/canvasRef.current.height
-    //     let w = res.size[0]/canvasRef.current.width
-    //     let h = res.size[1]/canvasRef.current.height
-
-    //     // using css percent to skip container height retrieval
-    //     return {
-    //         left: `${x*100}%`,
-    //         top: `${(1-y-h)*100}%`,
-    //         width: `${w*100}%`,
-    //         height: `${h*100}%`,
-    //     }
-    // }
 
 
-    // useEffect(()=>{
-    //     if(offscreen_canvas && canvasRef.current){
-    //         let mask: ColorMask = {red: true, green: true, blue: true};
-    //         if (preview.previewChannels[0] != Channel.NONE && preview.previewChannels[0] != Channel.GRAY){
-    //             mask = {red: false,green: false, blue: false};
-    //             preview.previewChannels.forEach((value) =>{
-    //                 switch(value){
-    //                     case Channel.RED:
-    //                         mask.red = true;
-    //                         break;
-    //                     case Channel.GREEN:
-    //                         mask.green = true;
-    //                         break;
-    //                     case Channel.BLUE:
-    //                         mask.blue = true;
-    //                         break;
-    //                 }
-    //             })
-    //         }
-    //         drawImage(offscreen_canvas, canvasRef.current, mask)
-    //     }
-    // },[offscreen_canvas, canvas_hash, preview])
 
-  
 
 
     // return <div className="preview" style={componentStyle(isFullscreen)}>

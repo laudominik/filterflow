@@ -24,6 +24,10 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
     const nodeCollection = useSyncExternalStore(nodeContext.subscribeNodeCollection.bind(nodeContext), nodeContext.getNodeCollection.bind(nodeContext));
     const connectionContext = useContext(connectionStoreContext);
     const connectionCollection = useSyncExternalStore(connectionContext.subscribeConnections.bind(connectionContext) as any, connectionContext.getConnections.bind(connectionContext));
+    
+    const previewContext = useContext(previewStoreContext);
+    const openedPreviews = useSyncExternalStore(previewContext.subscribePreviews.bind(previewContext) as any, previewContext.getPreviews.bind(previewContext))
+    const [_, setOpenedPreviewsState] = useState<string>()
 
     const [debSpaceSize, setDebSpaceSize] = useState({x:0, y:0})
 
@@ -40,7 +44,6 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
 
     const [connectionComponent, setConnectionComponent] = useState(handleConnections())
 
-    const [openedPreviews, setOpenedPreviews] = useState<Array<string>>([])
     const [previewConnectionComponent, setPreviewConnectionComponent] = useState(handlePreviewConnections())
 
 
@@ -163,16 +166,19 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
     }
 
     function handleNodePreviewIcon(){
-        if(openedPreviews.find(el => el == highlightedGUID)){
-            setOpenedPreviews(openedPreviews.filter(el => el != highlightedGUID))
+        if(Array.from(openedPreviews.keys()).find(el => el == highlightedGUID)){
+            previewContext.removePreviewStore(highlightedGUID)
+            setOpenedPreviewsState(crypto.randomUUID())
             return;
         }
 
-        setOpenedPreviews([...openedPreviews, highlightedGUID]);
+        previewContext.addPreviewStore(highlightedGUID, [], highlightedGUID)
+        setOpenedPreviewsState(crypto.randomUUID())
+        
     }
 
     function handlePreviewConnections(){
-        return openedPreviews.map(guid => <PreviewEdge guid={guid}/>)
+        return Array.from(openedPreviews.keys()).map(guid => <PreviewEdge guid={guid}/>)
     }
 
 
@@ -264,7 +270,9 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
             setAddingOutputConnection(false);
             window.removeEventListener('mousemove', addMove);
         }
-        setOpenedPreviews(openedPreviews.filter(el => el != highlightedGUID))
+        //openedPreviews
+        previewContext.removePreviewStore(highlightedGUID)
+        setOpenedPreviewsState(crypto.randomUUID())
 
         nodeContext.removeTransform(highlightedGUID)
         setHighlightedGUID("")
@@ -321,7 +329,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         {addingInputConnection || addingOutputConnection ? handleAddingEdgeAnimation(): <></>}
         
         {
-            openedPreviews.map(guid => {
+            Array.from(openedPreviews.keys()).map(guid => {
                 return <GraphPreview guid={guid} onBodyClick={dragStart} />
             })
         }
@@ -360,7 +368,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
     highlightedGUID={highlightedGUID} 
     handleNodeTrashIcon={handleNodeTrashIcon} 
     handleNodePreviewIcon={handleNodePreviewIcon} 
-    previewOpen={openedPreviews.find(el => el == highlightedGUID) != undefined} />
+    previewOpen={Array.from(openedPreviews.keys()).find(el => el == highlightedGUID) != undefined} />
      : <></>}
 
     {highlightedEdge.guid0 && highlightedEdge.guid1 ? 

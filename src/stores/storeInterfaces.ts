@@ -58,6 +58,8 @@ export interface IConnectionStore{
 
 // this layer must exist for compatibility 
 export interface IPreviewStores{
+    subscribePreviews(listener: Func): CallableFunction
+    getPreviews(): Map<string, IPreviewStore>
     getPreviewStore(name:string): IPreviewStore | undefined
     addPreviewStore(name:string,inputs: GUID[],output: GUID): void
     removePreviewStore(name: string): void // this will not close any windows
