@@ -36,21 +36,30 @@ export default function GraphPreview({guid, onBodyClick}: {guid: GUID, onBodyCli
             <div className="previewNode">
                 <div className="pipelineBar">
                     <div>{node.value.name} Preview</div> 
-                    {noInputs == 1 ? <></> : <InputSelection selectedInput={selectedInput} setSelectedInput={setSelectedInput} noInputs={noInputs}/>}
+                    {noInputs == 1 && previewStore.getVisualizationEnabled() ? <></> : <InputSelection selectedInput={selectedInput} setSelectedInput={setSelectedInput} noInputs={noInputs}/>}
                 </div>
-                {node.value.inputs.get(selectedInput - 1) ?
+                
+                {previewStore.getVisualizationEnabled() && node.value.inputs.get(selectedInput - 1) ?
                 <div><InputPreview sourceId={node.value.inputs.get(selectedInput - 1)![0]} previewName={guid} allowFullscreen={false}/></div> : <></>}
                 <OutputPreview sourceId={guid} allowFullscreen={false}/>
-                    <center>
-                    <div className='border-0 bg-transparent'>
-                            {
-                                colorsChannels.map((item, i) => 
-                                    <CircleSwitch key={i} color={item} state={previewSelections.channel == item} toggleState={() => {handleChooseChannel(item)}}/>
-                                )
-                            }
-                    </div>
-                    </center>
-                    {previewSelections.channel != Channel.NONE ? node.value.visualizationView(guid) : <></>}
+                {
+                    previewStore.getVisualizationEnabled() ? 
+                        <>
+                        <center>
+                            <div className='border-0 bg-transparent'>
+                                    {
+                                        colorsChannels.map((item, i) => 
+                                            <CircleSwitch key={i} color={item} state={previewSelections.channel == item} toggleState={() => {handleChooseChannel(item)}}/>
+                                        )
+                                    }
+                            </div>
+                        </center>
+                        {previewSelections.channel != Channel.NONE ? node.value.visualizationView(guid) : <></>}
+                        </>
+                        : <></>
+                }
+                    
+                    
             </div>
          </div>
 }

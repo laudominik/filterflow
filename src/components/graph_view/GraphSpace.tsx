@@ -5,7 +5,7 @@ import TransformGraphNode from "./TransformGraphNode";
 import { Button, Form } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { connectionStoreContext, nodeStoreContext, previewStoreContext } from "../../stores/context";
-import { faDoorClosed, faDoorOpen, faImagePortrait, faL, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faAnkh, faComment, faCommentDots, faDoorClosed, faDoorOpen, faImagePortrait, faL, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { GUID } from "../../engine/nodeResponse";
 import GraphEdge, { AnimationEdge, Edge, PreviewEdge } from "./GraphEdge";
 import PreviewContainer from "../preview_container/PreviewContainer";
@@ -173,8 +173,19 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         }
 
         previewContext.addPreviewStore(highlightedGUID, [], highlightedGUID)
+        previewContext.getPreviewStore(highlightedGUID)!.updateVisualizationEnabled(false);
         setOpenedPreviewsState(crypto.randomUUID())
-        
+    }
+
+    function handleNodeVisualizationIcon(){
+        if(Array.from(openedPreviews.keys()).find(el => el == highlightedGUID)){
+            const preview = previewContext.getPreviewStore(highlightedGUID)!
+            preview.updateVisualizationEnabled(!preview.getVisualizationEnabled())
+            return;
+        }
+        previewContext.addPreviewStore(highlightedGUID, [], highlightedGUID)
+        previewContext.getPreviewStore(highlightedGUID)!.updateVisualizationEnabled(true);
+        setOpenedPreviewsState(crypto.randomUUID())
     }
 
     function handlePreviewConnections(){
@@ -368,6 +379,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
     highlightedGUID={highlightedGUID} 
     handleNodeTrashIcon={handleNodeTrashIcon} 
     handleNodePreviewIcon={handleNodePreviewIcon} 
+    handleNodeVisualizationIcon={handleNodeVisualizationIcon}
     previewOpen={Array.from(openedPreviews.keys()).find(el => el == highlightedGUID) != undefined} />
      : <></>}
 
@@ -380,12 +392,27 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
 }
 
 
-function NodeContextMenu({ highlightedGUID, handleNodeTrashIcon, handleNodePreviewIcon, previewOpen } 
-    : {highlightedGUID : GUID, handleNodeTrashIcon: ()=> void, handleNodePreviewIcon: ()=>void, previewOpen: boolean}){
+function NodeContextMenu({ highlightedGUID, 
+    handleNodeTrashIcon, 
+    handleNodePreviewIcon, 
+    handleNodeVisualizationIcon, 
+    previewOpen } 
+    : {
+        highlightedGUID : GUID, 
+        handleNodeTrashIcon: ()=> void, 
+        handleNodePreviewIcon: ()=>void, 
+        handleNodeVisualizationIcon: ()=> void,
+        previewOpen: boolean
+    }){
 
     const nodeContext = useContext(nodeStoreContext);
     const node = useSyncExternalStore(nodeContext.subscribeNode(highlightedGUID), nodeContext.getNode(highlightedGUID));
-    const previewIcon =   previewOpen ? <FontAwesomeIcon icon={faDoorClosed}/> : <FontAwesomeIcon icon={faDoorOpen}/>
+  
+    const previewContext = useContext(previewStoreContext);
+    const previewStore = previewContext.getPreviewStore(highlightedGUID)
+    
+    const previewIcon = <FontAwesomeIcon icon={previewOpen ? faDoorClosed : faDoorOpen}/>
+    const visualizationIcon = <FontAwesomeIcon icon={previewStore && previewStore.getVisualizationEnabled() ? faComment : faCommentDots} />
     const chooseImageIcon = <FontAwesomeIcon icon={faImagePortrait} />
 
     const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -416,7 +443,10 @@ function NodeContextMenu({ highlightedGUID, handleNodeTrashIcon, handleNodePrevi
             <Button title="delete transformation" onClick={handleNodeTrashIcon}><FontAwesomeIcon icon={faTrash}/></Button>
             {
                 node.value.name == "source" ?  <></> : 
-                <Button title="preview" onClick={handleNodePreviewIcon}>{previewIcon}</Button>
+                <>
+                    <Button title="preview" onClick={handleNodePreviewIcon}>{previewIcon}</Button>
+                    <Button title="visualization" onClick={handleNodeVisualizationIcon}>{visualizationIcon}</Button>
+                </>
             }
             {
                 node.value.name == "source" && node.value.canvas.height != 1 && node.value.canvas.width != 1 ? 

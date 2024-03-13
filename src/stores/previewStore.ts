@@ -57,12 +57,14 @@ export class PreviewStore implements IPreviewStore{
     selectionListener: CallableFunction[]
     contextListener: CallableFunction[]
     selectionLocked: boolean
+    visualizationEnabled: boolean
 
     constructor(inputs: GUID[],output:GUID){
         this.context = {inputs,output};
         this.selectionListener = [];
         this.contextListener = [];
         this.selectionLocked = false;
+        this.visualizationEnabled = false;
         this.selection = {
             pointer: {destination: [0,0],source:[0,0]},
             preview: {destination: {center:[0,0],size:[0,0],start: [0,0]},source:{center:[0,0],size:[0,0],start: [0,0]}},
@@ -108,5 +110,15 @@ export class PreviewStore implements IPreviewStore{
         return () => {
             this.contextListener = this.contextListener.filter( v => v != listener)
         }
+    }
+
+    updateVisualizationEnabled(enabled: boolean): void {
+        this.visualizationEnabled = enabled
+        this.contextListener.forEach(v => v())
+        this.selectionListener.forEach(v => v())
+    }
+
+    getVisualizationEnabled(): boolean {
+        return this.visualizationEnabled
     }
 }
