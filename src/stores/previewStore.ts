@@ -10,7 +10,7 @@ import { AnyT, jsonMapMember, jsonMember, jsonObject } from "typedjson";
 export abstract class PreviewStores extends BaseFilterStore implements IPreviewStores{
     
     @jsonMapMember(String,() => PreviewStore)
-    previewStores: Map<string,IPreviewStore>
+    previewStores: Map<string,PreviewStore>
     previewListeners: CallableFunction[]
 
     constructor(engine: Engine){

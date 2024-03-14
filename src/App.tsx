@@ -11,7 +11,7 @@ import SplitPane from "./components/SplitPane";
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import GraphView from './components/graph_view/GraphView';
-import { connectionStoreContext as ConnectionStoreContext, nodeStoreContext as NodeStoreContext, notebookStoreContext as NotebookStoreContext, persistenceContext as PersistenceContext } from './stores/context';
+import { connectionStoreContext as ConnectionStoreContext, nodeStoreContext as NodeStoreContext, notebookStoreContext as NotebookStoreContext, previewStoreContext as PreviewStoreContext } from './stores/context';
 
 export default function App() {
   const notebookStore = useContext(NotebookStoreContext);
@@ -19,6 +19,8 @@ export default function App() {
   const [expanded, setExpanded] = useState(true);
   const [modeGraph, setModeGraph] = useState(false);
 
+  // @ts-ignore
+  window["notebook"] = notebookStore;
 
   function viewModeHandler() {
     let currentMode = sessionStorage.getItem("engineMode")
@@ -66,12 +68,12 @@ export default function App() {
     <StrictMode>
       <NodeStoreContext.Provider value={graphStore}>
           <ConnectionStoreContext.Provider value={graphStore}>
-            <PersistenceContext.Provider value={graphStore}>
+            <PreviewStoreContext.Provider value={graphStore}>
               <div className="App">
                 <BrandNavBar />
                 {view}
               </div>
-            </PersistenceContext.Provider>
+            </PreviewStoreContext.Provider>
           </ConnectionStoreContext.Provider>
       </NodeStoreContext.Provider>
     </StrictMode >

@@ -1,5 +1,6 @@
 import { TypedJSON } from "typedjson";
 import { GraphFilterStore } from "./graphFilterStore";
+import { knownTypes } from "../engine/TransformDeclarations";
 
 export class NotebookStore{
     stores: Map<String,GraphFilterStore>
@@ -46,6 +47,17 @@ export class NotebookStore{
         const body = serializer.stringify(this.selected);
         console.log(body)
         // TODO: save to some storage
+        return body;
+    }
+
+    public loadNotebook(name: string,body: string){
+        let json = new TypedJSON(GraphFilterStore,{knownTypes: Array.from(knownTypes())});
+        this.selected = json.parse(body)!;
+        this.selected.engine.fixSerialization();
+        this.selectedName = name;
+        this.stores.set(name,this.selected);
+        console.log(this.selected);
+        this.selectedListeners.forEach(v => v());
     }
 
     public changeNotebook(name: string){

@@ -71,6 +71,7 @@ export function PreviewEdge({guid}: {guid: GUID}){
     const pos0 = node.getPreviewPos();
     let pos1 = node.getPos();
 
+    // TODO: remove race condition
     const draggableTransform = document.getElementById(guid)!
 
     const card = draggableTransform.getElementsByClassName("card")[0]!;
