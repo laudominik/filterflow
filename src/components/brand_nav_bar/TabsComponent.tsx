@@ -5,18 +5,20 @@ import { Nav, Navbar } from "react-bootstrap";
 import { useSessionStorage } from 'usehooks-ts'
 
 import "./TabsComponent.css"
-import { persistenceContext } from "../../stores/context";
+import { notebookStoreContext, persistenceContext } from "../../stores/context";
 
 export default function TabsComponent() {
     const [notebooks, setNotebooks] = useSessionStorage<Array<string>>("notebooks", [])
     const [engines, setEngines] = useSessionStorage<Array<string>>("engines", [])
     const [selectedTabIx, setSelectedTabIx] = useSessionStorage<number>("selectedTabIx",0);
-    const persistence = useContext(persistenceContext)
+    const notebooksContext = useContext(notebookStoreContext)
 
     function handleSelectNotebook(ix: number){
-        persistence.saveToIndex(selectedTabIx)
-        setSelectedTabIx(ix) 
-        persistence.loadFromIndex(ix)
+        engines[selectedTabIx] = notebooksContext.saveNotebook()
+        notebooksContext.loadNotebook(notebooks[ix], engines[ix])
+        
+        setNotebooks(notebooks)
+        setSelectedTabIx(ix)
     }
 
     function handleCloseNotebook(ix: number){

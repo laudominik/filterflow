@@ -1,16 +1,17 @@
 import { ChangeEvent, useContext } from "react";
 import { Form, Nav, Navbar } from "react-bootstrap";
 import { useSessionStorage } from "usehooks-ts";
-import { persistenceContext } from "../../stores/context";
+import { notebookStoreContext } from "../../stores/context";
 import { serialize } from "v8";
 
 export default function FileComponent() {
     const [notebooks, setNotebooks] = useSessionStorage<Array<string>>("notebooks", [])
     const [engines, setEngines] = useSessionStorage<Array<string>>("engines", [])
     const [selectedTabIx, setSelectedTabIx] = useSessionStorage<number>("selectedTabIx", 0)
-    const persistence = useContext(persistenceContext)
+    
+    const notebookStore = useContext(notebookStoreContext)
 
-    function handleNewNotebook(name: string = "New_notebook", serialized: string = ""){
+    function handleNewNotebook(name: string = "New_notebook", serialized: string = "{}"){
         if(notebooks.includes(name)){
             name += "("
             let count = 1; 
@@ -23,7 +24,7 @@ export default function FileComponent() {
     }
 
     function handleSaveNotebook(){
-        const data = persistence.save()
+        const data = notebookStore.saveNotebook()
         const blob = new Blob([data], {type:""})
         const url = URL.createObjectURL(blob);
         

@@ -4,7 +4,7 @@ import ImportGraphNode from "./ImportGraphNode";
 import TransformGraphNode from "./TransformGraphNode";
 import { Button, Form } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { connectionStoreContext, nodeStoreContext, persistenceContext, previewStoreContext } from "../../stores/context";
+import { connectionStoreContext, nodeStoreContext, notebookStoreContext, persistenceContext, previewStoreContext } from "../../stores/context";
 import { faAnkh, faComment, faCommentDots, faDoorClosed, faDoorOpen, faImagePortrait, faL, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { GUID } from "../../engine/nodeResponse";
 import GraphEdge, { AnimationEdge, Edge, PreviewEdge } from "./GraphEdge";
@@ -21,8 +21,8 @@ export interface GraphSpaceInterface{
 
 export default function GraphSpaceComponent({children=undefined, scale, offset}: {children?: ReactNode, scale: number, offset: {x: number, y: number}}, forwardedRef: Ref<GraphSpaceInterface>){
 
-    const persistence = useContext(persistenceContext);
     const viewRef = useRef<HTMLDivElement>(null);
+    const notebooksContext = useContext(notebookStoreContext)
     const nodeContext = useContext(nodeStoreContext);
     const nodeCollection = useSyncExternalStore(nodeContext.subscribeNodeCollection.bind(nodeContext), nodeContext.getNodeCollection.bind(nodeContext));
     const connectionContext = useContext(connectionStoreContext);
@@ -49,6 +49,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
 
     const [previewConnectionComponent, setPreviewConnectionComponent] = useState(handlePreviewConnections())
     const [selectedTabIx, setSelectedTabIx] = useSessionStorage<number>("selectedTabIx", 0)
+    const [engines, setEngines] = useSessionStorage<Array<string>>("engines", [])
 
 
 
@@ -150,8 +151,8 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
                     clientY: dragMouseStartY
                 }))
             }
+            engines[selectedTabIx] = notebooksContext.saveNotebook()
 
-            persistence.saveToIndex(selectedTabIx)
         }
     }
 
