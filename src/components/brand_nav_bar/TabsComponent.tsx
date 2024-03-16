@@ -40,6 +40,7 @@ export default function TabsComponent() {
         setNotebooks(newNotebooks)
         setEngines(newEngines)
         setSelectedTabIx(newSelectedTabIx)
+        notebooksContext.loadNotebook(newNotebooks[newSelectedTabIx], newEngines[newSelectedTabIx])
     }
 
     function handleRenameNotebook(ix: number, event: React.FormEvent<HTMLInputElement>){
