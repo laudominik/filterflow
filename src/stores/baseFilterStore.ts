@@ -58,6 +58,10 @@ export abstract class BaseFilterStore implements INodeStore{
             }
         }else{
             const transform = this.engine.getNode(id)!;
+            if(!transform){
+                debugger;
+                throw "calling not existent node from frontend";
+            }
             transformWatch = {value:transform,hash: transform.hash};
             this.nodeWrappers.set(id,transformWatch);
         }

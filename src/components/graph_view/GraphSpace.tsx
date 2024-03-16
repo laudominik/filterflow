@@ -51,7 +51,18 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
     const [selectedTabIx, setSelectedTabIx] = useSessionStorage<number>("selectedTabIx", 0)
     const [engines, setEngines] = useSessionStorage<Array<string>>("engines", [])
 
-
+    useEffect(()=>{
+        setHightlightedEdge({guid0: "", guid1: "", inputNo: 0});
+        setHighlightedGUID("");
+        setAddingGUID("");
+        setAddingInputConnection(false);
+        setAddingInputNo(0);
+        setAddingOutputConnection(false);
+        setAddMovePos({x: 0, y:0});
+        setAddingEdgeAnimationComponent(<></>);
+        setConnectionComponent(handleConnections());
+        setPreviewConnectionComponent(handlePreviewConnections());
+    },[notebooksContext.getSelected()])
 
     useImperativeHandle(forwardedRef, () =>{
         return {
@@ -378,7 +389,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         
         {children}
         </div>
-    {highlightedGUID ? 
+    {nodeCollection.includes(highlightedGUID) ? 
     <NodeContextMenu 
     highlightedGUID={highlightedGUID} 
     handleNodeTrashIcon={handleNodeTrashIcon} 
