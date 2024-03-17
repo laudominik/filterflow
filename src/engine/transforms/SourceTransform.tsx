@@ -7,7 +7,6 @@ import { jsonObject } from "typedjson";
 @jsonObject
 export default class SourceTransform extends Transform{
 
-    image?: string
 
     constructor(){
         super("source","#FFFFFF", 0);
@@ -18,9 +17,11 @@ export default class SourceTransform extends Transform{
 
         // TODO: For serialization purposes
         // create canvas there if not exist and image string is set
+        if(!this.params["image"]) return undefined;
 
-        if(this.image === undefined || this.image === null || this.image === "") return undefined;
-        
+        if (!this.valid){
+            await this.loadImage();
+        }
 
         return this.canvas;
     }
@@ -49,7 +50,7 @@ export default class SourceTransform extends Transform{
         this.drawImage(image)
 
         this.hash = crypto.randomUUID();
-        this.update_node();
+        // this.update_node();
     }
 
     drawImage(input: HTMLImageElement) {

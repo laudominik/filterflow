@@ -79,7 +79,25 @@ export class Engine extends EventTarget implements IEngine<Transform>{
         }
     }
 
+    public async startUpdateAll(): Promise<void>{
+        this.nodes.forEach((node) =>{
+            if (node.inputs.size != 0) return;
+            this.batchState.pendingUpdates.add(node.meta.id);
+            this.batchState.concurent_updates+=1;
+            node.update_node()
+        })
+        if (this.batchState.concurent_updates == 0){
+            console.log("dispatching pending (no source)")
+            this.deadLockForceUpdate();
+        }
+        if(this.batchState.concurent_updates == 0){
+            console.log("Empty update");
+            this.flushUpdate();
+        }
+    }
+
     private flushUpdate():void{
+        this.batchState.response.node.removed_nodes = [...this.batchState.response.node.removed.map(v => this.getNode(v)!)]
         this.dispatchEvent(new CustomEvent<ExternalEngineResponse>("update",{detail:this.batchState.response}))
         this.batchState.response.node.removed.forEach(v => this.nodes.delete(v));
         const tick = this.batchState.tick + 1;
@@ -172,7 +190,7 @@ export class Engine extends EventTarget implements IEngine<Transform>{
 
     public update_all(){
         this.flushUpdate();
-        this.startUpdate();
+        this.startUpdateAll();
     }
 
     private handleInternalInfo(event: CustomEvent<NodeResponse>) {
@@ -242,6 +260,7 @@ export class Engine extends EventTarget implements IEngine<Transform>{
 
     public fixSerialization():void{
         this.nodes.forEach(n => n.engine = this);
+        this.update_all();
     }
 }
 
@@ -252,6 +271,7 @@ export class ExternalEngineResponse{
         errors: GUID[]   // all nodes that returned error
         added: GUID[]
         removed: GUID[]
+        removed_nodes: Transform[];
     }
 
     connection : {
@@ -263,7 +283,8 @@ export class ExternalEngineResponse{
             added : [],
             errors: [],
             removed: [],
-            updated: []
+            updated: [],
+            removed_nodes: [],
         };
         this.connection = {
             added: [],

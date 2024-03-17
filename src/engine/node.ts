@@ -33,6 +33,7 @@ export type NodeInit<T extends node<T>> = {
 
 @jsonObject
 export abstract class node<T extends node<T>>{
+    valid: boolean = false; // not included in json to reset state
     @jsonMember(AnyT)
     meta: {
         id: string,
@@ -187,6 +188,7 @@ export abstract class node<T extends node<T>>{
     }
 
     private dispatch_updated_successfully() {
+        this.valid = true;
         let updates: GUID[] = []
 
         this.connected_to_outputs.forEach((childrens, _) => {
@@ -203,6 +205,7 @@ export abstract class node<T extends node<T>>{
     }
 
     public dispatch_updated_error(err: string) {
+        this.valid = false;
         let updates: GUID[] = []
 
         this.connected_to_outputs.forEach((childrens, _) => {

@@ -5,7 +5,6 @@ import { AnyT, TypedJSON, jsonArrayMember, jsonMember, jsonObject } from "typedj
 import Transform from "../engine/Transform";
 import { IEngine } from "../engine/iengine"
 import { knownTypes } from "../engine/TransformDeclarations";
-import declareOps from "../engine/TransformRegistration";
 
 @jsonObject
 export class GraphFilterStore extends PreviewStores{
@@ -137,8 +136,6 @@ export class GraphFilterStore extends PreviewStores{
         this.engine = parsedEngine  
         this.nodeCollection = parsedNodeCollection
         this.connections = parsedConnectionCollection as any
-        // this.previewStores = new Map(parsedPreviewStores)
-        console.log("obobobobo", this.previewStores)
 
         this.engine.fixSerialization();
 
