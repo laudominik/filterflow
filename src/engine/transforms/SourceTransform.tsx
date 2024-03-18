@@ -12,6 +12,10 @@ export default class SourceTransform extends Transform{
         super("source","#FFFFFF", 0);
     }
 
+    public could_update(): boolean {
+        return this.params["image"]
+    }
+
     async apply(input: Array<OffscreenCanvas | undefined>): Promise<OffscreenCanvas | undefined> {
         // for the source node we ignore inputs
 
@@ -50,7 +54,7 @@ export default class SourceTransform extends Transform{
         this.drawImage(image)
 
         this.hash = crypto.randomUUID();
-        // this.update_node();
+        this.engine.requestUpdate(this.meta.id);
     }
 
     drawImage(input: HTMLImageElement) {

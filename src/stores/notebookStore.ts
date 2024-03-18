@@ -1,19 +1,21 @@
 import { TypedJSON } from "typedjson";
-import { GraphFilterStore } from "./graphFilterStore";
 import { knownTypes } from "../engine/TransformDeclarations";
+import { HistoryStore } from "./historyStore";
+import { TopStore } from "./topStore";
 
 export class NotebookStore{
-    stores: Map<String,GraphFilterStore>
+    stores: Map<String,TopStore>
 
     selectedName: string
-    selected: GraphFilterStore
+    selected: TopStore
     selectedListeners: CallableFunction[]
 
     constructor(){
         this.stores = new Map();
         this.selectedName = "unnamed";
-        this.selected = new GraphFilterStore();
+        this.selected = new TopStore();
         this.selectedListeners = [];
+        this.stores.set(this.selectedName,this.selected);
     }
 
     public getSelected(){
@@ -38,12 +40,13 @@ export class NotebookStore{
             this.selectedName = "unnamed" + i;
             i++;
         }
-        this.selected = new GraphFilterStore();
+        this.selected = new TopStore();
+        this.stores.set(this.selectedName,this.selected);
         this.selectedListeners.forEach(v => v());
     }
 
     public saveNotebook(){
-        const serializer = new TypedJSON(GraphFilterStore);
+        const serializer = new TypedJSON(TopStore);
         const body = serializer.stringify(this.selected);
         console.log(body)
         // TODO: save to some storage
@@ -51,7 +54,7 @@ export class NotebookStore{
     }
 
     public loadNotebook(name: string,body: string){
-        let json = new TypedJSON(GraphFilterStore,{knownTypes: Array.from(knownTypes())});
+        let json = new TypedJSON(TopStore,{knownTypes: Array.from(knownTypes())});
         this.selected = json.parse(body)!;
         this.selected.engine.fixSerialization();
         this.selectedName = name;

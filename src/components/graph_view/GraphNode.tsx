@@ -43,7 +43,6 @@ const GraphNode: React.FC<NodeProps> = ({ children,
     const handleOpenClick = () => {
         node.value.setExpanded(!open)
         setOpen(!open)
-        persistence.commit()
     }
     
     const inputs = <div className="circle-container">

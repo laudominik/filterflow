@@ -84,11 +84,6 @@ export interface IPreviewStore{
 }
 
 export interface IPersistentStore {
-
-    save(): string
-    saveToIndex(notebookIndex: number): void 
-    loadFromIndex(notebookIndex: number): void 
-    loadFromSerialized(serialized: string): void
-    rollback(): void
-    commit(): string
+    history_rollback(): void
+    history_redo(): void
 }

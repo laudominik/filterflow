@@ -1,6 +1,6 @@
 import { GraphFilterStore } from "./graphFilterStore";
 
-class CanvasGraphStore extends GraphFilterStore{
+export abstract class CanvasGraphStore extends GraphFilterStore{
     canvasConfig: {
 
     }

@@ -28,6 +28,8 @@ export class Engine extends EventTarget implements IEngine<Transform>{
     // engine should call node in async
     // this is only for async return (ensure that some msg is always send, otherwise batching in this implementation will break) 
     
+    inTransaction: boolean = false;
+
     batchState: {
        response: ExternalEngineResponse
        pendingUpdates: Set<GUID> // basicly open updates, that wait for return
@@ -62,8 +64,17 @@ export class Engine extends EventTarget implements IEngine<Transform>{
     public requestUpdate(node:GUID): void{
         this.batchState.pendingUpdates.add(node);
     }
+    protected transactionStart(): void{
+        this.inTransaction = true;
+    }
+
+    protected transactionCommit(): void{
+        this.inTransaction = false;
+        this.startUpdate();
+    }
 
     public async startUpdate(): Promise<void>{
+        if (this.inTransaction) return;
         this.source_nodes.forEach((id) =>{
             this.batchState.pendingUpdates.add(id);
             this.batchState.concurent_updates+=1;
@@ -128,11 +139,25 @@ export class Engine extends EventTarget implements IEngine<Transform>{
             // TODO think about some error handling
             return
         }
+        for (const key in params){
+            this.batchState.response.node.updated_params.push({node_id:node,key,old: transform.params[key],new: params[key]})
+        }
         // if found add to pending
         this.batchState.pendingUpdates.add(node)
         transform.updateParams(params);
         this.requestUpdate(transform.meta.id);
         this.startUpdate();
+    }
+    public _addNode(node: Transform){
+        const guid = node.meta.id;
+        if (node.meta.input_size == 0){
+            this.source_nodes.push(guid)
+        }
+        node.engine = this;
+        this.nodes.set(guid,node)
+        this.batchState.response.node.added.push(guid);
+        this.requestUpdate(guid);
+        this.startUpdate(); 
     }
 
     public addNode(transformation: string, params: any): GUID{
@@ -143,16 +168,8 @@ export class Engine extends EventTarget implements IEngine<Transform>{
         if(params.previewPosition){
             node.setPreviewPos(params.previewPosition);
         }
-        const guid = node.meta.id;
-        if (node.meta.input_size == 0){
-            this.source_nodes.push(guid)
-        }
-        node.engine = this;
-        this.nodes.set(guid,node)
-        this.batchState.response.node.added.push(guid);
-        this.requestUpdate(guid);
-        this.startUpdate(); 
-        return guid
+        this._addNode(node);
+        return node.meta.id;
     }
 
     public removeNode(guid:GUID){
@@ -266,12 +283,14 @@ export class Engine extends EventTarget implements IEngine<Transform>{
 
 // this will be send to parent element to inform that some element changed
 export class ExternalEngineResponse{
+    isHistoryUpdate: boolean = false; 
     node :{
         updated: GUID[] // all nodes that finished update successfully
         errors: GUID[]   // all nodes that returned error
         added: GUID[]
         removed: GUID[]
         removed_nodes: Transform[];
+        updated_params: {node_id: GUID,key: string,old: any,new: any}[]
     }
 
     connection : {
@@ -285,6 +304,7 @@ export class ExternalEngineResponse{
             removed: [],
             updated: [],
             removed_nodes: [],
+            updated_params: []
         };
         this.connection = {
             added: [],

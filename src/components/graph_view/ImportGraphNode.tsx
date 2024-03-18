@@ -14,7 +14,8 @@ export default function ImportGraphNode({ guid, style, onBodyClick, ioFunction }
     const node = useSyncExternalStore(nodeContext.subscribeNode(guid), nodeContext.getNode(guid));
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    const [imageDataUrl, setImageDataUrl] = useState(node.value.getImageString())
+    const isValid = useSyncExternalStore(nodeContext.subscribeNode(guid), () => nodeContext.getNode(guid)().value.valid)
+
     const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) {
@@ -24,7 +25,6 @@ export default function ImportGraphNode({ guid, style, onBodyClick, ioFunction }
         const reader = new FileReader();
         reader.onload = (event) => {
             nodeContext.updateParam(guid,{image: event.target?.result as string})
-            setImageDataUrl(event.target?.result as string)
         }
         
         reader.readAsDataURL(file);
@@ -124,7 +124,7 @@ export default function ImportGraphNode({ guid, style, onBodyClick, ioFunction }
     const img = <div className="imageContainer"><div className="centeredImage"><canvas ref={canvasRef} /></div></div>
     
     return <GraphNode guid={guid} onBodyClick={onBodyClick} style={style} ioFunction={ioFunction}>
-            {imageDataUrl ? img : form}
+            {isValid ? img : form}
         </GraphNode>
     
 }

@@ -102,7 +102,6 @@ export abstract class BaseFilterStore implements INodeStore{
         const guid = this.engine.addNode(name, params);
         this.nodeCollection = [...this.nodeCollection,guid];
         this.emitChangeNodeCollection();
-        this.commit();
         return this.engine.getNode(guid)!;
     }
 
@@ -110,13 +109,10 @@ export abstract class BaseFilterStore implements INodeStore{
         this.engine.removeNode(id);
         this.nodeCollection = this.nodeCollection.filter(v => v != id);
         this.emitChangeNodeCollection();
-        this.commit();
     }
 
     // #endregion 
 
     //#region Persistence
-    public abstract commit(): string;
-    public abstract rollback():void;
     // #endregion
 }

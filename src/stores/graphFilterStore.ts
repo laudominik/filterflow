@@ -1,5 +1,5 @@
 import { Engine, ExternalEngineResponse } from "../engine/engine"
-import { ConnectionDefinition, ConnectionInfo } from "./storeInterfaces";
+import { ConnectionDefinition, ConnectionInfo, IConnectionStore } from "./storeInterfaces";
 import { PreviewStores } from "./previewStore";
 import { AnyT, TypedJSON, jsonArrayMember, jsonMember, jsonObject } from "typedjson";
 import Transform from "../engine/Transform";
@@ -7,7 +7,7 @@ import { IEngine } from "../engine/iengine"
 import { knownTypes } from "../engine/TransformDeclarations";
 
 @jsonObject
-export class GraphFilterStore extends PreviewStores{
+export abstract class GraphFilterStore extends PreviewStores implements IConnectionStore{
  
     connectionsListener: CallableFunction[]
     @jsonArrayMember(AnyT)
@@ -21,11 +21,15 @@ export class GraphFilterStore extends PreviewStores{
         this.engine.addEventListener("update",this.handleEngineInfo.bind(this) as any)
     }
 
+    abstract _handleEngineInfo(event:ExternalEngineResponse): void;
+
     private handleEngineInfo(event:CustomEvent<ExternalEngineResponse>){
         let body = event.detail;
+        this._handleEngineInfo(body);
 
         this.connections.filter( v => body.connection.removed.reduce((p,c) => p || c==v.connectionDefinition,false))
         this.connections.push(...body.connection.added.map<ConnectionInfo>(v =>{return {connectionDefinition: v,display: [[0,0],[0,0]]};}))
+        
         this.connectionsListener.forEach(v => v());
         this.nodeListeners.forEach(v => v.listener()); // TODO tmp update
     }
@@ -74,92 +78,92 @@ export class GraphFilterStore extends PreviewStores{
     //#endregion
     
     //#region Persistence
-    public save(): string {
-        const serializer = new TypedJSON(Engine)
+    // public save(): string {
+    //     const serializer = new TypedJSON(Engine)
         
-        const toSerialize = {
-            // @ts-ignore
-            "engine" : serializer.stringify(this.engine),
-            "nodeCollection": JSON.stringify(this.nodeCollection),
-            "connectionCollection": JSON.stringify(this.connections),
-            "previewStores": JSON.stringify(Array.from(this.previewStores.entries()))
-        }
-        // TODO: rest of the stuff
-        return JSON.stringify(toSerialize)
-    }
-    public saveToIndex(notebookIndex: number) {
-        const allSaved = sessionStorage.getItem("engines")
-        if(!allSaved ) return;
-        const allSavedParsed = JSON.parse(allSaved)
-        allSavedParsed[notebookIndex] = this.save();
-        sessionStorage.setItem("engines", JSON.stringify(allSavedParsed))
-    }
+    //     const toSerialize = {
+    //         // @ts-ignore
+    //         "engine" : serializer.stringify(this.engine),
+    //         "nodeCollection": JSON.stringify(this.nodeCollection),
+    //         "connectionCollection": JSON.stringify(this.connections),
+    //         "previewStores": JSON.stringify(Array.from(this.previewStores.entries()))
+    //     }
+    //     // TODO: rest of the stuff
+    //     return JSON.stringify(toSerialize)
+    // }
+    // public saveToIndex(notebookIndex: number) {
+    //     const allSaved = sessionStorage.getItem("engines")
+    //     if(!allSaved ) return;
+    //     const allSavedParsed = JSON.parse(allSaved)
+    //     allSavedParsed[notebookIndex] = this.save();
+    //     sessionStorage.setItem("engines", JSON.stringify(allSavedParsed))
+    // }
     
-    public loadFromIndex(notebookIndex: number): void {
-        // construct fresh everything 
-        this.engine = new Engine()
-        this.connections = []
+    // public loadFromIndex(notebookIndex: number): void {
+    //     // construct fresh everything 
+    //     this.engine = new Engine()
+    //     this.connections = []
         
 
-        const allSaved = sessionStorage.getItem("engines")
-        if(!allSaved ) return;
-        const allSavedParsed = JSON.parse(allSaved)
+    //     const allSaved = sessionStorage.getItem("engines")
+    //     if(!allSaved ) return;
+    //     const allSavedParsed = JSON.parse(allSaved)
     
-        const thisSaved = allSavedParsed[notebookIndex]
-        if(!thisSaved) return;
-        this.loadFromSerialized(thisSaved)
+    //     const thisSaved = allSavedParsed[notebookIndex]
+    //     if(!thisSaved) return;
+    //     this.loadFromSerialized(thisSaved)
 
-        // emit everything
-    }
+    //     // emit everything
+    // }
 
-    public loadFromSerialized(serialized: string): void {
-        const thisSaved = JSON.parse(serialized)
+    // public loadFromSerialized(serialized: string): void {
+    //     const thisSaved = JSON.parse(serialized)
         
-        const savedEngine = thisSaved["engine"]
-        const savedNodeCollection = thisSaved["nodeCollection"]
-        const savedConnectionCollection = thisSaved["connectionCollection"]
-        const savedPreviewStores = thisSaved["previewStores"]
+    //     const savedEngine = thisSaved["engine"]
+    //     const savedNodeCollection = thisSaved["nodeCollection"]
+    //     const savedConnectionCollection = thisSaved["connectionCollection"]
+    //     const savedPreviewStores = thisSaved["previewStores"]
 
-        if(!savedEngine || !savedNodeCollection || !savedConnectionCollection) return;
+    //     if(!savedEngine || !savedNodeCollection || !savedConnectionCollection) return;
 
 
-        const serializer = new TypedJSON(Engine, {knownTypes: Array.from(knownTypes())})
-        // const previewSerializer = new TypedJSON()
-        // deserialize
-        const parsedEngine = serializer.parse(savedEngine)
-        const parsedNodeCollection = JSON.parse(savedNodeCollection)
-        const parsedConnectionCollection = JSON.parse(savedConnectionCollection)
-        const parsedPreviewStores = JSON.parse(savedPreviewStores)
+    //     const serializer = new TypedJSON(Engine, {knownTypes: Array.from(knownTypes())})
+    //     // const previewSerializer = new TypedJSON()
+    //     // deserialize
+    //     const parsedEngine = serializer.parse(savedEngine)
+    //     const parsedNodeCollection = JSON.parse(savedNodeCollection)
+    //     const parsedConnectionCollection = JSON.parse(savedConnectionCollection)
+    //     const parsedPreviewStores = JSON.parse(savedPreviewStores)
 
-        if(!parsedEngine || !parsedNodeCollection) return
+    //     if(!parsedEngine || !parsedNodeCollection) return
 
-        this.engine = parsedEngine  
-        this.nodeCollection = parsedNodeCollection
-        this.connections = parsedConnectionCollection as any
+    //     this.engine = parsedEngine  
+    //     this.nodeCollection = parsedNodeCollection
+    //     this.connections = parsedConnectionCollection as any
 
-        this.engine.fixSerialization();
+    //     this.engine.fixSerialization();
 
-        this.emitChangeConnections()
-        this.emitChangePreviews()
-        this.emitChangeNodeCollection()
-        //this.emitChangeConnections()
-        // TODO: parse rest of the props
+    //     this.emitChangeConnections()
+    //     this.emitChangePreviews()
+    //     this.emitChangeNodeCollection()
+    //     //this.emitChangeConnections()
+    //     // TODO: parse rest of the props
 
-    }
+    // }
 
-    public rollback(){
+    // public rollback(){
 
-        const selectedIndex = sessionStorage.getItem("selectedTabIx")
-        if(!selectedIndex) return 
-        this.loadFromIndex(JSON.parse(selectedIndex))
-    }
+    //     const selectedIndex = sessionStorage.getItem("selectedTabIx")
+    //     if(!selectedIndex) return 
+    //     this.loadFromIndex(JSON.parse(selectedIndex))
+    // }
 
-    public commit(): string {
-        const selectedIndex = sessionStorage.getItem("selectedTabIx")
-        if(!selectedIndex) return ""
-        this.saveToIndex(JSON.parse(selectedIndex))
-        return ""
-    }
+    // public commit(): string {
+    //     const selectedIndex = sessionStorage.getItem("selectedTabIx")
+    //     if(!selectedIndex) return ""
+    //     this.saveToIndex(JSON.parse(selectedIndex))
+    //     return ""
+    // }
 
     //#endregion
 }

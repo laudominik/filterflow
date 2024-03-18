@@ -1,6 +1,6 @@
 import { faCancel, faClose, faCross } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useSyncExternalStore } from "react";
 import { Nav, Navbar } from "react-bootstrap";
 import { useSessionStorage } from 'usehooks-ts'
 
@@ -8,52 +8,22 @@ import "./TabsComponent.css"
 import { notebookStoreContext, persistenceContext } from "../../stores/context";
 
 export default function TabsComponent() {
-    const [notebooks, setNotebooks] = useSessionStorage<Array<string>>("notebooks", [])
-    const [engines, setEngines] = useSessionStorage<Array<string>>("engines", [])
-    const [selectedTabIx, setSelectedTabIx] = useSessionStorage<number>("selectedTabIx",0);
     const notebooksContext = useContext(notebookStoreContext)
+    const selectedNotebook = useSyncExternalStore(notebooksContext.subscribeSelected.bind(notebooksContext),notebooksContext.getSelectedName.bind(notebookStoreContext));
 
-    function handleSelectNotebook(ix: number){
-        engines[selectedTabIx] = notebooksContext.saveNotebook()
-        notebooksContext.loadNotebook(notebooks[ix], engines[ix])
-        
-        setNotebooks(notebooks)
-        setSelectedTabIx(ix)
+    function handleSelectNotebook(name: string){
+        notebooksContext.changeNotebook(name);
     }
 
-    function handleCloseNotebook(ix: number){
-        let newNotebooks = notebooks.slice(0, ix).concat(notebooks.slice(ix + 1))
-        let newEngines = engines.slice(0, ix).concat(engines.slice(ix + 1))
-        let newSelectedTabIx = selectedTabIx
-
-        if(ix == selectedTabIx){
-            newSelectedTabIx = 0;
-        } else if(selectedTabIx > ix) {
-            newSelectedTabIx = selectedTabIx - 1;
-        }
-
-        if (newNotebooks.length == 0){
-            newNotebooks = ["New_notebook"]   
-            newEngines = ["{}"]
-        }
-
-        setNotebooks(newNotebooks)
-        setEngines(newEngines)
-        setSelectedTabIx(newSelectedTabIx)
-        notebooksContext.loadNotebook(newNotebooks[newSelectedTabIx], newEngines[newSelectedTabIx])
+    function handleCloseNotebook(name: string){
+        notebooksContext.deleteNotebook(name);    
     }
 
-    function handleRenameNotebook(ix: number, event: React.FormEvent<HTMLInputElement>){
+    function handleRenameNotebook(name: string, event: React.FormEvent<HTMLInputElement>){
         const newText = event.currentTarget.value; 
         if(!newText) return;
         
-        const updatedNotebooks = [
-            ...notebooks.slice(0, ix), 
-            newText, 
-            ...notebooks.slice(ix + 1) 
-        ];
-
-        setNotebooks(updatedNotebooks)
+        notebooksContext.renameNotebook(name,newText);
     }
 
     const tabStyle = {
@@ -67,31 +37,32 @@ export default function TabsComponent() {
 
     return <Navbar.Collapse id="basic-navbar-nav">
     <Nav className="mr-auto">
-        {notebooks.map((el, ix) => {
-            return  <Nav.Link key={ix} style={{cursor: "default"}}>
-            <div  key={ix} style={tabStyle} onClick={() => handleSelectNotebook(ix)}>
+        {Array.from(notebooksContext.stores.keys()).map( Name => {
+            const name = `${Name}`;
+            return  <Nav.Link key={name} style={{cursor: "default"}}>
+            <div style={tabStyle} onClick={() => handleSelectNotebook(name)}>
                 {
-                    ix == selectedTabIx ? 
-                    <input key={ix} type="text" className="tabText"
+                    name === selectedNotebook ? 
+                    <input type="text" className="tabText"
                     style={{
                         border: 0,
                         borderBottom: "0.1vw", 
                         borderStyle: "solid"}}
-                    value={el}
+                    value={name}
                     minLength={1}
-                    onChange={(e) => handleRenameNotebook(ix, e)}/> 
+                    onChange={(e) => handleRenameNotebook(name, e)}/> 
                     :
-                    <input key={ix} type="text" className="tabText"
+                    <input type="text" className="tabText"
                     style={{
                         border: 0,
                         borderBottom: 0
                     }}
                     minLength={1}
-                    value={el}
-                    onChange={(e) => handleRenameNotebook(ix, e)}/> 
+                    value={name}
+                    onChange={(e) => handleRenameNotebook(name, e)}/> 
                 }
             </div>
-            <FontAwesomeIcon icon={faClose} onClick={() => handleCloseNotebook(ix)}/>
+            <FontAwesomeIcon icon={faClose} onClick={() => handleCloseNotebook(name)}/>
             </Nav.Link>
             }
         )}

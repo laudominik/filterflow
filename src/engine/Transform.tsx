@@ -64,12 +64,23 @@ abstract class Transform extends node<Transform> {
 
     public async _update_node(): Promise<boolean> {
         // based on input connections perform calculations
-        if (this.inputs.has(0)){
-            let [parent,nr] = this.inputs.get(0)!;
-            let input = this.engine.getNode(parent)?.canvas;
-            return await this.apply(input ? [input] : []) != undefined;
+        let inputs = []; 
+        for (let i = 0; i < this.meta.input_size; i++) {
+            const input = this.inputs.get(i);
+            if (input){
+                const node = this.engine.getNode(input[0]);
+                if (node && node.valid){
+                    inputs.push(node.canvas);
+                }else{
+                    inputs.push(undefined);
+                }
+            }else{
+                inputs.push(undefined);
+            }
+            
         }
-        return false;
+
+        return await this.apply(inputs) != undefined;
     }
 
     abstract paramView(guid: GUID): ReactElement;
