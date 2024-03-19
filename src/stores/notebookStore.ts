@@ -124,6 +124,7 @@ export class NotebookStore{
 
     public loadNotebook(name: string,body: string){
         name = this.availableName(name);
+        localStorage.setItem("store_"+name,body);
         let json = new TypedJSON(TopStore,{knownTypes: Array.from(knownTypes())});
         this.selected = json.parse(body)!;
         this.bindSave(this.selected);
