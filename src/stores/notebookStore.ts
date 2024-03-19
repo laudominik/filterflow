@@ -23,7 +23,7 @@ export class NotebookStore{
             list.forEach(name => {
                 const cache = localStorage.getItem("store_"+name);
                 if(cache){
-                    const store = new TypedJSON(TopStore).parse(cache)!;
+                    const store = new TypedJSON(TopStore, {knownTypes: Array.from(knownTypes())}).parse(cache)!;
                     this.bindSave(store);
                     store.engine.fixSerialization();
                     this.stores.push([name,store])
@@ -48,7 +48,7 @@ export class NotebookStore{
         const record = this.stores.filter( v => v[1] === store);
         if (record){
             const name = record[0][0];
-            const serializer = new TypedJSON(TopStore);
+            const serializer = new TypedJSON(TopStore, {knownTypes: Array.from(knownTypes())});
             const body = serializer.stringify(store);
             window.localStorage.setItem("store_"+name,body);        
         }
@@ -115,7 +115,7 @@ export class NotebookStore{
 
     // This is a litle funky, call it from UI only. It should be fine as long a user is slow.
     public saveNotebook(){
-        const serializer = new TypedJSON(TopStore);
+        const serializer = new TypedJSON(TopStore, {knownTypes: Array.from(knownTypes())});
         const body = serializer.stringify(this.selected);
         console.log(body)
         // TODO: save to some storage
@@ -125,9 +125,10 @@ export class NotebookStore{
     public loadNotebook(name: string,body: string){
         name = this.availableName(name);
         localStorage.setItem("store_"+name,body);
-        let json = new TypedJSON(TopStore,{knownTypes: Array.from(knownTypes())});
+        let json = new TypedJSON(TopStore, {knownTypes: Array.from(knownTypes())});
         this.selected = json.parse(body)!;
         this.bindSave(this.selected);
+        this.selectedIx = this.stores.length;
         this.selected.engine.fixSerialization();
         this.stores.push([name, this.selected])
         this._dispatchStoreListUpdated();
@@ -162,6 +163,8 @@ export class NotebookStore{
         } else if(this.selectedIx > ix) {
             this.selectedIx -= 1;
         }
+
+        this.selected = this.stores[this.selectedIx][1]
         this._dispatchStoreListUpdated();
 
     }
