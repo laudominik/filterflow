@@ -9,23 +9,20 @@ import { notebookStoreContext } from "../../stores/context";
 
 export default function TabsComponent() {
     const notebooksContext = useContext(notebookStoreContext)
-    const selectedNotebook = useSyncExternalStore(notebooksContext.subscribeSelected.bind(notebooksContext),notebooksContext.getSelectedName.bind(notebooksContext))
+    const selectedNotebook = useSyncExternalStore(notebooksContext.subscribeSelected.bind(notebooksContext),notebooksContext.getSelectedIx.bind(notebooksContext))
     const _ = useSyncExternalStore(notebooksContext.subscribeNotebookCollection.bind(notebooksContext), notebooksContext.getNotebookCollection.bind(notebooksContext))
 
-    function handleSelectNotebook(name: string){
-        notebooksContext.changeNotebook(name);
+    function handleSelectNotebook(ix: number){
+        notebooksContext.changeNotebook(ix);
     }
 
-    function handleCloseNotebook(name: string){
-        notebooksContext.deleteNotebook(name);    
+    function handleCloseNotebook(ix: number){
+        notebooksContext.deleteNotebook(ix);    
     }
 
-    function handleRenameNotebook(name: string, event: React.FormEvent<HTMLInputElement>){
-        const newText = event.currentTarget.value; 
-        console.log(newText)
-        if(!newText) return;
-        
-        notebooksContext.renameNotebook(name,newText);
+    function handleRenameNotebook(ix: number, event: React.FormEvent<HTMLInputElement>){
+        const newText = event.currentTarget.value;
+        notebooksContext.renameNotebook(ix, newText);
     }
 
     const tabStyle = {
@@ -36,20 +33,19 @@ export default function TabsComponent() {
 
     return <Navbar.Collapse id="basic-navbar-nav">
     <Nav className="mr-auto">
-        {notebooksContext.stores.map( el => {
+        {notebooksContext.stores.map( (el, ix) => {
             const name = `${el[0]}`;
             return  <Nav.Link key={name} style={{cursor: "default"}}>
-            <div style={tabStyle} onClick={() => handleSelectNotebook(name)}>
+            <div style={tabStyle} onClick={() => handleSelectNotebook(ix)}>
                 {
-                    name === selectedNotebook ? 
+                    ix === selectedNotebook ? 
                     <input type="text" className="tabText"
                     style={{
                         border: 0,
                         borderBottom: "0.1vw", 
                         borderStyle: "solid"}}
                     value={name}
-                    minLength={1}
-                    onChange={(e) => handleRenameNotebook(name, e)}
+                    onChange={(e) => handleRenameNotebook(ix, e)}
                     autoFocus/> 
                     :
                     <input type="text" className="tabText"
@@ -57,12 +53,11 @@ export default function TabsComponent() {
                         border: 0,
                         borderBottom: 0
                     }}
-                    minLength={1}
                     value={name}
-                    onChange={(e) => handleRenameNotebook(name, e)}/> 
+                    onChange={(e) => handleRenameNotebook(ix, e)}/> 
                 }
             </div>
-            <FontAwesomeIcon icon={faClose} onClick={() => handleCloseNotebook(name)}/>
+            <FontAwesomeIcon icon={faClose} onClick={() => handleCloseNotebook(ix)}/>
             </Nav.Link>
             }
         )}

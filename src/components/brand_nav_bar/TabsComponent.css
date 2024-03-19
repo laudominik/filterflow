@@ -7,5 +7,5 @@
     background-color: rgba(0, 0, 0, 0.0);
     outline: none;
     cursor: default;
-    caret-color: transparent;
+    /* caret-color: transparent; */
 }

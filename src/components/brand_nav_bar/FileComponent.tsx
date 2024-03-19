@@ -18,7 +18,7 @@ export default function FileComponent() {
         
         const link = document.createElement('a');
         link.href = url;
-        link.download =  notebookStore.getSelectedName() + ".ffnb"
+        link.download =  notebookStore.stores[notebookStore.getSelectedIx()][0] + ".ffnb"
     
         link.click();
         URL.revokeObjectURL(url);
