@@ -5,11 +5,12 @@ import { Nav, Navbar } from "react-bootstrap";
 import { useSessionStorage } from 'usehooks-ts'
 
 import "./TabsComponent.css"
-import { notebookStoreContext, persistenceContext } from "../../stores/context";
+import { notebookStoreContext } from "../../stores/context";
 
 export default function TabsComponent() {
     const notebooksContext = useContext(notebookStoreContext)
-    const selectedNotebook = useSyncExternalStore(notebooksContext.subscribeSelected.bind(notebooksContext),notebooksContext.getSelectedName.bind(notebookStoreContext));
+    const selectedNotebook = useSyncExternalStore(notebooksContext.subscribeSelected.bind(notebooksContext),notebooksContext.getSelectedName.bind(notebooksContext))
+    const _ = useSyncExternalStore(notebooksContext.subscribeNotebookCollection.bind(notebooksContext), notebooksContext.getNotebookCollection.bind(notebooksContext))
 
     function handleSelectNotebook(name: string){
         notebooksContext.changeNotebook(name);
@@ -21,6 +22,7 @@ export default function TabsComponent() {
 
     function handleRenameNotebook(name: string, event: React.FormEvent<HTMLInputElement>){
         const newText = event.currentTarget.value; 
+        console.log(newText)
         if(!newText) return;
         
         notebooksContext.renameNotebook(name,newText);
@@ -32,13 +34,10 @@ export default function TabsComponent() {
         paddingBottom: "0.1vw",
     }
 
-    // border: 0;
-    // border-style: solid;
-
     return <Navbar.Collapse id="basic-navbar-nav">
     <Nav className="mr-auto">
-        {Array.from(notebooksContext.stores.keys()).map( Name => {
-            const name = `${Name}`;
+        {notebooksContext.stores.map( el => {
+            const name = `${el[0]}`;
             return  <Nav.Link key={name} style={{cursor: "default"}}>
             <div style={tabStyle} onClick={() => handleSelectNotebook(name)}>
                 {
@@ -50,7 +49,8 @@ export default function TabsComponent() {
                         borderStyle: "solid"}}
                     value={name}
                     minLength={1}
-                    onChange={(e) => handleRenameNotebook(name, e)}/> 
+                    onChange={(e) => handleRenameNotebook(name, e)}
+                    autoFocus/> 
                     :
                     <input type="text" className="tabText"
                     style={{

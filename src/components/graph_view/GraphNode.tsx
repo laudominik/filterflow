@@ -35,7 +35,6 @@ const GraphNode: React.FC<NodeProps> = ({ children,
     onBodyClick,
     ioFunction
     }) => {
-    const persistence = useContext(persistenceContext)
     const nodeContext = useContext(nodeStoreContext) 
     const node = useSyncExternalStore(nodeContext.subscribeNode(guid), nodeContext.getNode(guid));
     const [open, setOpen] = useState(node.value.getExpanded());
