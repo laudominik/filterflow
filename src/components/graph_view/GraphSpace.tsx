@@ -12,6 +12,7 @@ import PreviewContainer from "../preview_container/PreviewContainer";
 import GraphPreview from "./GraphPreview";
 import { useSessionStorage } from "usehooks-ts";
 import { PreviewStore } from "../../stores/previewStore";
+import { useCommand } from "../../util/commands";
 
 
 export interface GraphSpaceInterface{
@@ -74,6 +75,20 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
             }
         }
     }, [debSpaceSize]);
+
+    useCommand({
+        name: "Delete Node",
+        binding: ["Delete"],
+        callback: handleNodeTrashIcon,
+        dependencies: [highlightedGUID]
+    });
+
+    useCommand({
+        name: "Delete Edge",
+        binding: ["Delete"],
+        callback: handleEdgeTrashIcon,
+        dependencies: [highlightedEdge]
+    });
 
     let dragTarget : HTMLElement | undefined = undefined;
     let dragMouseStartX = 0;
@@ -307,6 +322,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
     }
 
     function handleEdgeTrashIcon(){
+        if(highlightedEdge.guid0 === "" || highlightedEdge.guid1 === "") return;
         connectionContext.disconnectNodes([
             [highlightedEdge.guid0, 0],
             [highlightedEdge.guid1, highlightedEdge.inputNo]

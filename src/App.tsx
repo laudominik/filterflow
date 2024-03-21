@@ -12,6 +12,7 @@ import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import GraphView from './components/graph_view/GraphView';
 import { connectionStoreContext as ConnectionStoreContext, nodeStoreContext as NodeStoreContext, notebookStoreContext as NotebookStoreContext, previewStoreContext as PreviewStoreContext } from './stores/context';
+import { useKeybinds } from './util/commands';
 
 export default function App() {
   const notebookStore = useContext(NotebookStoreContext);
@@ -34,6 +35,8 @@ export default function App() {
     viewModeHandler()
     window.addEventListener('storage', viewModeHandler, false);
   }, [])
+
+  useKeybinds();
 
   const notebooks = sessionStorage.getItem("notebooks");
   if (!notebooks) {
@@ -69,10 +72,10 @@ export default function App() {
       <NodeStoreContext.Provider value={graphStore}>
           <ConnectionStoreContext.Provider value={graphStore}>
             <PreviewStoreContext.Provider value={graphStore}>
-              <div className="App">
-                <BrandNavBar />
-                {view}
-              </div>
+                <div className="App">
+                  <BrandNavBar />
+                  {view}
+                </div>
             </PreviewStoreContext.Provider>
           </ConnectionStoreContext.Provider>
       </NodeStoreContext.Provider>
