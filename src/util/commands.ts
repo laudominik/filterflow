@@ -73,8 +73,7 @@ class CommandRegistry {
         if(!command.binding) return;
         let currentNode = this.bindingsTree;
         const chain: HotKeyNode[] = [];
-
-        for (const key in command.binding.sort()){
+        for (const key of command.binding.sort()){
             const {children} = currentNode;
             if(!children) return;
 
@@ -124,12 +123,12 @@ class CommandRegistry {
 
 /**
  * this is the hook that you should use to register a new command\
- * registers command, and binds it's action to keyboard shortcut (if key binding was given)\
+ * registers command, and binds its action to keyboard shortcut (if key binding was given)\
  *      it register command when component is created, and removes command when component unloads\
- *      between renders it updates function handler if passed `action` function has changed\
+ *      between renders it updates function handler if passed `callback` function has changed\
  * \
  * the order of keys in `binding` does not matter\
- * the `name` don't have to unique
+ * the `name` don't have to be unique
  * 
  * @example
  * //use useCallback, for functions in compontents that re-renders too often
