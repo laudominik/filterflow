@@ -23,7 +23,7 @@ export default function PoolingVisualizationComponent({guid, type, reduction}: {
 
     const inputNode =  useSyncExternalStore(nodeContext.subscribeNode(inputId), nodeContext.getNode(inputId));
     const pixels = inputNode.value.getPixels(selection.preview.source.start, selection.preview.source.size);
-    const res_pixel = node.value.getPixels(selection.preview.destination.start, selection.preview.destination.size);
+    //const res_pixel = node.value.getPixels(selection.preview.destination.start, selection.preview.destination.size);
     const channelOffset = ChannelValue[selection.channel]
 
     const poolingSize = node.value.params["pooling_size"]
@@ -35,23 +35,13 @@ export default function PoolingVisualizationComponent({guid, type, reduction}: {
         })
     })
 
-    function mapChannel(channel: Channel){
-        switch(channel){
-            case Channel.RED:
-                return 0;
-            case Channel.GREEN:
-                return 1;
-            case Channel.BLUE:
-                return 2;
-            default:
-                return 0;
-        }
-    }
+    const res_pixel = Math.floor(reduction(...values.map(el => reduction(...el))))
+    
 
     return <>
         <hr/>
         {drawPixelValues(values, selection.channel)}
-        {AdnotateElement(<>=</>, type, "under")} {ColorComponent(res_pixel[mapChannel(selection.channel)], selection.channel)}
+        {AdnotateElement(<>=</>, type, "under")} {ColorComponent(res_pixel, selection.channel)}
         <br/>
     </>    
 }

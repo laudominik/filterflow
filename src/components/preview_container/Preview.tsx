@@ -19,6 +19,7 @@ type ColorMask = [boolean, boolean, boolean];
 function Preview({ title, sourceId, allowFullscreen, previewName }: { title: string, sourceId: string, allowFullscreen: boolean, previewName: string}) {
     const nodeContext = useContext(nodeStoreContext);
     const node = useSyncExternalStore(nodeContext.subscribeNode(sourceId), nodeContext.getNode(sourceId));
+    const previewNode = useSyncExternalStore(nodeContext.subscribeNode(previewName), nodeContext.getNode(previewName));
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     const previewContext = useContext(previewStoreContext);
@@ -119,19 +120,24 @@ function Preview({ title, sourceId, allowFullscreen, previewName }: { title: str
                 source: node.value.fromDestinationToSourcePosition(pos),
                 destination: pos
             }
-        } else {
-            selection.pointer = {
-                source: pos,
-                destination: node.value.fromSourceToDestinationPosition(pos)
-            }
-        }
-
-        previewStore.updateSelection(
-            selection.pointer,
-            {
+            selection.preview = {
                 source: node.value.fromPositionToSourceSelection(selection.pointer.source),
                 destination: node.value.fromPositionToSelection(selection.pointer.destination)
-            },
+            }
+        } else {
+            // something wrong here!
+            selection.pointer = {
+                source: pos,
+                destination: previewNode.value.fromSourceToDestinationPosition(pos)
+            }
+            selection.preview = {
+                source: previewNode.value.fromPositionToSourceSelection(selection.pointer.source),
+                destination: previewNode.value.fromPositionToSelection(selection.pointer.destination)
+            }
+        }
+        previewStore.updateSelection(
+            selection.pointer,
+            selection.preview,
             selection.channel
         )
     }
@@ -195,7 +201,7 @@ function Preview({ title, sourceId, allowFullscreen, previewName }: { title: str
         <div className="imageContainer">
             <div className='centeredImage' onMouseMove={handleMouse} onClick={() => previewStore.updateSelectionLocked(!previewStore.getSelectionLocked())}>
                     <canvas ref={canvasRef} />
-                    <div className='overlay' style={overlayPos(previewSelections.preview)}></div>
+                    {previewStore.getSelection().channel != Channel.NONE ? <div className='overlay' style={overlayPos(previewSelections.preview)}></div> : <></>}
             </div>
         </div>
     </div>

@@ -66,10 +66,11 @@ class ConvolutionTransform extends Transform {
     }
 
     public fromPositionToSourceSelection(position: [number, number]): CanvasSelection {
+        console.log("HERRESE!")
         const kernelN = this.params["kernel"].length;
         const x = position[0] - Math.floor((kernelN-1)/2)
         const y = position[1] - Math.floor((kernelN-1)/2)
-
+        console.log("start:", x, y)
         return {start: [x,y], size: [kernelN, kernelN], center: position}
     }
 
