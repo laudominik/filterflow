@@ -98,6 +98,7 @@ export class NotebookStore{
         this.selectedIx = 0
         const name = this.availableName("unnamed")
         this.selected = new TopStore();
+        this.selectedIx = this.stores.length;
         this.bindSave(this.selected)
         this.stores.push([name, this.selected])
         this._dispatchStoreListUpdated();
