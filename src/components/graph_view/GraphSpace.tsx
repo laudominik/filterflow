@@ -63,7 +63,12 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         setAddingEdgeAnimationComponent(<></>);
         setConnectionComponent(handleConnections());
         setPreviewConnectionComponent(handlePreviewConnections());
+        window.removeEventListener('mousemove', addMove);
     },[notebooksContext.getSelected()])
+
+    useEffect(()=>{
+        setConnectionComponent(handleConnections())
+    }, [connectionCollection])
 
     useImperativeHandle(forwardedRef, () =>{
         return {
@@ -416,7 +421,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
 
     {highlightedEdge.guid0 && highlightedEdge.guid1 ? 
         <div className='nodeContextMenu'>
-           {highlightedEdge.guid0} =- {highlightedEdge.guid1} ({highlightedEdge.inputNo}) <Button onClick={handleEdgeTrashIcon}><FontAwesomeIcon icon={faTrash}/></Button>
+           <Button onClick={handleEdgeTrashIcon}><FontAwesomeIcon icon={faTrash}/></Button>
         </div>
      : <></>}
     </>    
@@ -472,9 +477,6 @@ function NodeContextMenu({ highlightedGUID,
     </Form>
 
     return <div className='nodeContextMenu'>
-            {/* debug */}
-            GUID: {highlightedGUID} 
-            {/* end debug */}
             <Button title="delete transformation" onClick={handleNodeTrashIcon}><FontAwesomeIcon icon={faTrash}/></Button>
             {
                 node.value.name == "source" ?  <></> : 

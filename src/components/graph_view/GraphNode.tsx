@@ -6,7 +6,7 @@ import { faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import './GraphNode.css';
-import { nodeStoreContext, persistenceContext } from "../../stores/context";
+import { connectionStoreContext, nodeStoreContext, persistenceContext } from "../../stores/context";
 
 interface NodeBodyProps {
     children: ReactNode;
@@ -36,12 +36,15 @@ const GraphNode: React.FC<NodeProps> = ({ children,
     ioFunction
     }) => {
     const nodeContext = useContext(nodeStoreContext) 
+    const connectionContext = useContext(connectionStoreContext);
+
     const node = useSyncExternalStore(nodeContext.subscribeNode(guid), nodeContext.getNode(guid));
     const [open, setOpen] = useState(node.value.getExpanded());
     
     const handleOpenClick = () => {
         node.value.setExpanded(!open)
         setOpen(!open)
+        connectionContext.forceConnectionsRefresh()
     }
     
     const inputs = <div className="circle-container">
@@ -58,7 +61,6 @@ const GraphNode: React.FC<NodeProps> = ({ children,
                 <Card className="transformCard" style={style}>
                     <Card.Header className="cardHeader">
                         {node.value.getName()}
-                        : {guid}
                         <div>
                             <Button 
                                 className='border-0 bg-transparent'

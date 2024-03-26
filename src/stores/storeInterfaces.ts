@@ -51,6 +51,7 @@ export interface INodeStore{
 export interface IConnectionStore{
     getConnections():  ConnectionInfo[]
     subscribeConnections(listener: Func): CallableFunction
+    forceConnectionsRefresh(): void
     
     disconnectNodes(connection: ConnectionDefinition): void
     connectNodes(connection: ConnectionDefinition): void

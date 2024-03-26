@@ -55,6 +55,7 @@ export default function KernelComponent({guid}: {guid: GUID}){
                                     className="form-control"
                                     value={gridValues[rowIndex][colIndex]}
                                     onChange={(e) => handleInputChange(rowIndex, colIndex, e.target.value)}
+                                    style={colIndex == Math.ceil(kernelN/2) - 1 && rowIndex == Math.ceil(kernelN/2) - 1 ? {borderColor: "yellow", borderWidth: 5} : {}}
                                 />
                             </div>
                         ))}

@@ -40,6 +40,11 @@ export abstract class GraphFilterStore extends PreviewStores implements IConnect
         return this.connections;
     }
 
+    public forceConnectionsRefresh(){
+        this.connections = [...this.connections]
+        this.emitChangeConnections()
+    }
+
     public subscribeConnections(listener: CallableFunction) {
         this.connectionsListener = [...this.connectionsListener, listener]
         return () => {

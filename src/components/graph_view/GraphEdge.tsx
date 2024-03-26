@@ -43,6 +43,11 @@ export function Edge({pos0, pos1, onClick, style, marker=true}:{pos0: [number, n
 
 export function AnimationEdge({guid, isInput, mousePos, inputNo}: {guid : GUID, isInput: boolean, mousePos: {x: number, y: number}, inputNo: number}){
     const nodeContext = useContext(nodeStoreContext);
+
+    if(!nodeContext.getNodeCollection().find(el => el == guid)){
+        return <></>
+    }
+
     let pos0 = nodeContext.getNode(guid)().value.getPos();
     let pos1 = {x: pos0.x, y: pos0.y};
 
