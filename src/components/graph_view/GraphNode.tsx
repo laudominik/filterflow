@@ -70,10 +70,10 @@ const GraphNode: React.FC<NodeProps> = ({ children,
                             </Button>
                         </div>
                     </Card.Header>
-                    <Collapse in={open}>
+                    <Collapse in={open} timeout={0}>
                         <Card.Body>
-                            {children ?? node.value.paramView(guid)}
-                        </Card.Body>
+                                {children ?? node.value.paramView(guid)}
+                        </Card.Body> 
                     </Collapse>
                 </Card>
             </div>

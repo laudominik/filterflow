@@ -2,6 +2,7 @@
     background-color: var(--background-color);
     margin: 0;
     padding: 0;
+    background-color: transparent;
 }
 
 .circle-container {

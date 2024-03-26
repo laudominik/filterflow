@@ -1,4 +1,4 @@
-import React, { ChangeEvent, ReactNode, Ref, forwardRef, useContext, useEffect, useImperativeHandle, useRef, useState, useSyncExternalStore } from "react";
+import React, { CSSProperties, ChangeEvent, ReactNode, Ref, forwardRef, useContext, useEffect, useImperativeHandle, useRef, useState, useSyncExternalStore } from "react";
 import GraphNode from "./GraphNode";
 import ImportGraphNode from "./ImportGraphNode";
 import TransformGraphNode from "./TransformGraphNode";
@@ -389,17 +389,22 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
             nodeCollection.map(guid => {
 
                 const trf = nodeContext.getNode(guid)().value;
-                const style = guid == highlightedGUID ? {
+                const style : CSSProperties = guid == highlightedGUID ? {
                         borderStyle: "solid",
                         borderWidth: "3px",
                         borderColor: "blue",
                         backgroundColor: trf.getColor(),
-                        color: "black"
+                        color: "black",
                     } : {
-                        borderWitdh: "0px",
+                        borderWidth: "0px",
                         backgroundColor: trf.getColor(),
-                        color: "black"
+                        color: "black",
                     }
+                
+                if(trf.name != "source"){
+                    style.width = "350px"
+                }
+                    
                 return (trf.name == "source" ? 
                () => <ImportGraphNode key={guid} guid={guid} style={style} onBodyClick={dragStart} ioFunction={connectionToggle}/> : 
                () => <TransformGraphNode key={guid} guid={guid} style={style} onBodyClick={dragStart} ioFunction={connectionToggle}/>
