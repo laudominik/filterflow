@@ -169,9 +169,9 @@ export default function GraphView(){
     return <div className='graphView' onWheel={handleWheel} onKeyDown={handleKeyDown} onMouseDown={handleMouseDown} onMouseMove={handleMousePan} onMouseUp={handleMouseUp} ref={rootRef}>
         <Grid displacement={[offset.x, offset.y]} scale={scale} size={[viewWidth, viewHeight]}/>
         {/* DEBUG: transformation info */}
-        <div style={{position: 'absolute', top: "1em", left: "0.2vw"}} className='debugOverlay'>{`screen size: ${viewWidth}, ${viewHeight}`}</div>
+        {/* <div style={{position: 'absolute', top: "1em", left: "0.2vw"}} className='debugOverlay'>{`screen size: ${viewWidth}, ${viewHeight}`}</div>
         <div style={{position: 'absolute', top: "3em", left: "0.2vw"}} className='debugOverlay'>{`search pos: ${searchPos[0]}, ${searchPos[1]}`}</div>
-        <div style={{position: 'absolute', top: "5.6em", left: "0.2vw"}} className='debugOverlay'>{`scale: ${scale}`}</div>
+        <div style={{position: 'absolute', top: "5.6em", left: "0.2vw"}} className='debugOverlay'>{`scale: ${scale}`}</div> */}
         {/* END DEBUG */}
  
         <GraphSpace scale={scale} offset={offset} ref={graphSpaceRef}></GraphSpace>

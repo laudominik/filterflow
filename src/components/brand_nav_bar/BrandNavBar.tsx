@@ -8,19 +8,21 @@ import FileComponent from "./FileComponent";
 
 export default function BrandNavBar() {
 
-    return <Navbar id="brandNav" expand="lg" className="brandNav">
+    return <Navbar id="brandNav" className="brandNav">
                 <Navbar.Brand className="p-3">
                     <FontAwesomeIcon icon={faFilm} />
-                </Navbar.Brand>
-                <Navbar.Brand>
                     FilterFlow
                 </Navbar.Brand>
                 <FileComponent />
-                <TabsComponent />
-
-                <Navbar.Collapse className="justify-content-end navModeBar">
-                    <DarkModeSwitch />
-                    {/* <EngineModeSwitch /> */}
+                
+                <Navbar.Collapse id="responsive-navbar-nav" style={{
+                    overflowX: "auto",
+                    whiteSpace: "nowrap"
+                }}>
+                    <TabsComponent />
                 </Navbar.Collapse>
+                <Nav className="me-auto"><DarkModeSwitch /></Nav>
+                <Navbar.Toggle aria-controls="responsive-navbar-nav" />
+                
            </Navbar>
   }

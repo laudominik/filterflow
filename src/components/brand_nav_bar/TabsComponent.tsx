@@ -28,11 +28,11 @@ export default function TabsComponent() {
     const tabStyle = {
         display: "inline", 
         paddingRight: "0.1vw",
-        paddingBottom: "0.1vw",
+        // paddingBottom: "0.1vw",
+        backgroundColor: "lightgray"
     }
 
-    return <Navbar.Collapse id="basic-navbar-nav">
-    <Nav className="mr-auto">
+    return <Nav className="mr-auto">
         {notebooksContext.stores.map( (el, ix) => {
             const name = `${el[0]}`;
             return  <Nav.Link key={name} style={{cursor: "default"}}>
@@ -42,7 +42,7 @@ export default function TabsComponent() {
                     <input type="text" className="tabText"
                     style={{
                         border: 0,
-                        borderBottom: "0.1vw", 
+                        borderBottom: "0.2vw", 
                         borderStyle: "solid"}}
                     value={name}
                     onChange={(e) => handleRenameNotebook(ix, e)}
@@ -62,5 +62,4 @@ export default function TabsComponent() {
             }
         )}
     </Nav>
-</Navbar.Collapse>
 }

@@ -369,7 +369,8 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
         <div style={{position: 'absolute', top: "100%", left: "100%"}} className='debugSpaceOverlay'>{viewRef.current ? `${debSpaceSize.x}, ${debSpaceSize.y}` : ''}</div>
         <div style={{position: 'absolute', top: "-2.5rem", left: "100%"}} className='debugSpaceOverlay'>{viewRef.current ? `${debSpaceSize.x}, 0` : ''}</div>
         <div style={{position: 'absolute', top: "100%", left: "-1.5rem"}} className='debugSpaceOverlay'>{viewRef.current ? `0, ${debSpaceSize.y}` : ''}</div>
-        
+        {/* END DEBUG */}
+
         {   
             handleConnections()
         }
@@ -384,7 +385,6 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
             handlePreviewConnections()
         }
 
-        {/* END DEBUG */}
         {
             nodeCollection.map(guid => {
 

@@ -39,8 +39,7 @@ export default function FileComponent() {
         reader.readAsText(file);
     }
 
-    return <Navbar.Collapse id="basic-navbar-nav">
-        <Nav className="mr-auto">
+    return <Nav className="mr-auto">
             <Nav.Link onClick={handleNewNotebook}>New</Nav.Link>
             <Nav.Link onClick={handleSaveNotebook}>Download</Nav.Link>
 
@@ -53,6 +52,4 @@ export default function FileComponent() {
             />
             <Nav.Link onClick={() => {document.getElementById("loadNotebook")?.click()}} type="file">Load</Nav.Link>
         </Nav>
-    </Navbar.Collapse>
-
 }
