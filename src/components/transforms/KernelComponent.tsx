@@ -16,6 +16,8 @@ export default function KernelComponent({guid}: {guid: GUID}){
    
     const [gridValues, setGridValues] = useState<number[][]>(node.value.getParams()["kernel"]);
     const [kernelN, setKernelN] = useState(gridValues.length);
+    const [kernelWeight, setKernelWeight] = useState(node.value.getParams()["weight"] ?? 1);
+
     const handleKernelChange = (newKernelN: number) => {
         setKernelN(newKernelN);
         const newGridValues = Array(newKernelN).fill(0).map(() => new Array(newKernelN).fill(0))
@@ -34,6 +36,14 @@ export default function KernelComponent({guid}: {guid: GUID}){
         })
     };
 
+    const handleWeightChange = (newWeight: string) => {
+        const newWeightI = parseInt(newWeight)
+        setKernelWeight(newWeightI)
+        nodeContext.updateParam(guid,{
+            "weight": newWeightI
+        })
+    }
+
     return <div className="grid">
         <label>
             Select Kernel Size:
@@ -42,6 +52,13 @@ export default function KernelComponent({guid}: {guid: GUID}){
                 <option value={3}>3</option>
                 <option value={4}>4</option>
             </FormSelect>
+            Select Kernel Weight:
+            <input
+                    type="number"
+                    className="form-control"
+                    value={kernelWeight}
+                    onChange={(e) => handleWeightChange(e.target.value)}
+            />
         </label>
         <div className="container mt-3">
             <label className="form-label">Enter NxN Grid Values:</label>

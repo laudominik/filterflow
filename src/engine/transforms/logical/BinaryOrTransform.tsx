@@ -1,5 +1,6 @@
 import { ReactElement, JSXElementConstructor } from "react";
 import BinaryTransform from "../BinaryTransform"
+import { jsonObject } from "typedjson";
 
 
 const fs = `
@@ -19,6 +20,7 @@ void main() {
 }
 `
 
+@jsonObject
 export default class BinaryOrTransform extends BinaryTransform {
     constructor(){
         super("binary or", fs);

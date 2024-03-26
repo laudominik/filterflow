@@ -35,10 +35,23 @@ export default function PoolingVisualizationComponent({guid, type, reduction}: {
         })
     })
 
+    function mapChannel(channel: Channel){
+        switch(channel){
+            case Channel.RED:
+                return 0;
+            case Channel.GREEN:
+                return 1;
+            case Channel.BLUE:
+                return 2;
+            default:
+                return 0;
+        }
+    }
+
     return <>
         <hr/>
         {drawPixelValues(values, selection.channel)}
-        {AdnotateElement(<>=</>, type, "under")} {ColorComponent(res_pixel[0], selection.channel)}
+        {AdnotateElement(<>=</>, type, "under")} {ColorComponent(res_pixel[mapChannel(selection.channel)], selection.channel)}
         <br/>
     </>    
 }

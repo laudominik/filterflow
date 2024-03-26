@@ -1,4 +1,4 @@
-import { ReactNode, useContext, useSyncExternalStore } from "react"
+import { ReactNode, useContext, useEffect, useSyncExternalStore } from "react"
 import { GUID } from "../../engine/engine"
 import { Channel, ChannelValue, FilterStoreContext } from "../../stores/simpleFilterStore"
 import PixelComponent, { ColorComponent } from "./PixelComponent"
@@ -13,6 +13,7 @@ export default function ConvolutionVisualizationComponent({guid}: {guid: GUID}) 
     const previewStore = previewContext.getPreviewStore(guid)!;
     const selection = useSyncExternalStore(previewStore.subscribeSelection.bind(previewStore), previewStore.getSelection.bind(previewStore));
 
+    console.log(node.value.getParams())
     const input = node.value.inputs.get(0)
     let inputId = guid;
     if(input){
@@ -24,10 +25,10 @@ export default function ConvolutionVisualizationComponent({guid}: {guid: GUID}) 
     const res_pixel = node.value.getPixels(selection.preview.destination.start, selection.preview.destination.size);
     const channelOffset = ChannelValue[selection.channel]
 
-    const kernel: number[][] = node.value.params["kernel"]
-    const kernelWeight = node.value.params["weigth"] ?? 1
+    const kernel: number[][] = node.value.getParams()["kernel"]
+    const kernelWeight = node.value.getParams()["weight"] ?? 1
 
-    const rowsN = kernel.length;
+    const rowsN = kernel.length
     const colsN = kernel[0].length
 
     const sum = [...Array(rowsN)].map((_,i)=>{
@@ -41,6 +42,7 @@ export default function ConvolutionVisualizationComponent({guid}: {guid: GUID}) 
         <hr/>
         {drawPixelValues(pixels, kernel, selection.channel)}
         = {AdnotateText(`${sum}`, "sum", "under")}
+        
         <br/>
         {AdnotateText(`${sum}`, "sum", "under")} / {AdnotateText(`${kernelWeight}`, "kernel weight", "under")} = {Math.trunc(sum/kernelWeight)} → {AdnotateElement(ColorComponent(res_pixel[channelOffset], selection.channel), "result", "under")}
     </>    

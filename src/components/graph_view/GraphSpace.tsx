@@ -402,7 +402,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
                     }
                 
                 if(trf.name != "source"){
-                    style.width = "350px"
+                    style.width = "400px"
                 }
                     
                 return (trf.name == "source" ? 

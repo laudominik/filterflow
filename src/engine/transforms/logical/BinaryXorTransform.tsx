@@ -1,5 +1,6 @@
 import { ReactElement, JSXElementConstructor } from "react";
 import BinaryTransform from "../BinaryTransform"
+import { jsonObject } from "typedjson";
 
 const fs = `
 precision mediump float;
@@ -23,6 +24,7 @@ void main() {
 }
 `
 
+@jsonObject
 export default class BinaryXorTransform extends BinaryTransform {
     constructor(){
         super("binary xor", fs);
