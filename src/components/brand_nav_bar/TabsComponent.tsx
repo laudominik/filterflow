@@ -11,9 +11,17 @@ export default function TabsComponent() {
     const notebooksContext = useContext(notebookStoreContext)
     const selectedNotebook = useSyncExternalStore(notebooksContext.subscribeSelected.bind(notebooksContext),notebooksContext.getSelectedIx.bind(notebooksContext))
     const _ = useSyncExternalStore(notebooksContext.subscribeNotebookCollection.bind(notebooksContext), notebooksContext.getNotebookCollection.bind(notebooksContext))
+    const [cursorPos, setCursorPos] = useState(notebooksContext.stores[0][0].length)
+
+    useEffect(() => {
+        const el = document.getElementById("selectednbinput") as HTMLInputElement
+        if(!el) return;
+        el.setSelectionRange(cursorPos, cursorPos)
+    }, [cursorPos, _])
 
     function handleSelectNotebook(ix: number){
         notebooksContext.changeNotebook(ix);
+        setCursorPos(notebooksContext.stores[ix][0].length)
     }
 
     function handleCloseNotebook(ix: number){
@@ -23,6 +31,13 @@ export default function TabsComponent() {
     function handleRenameNotebook(ix: number, event: React.FormEvent<HTMLInputElement>){
         const newText = event.currentTarget.value;
         notebooksContext.renameNotebook(ix, newText);
+        const el = document.getElementById("selectednbinput") as HTMLInputElement
+        if(!el) return;
+        if(!el.selectionStart) {
+            setCursorPos(0)
+            return;
+        }
+        setCursorPos(el.selectionStart)
     }
 
     const tabStyle = {
@@ -39,7 +54,7 @@ export default function TabsComponent() {
             <div style={tabStyle} onClick={() => handleSelectNotebook(ix)}>
                 {
                     ix === selectedNotebook ? 
-                    <input type="text" className="tabText"
+                    <input id="selectednbinput" type="text" className="tabText"
                     style={{
                         border: 0,
                         borderBottom: "0.2vw", 
