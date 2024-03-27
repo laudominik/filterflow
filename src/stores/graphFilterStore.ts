@@ -27,8 +27,9 @@ export abstract class GraphFilterStore extends PreviewStores implements IConnect
         let body = event.detail;
         this._handleEngineInfo(body);
 
-        this.connections.filter( v => body.connection.removed.reduce((p,c) => p || c==v.connectionDefinition,false))
-        this.connections.push(...body.connection.added.map<ConnectionInfo>(v =>{return {connectionDefinition: v,display: [[0,0],[0,0]]};}))
+        this.connections = this.connections.filter( v => body.connection.removed.reduce((p,c) => p || c==v.connectionDefinition,false))
+        // due to optimization in adding is redundant while no auto-connect exist
+        // this.connections.push(...body.connection.added.map<ConnectionInfo>(v =>{return {connectionDefinition: v,display: [[0,0],[0,0]]};}))
         
         this.connectionsListener.forEach(v => v());
         this.nodeListeners.forEach(v => v.listener()); // TODO tmp update
@@ -78,97 +79,5 @@ export abstract class GraphFilterStore extends PreviewStores implements IConnect
         }
         // Store state only update Nodes, connection is between nodes
     }
-    //#endregion
-    
-    //#endregion
-    
-    //#region Persistence
-    // public save(): string {
-    //     const serializer = new TypedJSON(Engine)
-        
-    //     const toSerialize = {
-    //         // @ts-ignore
-    //         "engine" : serializer.stringify(this.engine),
-    //         "nodeCollection": JSON.stringify(this.nodeCollection),
-    //         "connectionCollection": JSON.stringify(this.connections),
-    //         "previewStores": JSON.stringify(Array.from(this.previewStores.entries()))
-    //     }
-    //     // TODO: rest of the stuff
-    //     return JSON.stringify(toSerialize)
-    // }
-    // public saveToIndex(notebookIndex: number) {
-    //     const allSaved = sessionStorage.getItem("engines")
-    //     if(!allSaved ) return;
-    //     const allSavedParsed = JSON.parse(allSaved)
-    //     allSavedParsed[notebookIndex] = this.save();
-    //     sessionStorage.setItem("engines", JSON.stringify(allSavedParsed))
-    // }
-    
-    // public loadFromIndex(notebookIndex: number): void {
-    //     // construct fresh everything 
-    //     this.engine = new Engine()
-    //     this.connections = []
-        
-
-    //     const allSaved = sessionStorage.getItem("engines")
-    //     if(!allSaved ) return;
-    //     const allSavedParsed = JSON.parse(allSaved)
-    
-    //     const thisSaved = allSavedParsed[notebookIndex]
-    //     if(!thisSaved) return;
-    //     this.loadFromSerialized(thisSaved)
-
-    //     // emit everything
-    // }
-
-    // public loadFromSerialized(serialized: string): void {
-    //     const thisSaved = JSON.parse(serialized)
-        
-    //     const savedEngine = thisSaved["engine"]
-    //     const savedNodeCollection = thisSaved["nodeCollection"]
-    //     const savedConnectionCollection = thisSaved["connectionCollection"]
-    //     const savedPreviewStores = thisSaved["previewStores"]
-
-    //     if(!savedEngine || !savedNodeCollection || !savedConnectionCollection) return;
-
-
-    //     const serializer = new TypedJSON(Engine, {knownTypes: Array.from(knownTypes())})
-    //     // const previewSerializer = new TypedJSON()
-    //     // deserialize
-    //     const parsedEngine = serializer.parse(savedEngine)
-    //     const parsedNodeCollection = JSON.parse(savedNodeCollection)
-    //     const parsedConnectionCollection = JSON.parse(savedConnectionCollection)
-    //     const parsedPreviewStores = JSON.parse(savedPreviewStores)
-
-    //     if(!parsedEngine || !parsedNodeCollection) return
-
-    //     this.engine = parsedEngine  
-    //     this.nodeCollection = parsedNodeCollection
-    //     this.connections = parsedConnectionCollection as any
-
-    //     this.engine.fixSerialization();
-
-    //     this.emitChangeConnections()
-    //     this.emitChangePreviews()
-    //     this.emitChangeNodeCollection()
-    //     //this.emitChangeConnections()
-    //     // TODO: parse rest of the props
-
-    // }
-
-    // public rollback(){
-
-    //     const selectedIndex = sessionStorage.getItem("selectedTabIx")
-    //     if(!selectedIndex) return 
-    //     this.loadFromIndex(JSON.parse(selectedIndex))
-    // }
-
-    // public commit(): string {
-    //     const selectedIndex = sessionStorage.getItem("selectedTabIx")
-    //     if(!selectedIndex) return ""
-    //     this.saveToIndex(JSON.parse(selectedIndex))
-    //     return ""
-    // }
-
     //#endregion
 }

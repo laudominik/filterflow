@@ -49,8 +49,6 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
     const [connectionComponent, setConnectionComponent] = useState(handleConnections())
 
     const [previewConnectionComponent, setPreviewConnectionComponent] = useState(handlePreviewConnections())
-    const [selectedTabIx, setSelectedTabIx] = useSessionStorage<number>("selectedTabIx", 0)
-    const [engines, setEngines] = useSessionStorage<Array<string>>("engines", [])
 
     useEffect(()=>{
         setHightlightedEdge({guid0: "", guid1: "", inputNo: 0});
@@ -182,7 +180,6 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
                     clientY: dragMouseStartY
                 }))
             }
-            engines[selectedTabIx] = notebooksContext.saveNotebook()
 
         }
     }
@@ -199,7 +196,7 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
                 setHightlightedEdge({guid0: guid0, guid1: guid1, inputNo: inputNo})
             }
             const highlighted = highlightedEdge.guid0 === guid0 && highlightedEdge.guid1 === guid1 && highlightedEdge.inputNo === inputNumber;
-            return <GraphEdge key={`${guid0}-${guid1}-${inputNumber}`} guid0={guid0} guid1={guid1} inputNumber={inputNumber} highlighted={highlighted} onClick={onEdgeClick} />
+            return <GraphEdge key={`con-${guid0}-to-${guid1}-at-${inputNumber}`} guid0={guid0} guid1={guid1} inputNumber={inputNumber} highlighted={highlighted} onClick={onEdgeClick} />
         })
     }
 

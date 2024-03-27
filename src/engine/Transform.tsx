@@ -79,8 +79,13 @@ abstract class Transform extends node<Transform> {
             }
             
         }
+        try {
+            return await this.apply(inputs) != undefined;
+        } catch (error) {
+            console.error("apply function failed for Transform");
+            return false;
+        }
 
-        return await this.apply(inputs) != undefined;
     }
 
     abstract paramView(guid: GUID): ReactElement;

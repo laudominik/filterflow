@@ -11,18 +11,6 @@ export default class MuxTransform extends Transform {
         this.meta.input_size = 2;
         this.params = {...this.params, "selected" : this.selected, "muxedInputs": this.meta.input_size};
     }
-    public async _update_node(): Promise<boolean> {
-        // based on input connections perform calculations
-        this.meta.input_size = this.params["muxedInputs"]
-        console.log(this.meta.input_size)
-        const input = [...Array(this.meta.input_size)].map((_, ix) => {
-            const pair = this.inputs.get(ix)
-            console.log(pair)
-            if(!pair) return undefined;
-            return this.engine.getNode(pair[0])?.canvas
-        })
-        return await this.apply(input)!= undefined;
-    }
 
 
     paramView(guid: string): ReactElement<any, string | JSXElementConstructor<any>> {
@@ -31,6 +19,7 @@ export default class MuxTransform extends Transform {
 
     _apply(input: OffscreenCanvas[]): Promise<OffscreenCanvas> {
         this.selected = this.params["selected"];
+        this.meta.input_size = this.params["muxedInputs"]
         this.canvas = input[this.selected]
         //@ts-ignore
         return this.canvas;

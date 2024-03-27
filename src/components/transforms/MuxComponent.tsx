@@ -53,10 +53,10 @@ export default function MuxComponent({guid}: {guid: GUID}){
                         return <Form.Check
                         inline
                         label={`${ix + 1}`}
-                        name={`group-${guid}`}
+                        key={`group-${guid}-${ix}`}
                         type="radio"
                         value={ix}
-                        defaultChecked={selected == ix}
+                        checked={selected == ix}
                         onChange={(e) => handleSelectedChange(e.target.value)}
                         />
                     })

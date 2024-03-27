@@ -28,7 +28,9 @@ export class NotebookStore{
                     store.engine.fixSerialization();
                     this.stores.push([name,store])
                 }else{
-                    this.stores.push([name,new TopStore()])
+                    const store = new TopStore();
+                    this.bindSave(store);
+                    this.stores.push([name,store])
                 }
             })
             this.selected = this.stores[0][1];
@@ -47,6 +49,7 @@ export class NotebookStore{
     private _handelAsyncSave(store:TopStore){
         const record = this.stores.filter( v => v[1] === store);
         if (record){
+            console.log("Store saved")
             const name = record[0][0];
             const serializer = new TypedJSON(TopStore, {knownTypes: Array.from(knownTypes())});
             const body = serializer.stringify(store);
@@ -118,7 +121,7 @@ export class NotebookStore{
     public saveNotebook(){
         const serializer = new TypedJSON(TopStore, {knownTypes: Array.from(knownTypes())});
         const body = serializer.stringify(this.selected);
-        console.log(body)
+        // console.log(body)
         // TODO: save to some storage
         return body;
     }

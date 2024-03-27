@@ -50,14 +50,14 @@ const GraphNode: React.FC<NodeProps> = ({ children,
     const inputs = <div className="circle-container">
         {
             [...Array(node.value.meta.input_size)].map(
-                (_,i) => <div key={i}  className="circle circle-top" onMouseDown={(e) => ioFunction ? ioFunction(e, guid, i) : {}}></div>
+                (_,i) => <div key={`input-${guid}-${i}`}  className="circle circle-top" onMouseDown={(e) => ioFunction ? ioFunction(e, guid, i) : {}}></div>
             )
         }
     </div>
     const outputs = <div className="circle-container"><div className="circle circle-bottom" onMouseDown={(e) => ioFunction ? ioFunction(e, guid, 0) : {}}></div></div>
     return  <div className="draggable transformNode" id={guid} key={guid} style={{left: node.value.getPos().x, top: node.value.getPos().y}}>
             {inputs}
-            <div className="graphNode" id={guid} onMouseDown={onBodyClick}>   
+            <div className="graphNode" onMouseDown={onBodyClick}>   
                 <Card className="transformCard" style={style}>
                     <Card.Header className="cardHeader">
                         {node.value.getName()}
