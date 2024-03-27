@@ -155,11 +155,15 @@ function Preview({ title, sourceId, allowFullscreen, previewName }: { title: str
 
         if(!res) return {}
 
-        let x = res.start[0]/canvasRef.current.width
-        let y = res.start[1]/canvasRef.current.height
+        let x = res.start[0] >= 0 ? res.start[0]/canvasRef.current.width : 0
+        let y = res.start[1] >= 0 ? res.start[1]/canvasRef.current.height : 0
         let w = res.size[0]/canvasRef.current.width
         let h = res.size[1]/canvasRef.current.height
-
+        
+        if(res.start[0] < 0) w = (res.size[0] + res.start[0])/canvasRef.current.width
+        if(res.start[1] < 0) h = (res.size[1] + res.start[1])/canvasRef.current.height
+        if(res.start[0] + res.size[0] > canvasRef.current.width) w = 1 - x
+        if(res.start[1] + res.size[1] > canvasRef.current.width) h = 1 - y
         // using css percent to skip container height retrieval
         return {
             left: `${x*100}%`,

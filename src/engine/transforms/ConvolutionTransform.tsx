@@ -66,7 +66,6 @@ class ConvolutionTransform extends Transform {
     }
 
     public fromPositionToSourceSelection(position: [number, number]): CanvasSelection {
-        console.log("HERRESE!")
         const kernelN = this.params["kernel"].length;
         const x = position[0] - Math.floor((kernelN-1)/2)
         const y = position[1] - Math.floor((kernelN-1)/2)
@@ -87,7 +86,7 @@ class ConvolutionTransform extends Transform {
 
     async _apply(input: Array<OffscreenCanvas>): Promise<OffscreenCanvas> {
         this.kernel = this.params["kernel"]
-        const weight = this.params["weight"]
+        const weight = this.params["weight"] ?? 1
         const vertexShaderSource = `
                 attribute vec2 a_position;
                 varying vec2 v_texCoord;

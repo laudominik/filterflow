@@ -58,9 +58,10 @@ class PoolingTransform extends Transform {
 
     public fromPositionToSourceSelection(position: [number, number]): CanvasSelection {
         const poolingSize = this.params["pooling_size"];
-    
-        const posNormalizedX = Math.floor(position[0] / poolingSize) * poolingSize 
-        const posNormalizedY = Math.floor(position[1] / poolingSize) * poolingSize 
+        const step = this.params["pooling_step"];
+        
+        const posNormalizedX = Math.floor(position[0] / step) * step  
+        const posNormalizedY = Math.floor(position[1] / step) * step 
 
         const x = (posNormalizedX - Math.floor((poolingSize-1)/2))
         const y = (posNormalizedY - Math.floor((poolingSize-1)/2))
