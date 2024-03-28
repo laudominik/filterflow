@@ -4,24 +4,51 @@ import { NodeResponse, NodeResponseError, NodeResponseUpdated } from "./nodeResp
 
 
 export function connect<T extends node<T>>(source: T, source_nr: number, destination: T, destination_nr: number): boolean {
-    if (destination.inputs.has(destination_nr)){
-        return false;
-    }
-    source._connect_output(source_nr, destination, destination_nr)
-    destination._connect_input(destination_nr, source, source_nr)
-    source.engine.dispatchEvent(new CustomEvent("connection_added",{detail:[[source.meta.id,source_nr],[destination.meta.id,destination_nr]]}))
+    if(source.meta.output_size <= source_nr || destination.meta.input_size <= destination_nr) return false;
 
+    const src_output = source.connected_to_outputs.get(source_nr) || [];
+    const dst_input = destination.inputs.get(destination_nr);
+    
+    if(dst_input !== undefined){
+        console.log("Input claimed")
+        return false; 
+    }
+
+    // connect 
+    src_output.push([destination.meta.id,destination_nr]);
+    source.connected_to_outputs.set(source_nr,src_output);
+
+    destination.inputs.set(destination_nr,[source.meta.id,source_nr]);
+
+    // inform engine
+    source.engine.dispatchEvent(new CustomEvent("connection_added",{detail:[[source.meta.id,source_nr],[destination.meta.id,destination_nr]]}))
     destination.engine.requestUpdate(destination.meta.id);
     return true;
 }
 
 export function disconnect<T extends node<T>>(source: T, source_nr: number, destination: T, destination_nr: number) {
-    if (!destination.inputs.has(destination_nr)){
+    if(source.meta.output_size <= source_nr || destination.meta.input_size <= destination_nr) return false;
+
+    const src_output = source.connected_to_outputs.get(source_nr) || [];
+    const dst_input = destination.inputs.get(destination_nr);
+    
+    if(dst_input === undefined){
+        console.log("Input empty")
+        return false; 
+    }
+
+    // disconnect 
+    const new_output = src_output.filter(v => v[0]!== destination.meta.id && v[1]!== destination_nr);
+    if(new_output.length === src_output.length){
+        console.log("Output empty")
         return false;
     }
-    destination._disconnect_input(destination_nr, source, source_nr)
-    source._disconnect_output(source_nr, destination, destination_nr)
-    source.engine.dispatchEvent(new CustomEvent("connection_remove",{detail:[[source.meta.id,source_nr],[destination.meta.id,destination_nr]]}))
+    source.connected_to_outputs.set(source_nr,new_output);
+
+    destination.inputs.delete(destination_nr);
+
+    // inform engine
+    source.engine.dispatchEvent(new CustomEvent("connection_removed",{detail:[[source.meta.id,source_nr],[destination.meta.id,destination_nr]]}))
     destination.engine.requestUpdate(destination.meta.id);
     return true;
 }
@@ -47,9 +74,9 @@ export abstract class node<T extends node<T>>{
     engine: IEngine<T>
     // TODO change to GUID
     @jsonMapMember(Number, AnyT)
-    inputs: Map<number, [GUID, number]>
+    public inputs: Map<number, [GUID, number]>
     @jsonMapMember(Number, AnyT)
-    connected_to_outputs: Map<number, [GUID, number][]> // two way linked list
+    public connected_to_outputs: Map<number, [GUID, number][]> // two way linked list
 
     constructor(params: NodeInit<T>) {
         this.engine = params.engine!
@@ -66,47 +93,7 @@ export abstract class node<T extends node<T>>{
         }
     }
 
-    public _connect_output(output_nr: number, self: T, self_input_nr: number) {
-        if (!this.connected_to_outputs.has(output_nr)) {
-            this.connected_to_outputs.set(output_nr, [[self.meta.id, self_input_nr]])
-        } else {
-            const prev = this.connected_to_outputs.get(output_nr) ?? [];
-            this.connected_to_outputs.set(output_nr, [...prev, [self.meta.id, self_input_nr]])
-        }
-    }
-
-    public _disconnect_output(output_nr: number, self: T, self_input_nr: number) {
-        if (this.connected_to_outputs.has(output_nr)) {
-            let prev = this.connected_to_outputs.get(output_nr) || [];
-            let new_prev = prev.filter(([child, child_nr]) => child == self.meta.id && child_nr == self_input_nr)
-            this.connected_to_outputs.set(output_nr,new_prev);
-            if (prev.length == new_prev.length) {
-                console.log("Logic error disconnect output without connecting first")
-                return;
-            }
-        } else {
-            console.log("Logic error disconnect output without connecting first")
-        }
-    }
-
-
-    public _connect_input(input_nr: number, parent: T, parent_output_nr: number) {
-        if (this.inputs.has(input_nr)) {
-            console.log("Logic error reconnecting input without disconnecting first")
-            this.inputs.set(input_nr, [parent.meta.id, parent_output_nr])
-        } else {
-            this.inputs.set(input_nr, [parent.meta.id, parent_output_nr])
-        }
-    }
-
-    public _disconnect_input(input_nr: number, parent: T, parent_output_nr: number) {
-        if (this.inputs.has(input_nr)) {
-            this.inputs.delete(input_nr)
-        } else {
-            console.log("Logic error disconnecting input without connecting first")
-        }
-    }
-
+    
     public disconnect() {
         this.inputs.forEach(([parent, parent_nr], key) => {
             // TODO: here it sometimes crashes (no parent, this.inputs most likely not updated), find why's that, for now adding check
@@ -124,8 +111,6 @@ export abstract class node<T extends node<T>>{
                 disconnect(this.engine.getNode(this.meta.id)!,key,this.engine.getNode(child)!,child_nr);
             })
         })
-        this.inputs.clear(); // all inputs are now unnconnected
-        this.connected_to_outputs.clear(); // remove later to
         this.engine.requestUpdate(this.meta.id); // self invalidate
     }
 
