@@ -20,8 +20,17 @@ export default class MuxTransform extends Transform {
         return <MuxComponent guid={guid}/>
     }
 
-    _apply(input: OffscreenCanvas[]): Promise<OffscreenCanvas> {
+    async apply(input:Array<OffscreenCanvas | undefined>): Promise<OffscreenCanvas|undefined>{
         this.selected = this.params["selected"];
+        if(!input.length || input[this.selected] === undefined) {
+            return undefined
+        }
+        this.hash = crypto.randomUUID();
+        const ret = await this._apply(input as Array<OffscreenCanvas>);
+        return ret;
+    }
+
+    _apply(input: OffscreenCanvas[]): Promise<OffscreenCanvas> {
         this.meta.input_size = this.params["muxedInputs"]
         this.canvas = input[this.selected]
         //@ts-ignore

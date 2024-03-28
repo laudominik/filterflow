@@ -242,7 +242,7 @@ export class Engine extends EventTarget implements IEngine<Transform>{
 
         
         // Desired state all required nodes updated
-        if (this.batchState.pendingUpdates.size == this.batchState.doneUpdates.size){
+        if (this.batchState.pendingUpdates.size == this.batchState.doneUpdates.size && this.batchState.concurent_updates == 0){
             this.flushUpdate();
             console.log("batch reset"); // TODO: Remove this later
             return;

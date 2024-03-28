@@ -176,10 +176,14 @@ export abstract class node<T extends node<T>>{
             this.dependency.inputs += 1;
         }
         if (!this.could_update()){
-            this.dispatch_updated_error("Not all inputs connected");
-            return true;
+            if (this.dependency.inputs == 1){
+                this.dispatch_updated_error("Not all inputs connected");
+                return true;
+            }else{
+                return false;
+            }
         }
-        if (this.dependency.inputs >= this.inputs.size) { 
+        if (this.dependency.inputs === this.inputs.size) { 
             // using this in case some input are optional(if all are needed handle it by returning error to engine)
             this.update_node();
             return true;
