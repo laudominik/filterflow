@@ -14,7 +14,7 @@ export type CanvasPosition = [number,number]; // x y
 export type CanvasArrow = [CanvasPosition,CanvasPosition]
 export interface ConnectionInfo{
     connectionDefinition: ConnectionDefinition
-    display: CanvasArrow
+    // display: CanvasArrow
 }
 
 export type PreviewType = {start: GUID, end: GUID, distance: number, visualizationChannel: Channel, previewChannels: Channel[]}

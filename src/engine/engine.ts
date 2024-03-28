@@ -143,8 +143,8 @@ export class Engine extends EventTarget implements IEngine<Transform>{
             this.batchState.response.node.updated_params.push({node_id:node,key,old: transform.params[key],new: params[key]})
         }
         // if found add to pending
-        this.batchState.pendingUpdates.add(node)
         transform.updateParams(params);
+        transform.hash = crypto.randomUUID();
         this.requestUpdate(transform.meta.id);
         this.startUpdate();
     }
@@ -238,6 +238,8 @@ export class Engine extends EventTarget implements IEngine<Transform>{
             this.batchState.doneUpdates.add(event.detail.nodeId);
             this.batchState.concurent_updates-=1;
         }
+        this.getNode(event.detail.nodeId)!.hash = crypto.randomUUID();
+
         
         // Desired state all required nodes updated
         if (this.batchState.pendingUpdates.size == this.batchState.doneUpdates.size){

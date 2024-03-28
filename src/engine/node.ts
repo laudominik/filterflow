@@ -201,6 +201,7 @@ export abstract class node<T extends node<T>>{
             status: "updated"
         }
 
+        console.log(`UPDATE: success for ${this.meta.id}`)
         this.engine.internal.dispatchEvent(new CustomEvent<NodeResponse>("info", { detail: msg }))
     }
 
@@ -219,6 +220,7 @@ export abstract class node<T extends node<T>>{
             error: err,
         }
 
+        console.log(`UPDATE: error for ${this.meta.id}`)
         this.engine.internal.dispatchEvent(new CustomEvent<NodeResponse>("info", { detail: msg }))
     }
 }

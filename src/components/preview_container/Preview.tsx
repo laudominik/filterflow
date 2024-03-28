@@ -204,7 +204,7 @@ function Preview({ title, sourceId, allowFullscreen, previewName }: { title: str
         </div>
         <div className="imageContainer">
             <div className='centeredImage' onMouseMove={handleMouse} onClick={() => previewStore.updateSelectionLocked(!previewStore.getSelectionLocked())}>
-                    <canvas ref={canvasRef} />
+                    {node.value.valid ? <canvas ref={canvasRef} />: <>ERROR</>}
                     {previewStore.getSelection().channel != Channel.NONE ? <div className='overlay' style={overlayPos(previewSelections.preview)}></div> : <></>}
             </div>
         </div>

@@ -12,6 +12,9 @@ export default class MuxTransform extends Transform {
         this.params = {...this.params, "selected" : this.selected, "muxedInputs": this.meta.input_size};
     }
 
+    public could_update(): boolean {
+        return this.inputs.has(this.params["selected"]);
+    }
 
     paramView(guid: string): ReactElement<any, string | JSXElementConstructor<any>> {
         return <MuxComponent guid={guid}/>

@@ -27,9 +27,10 @@ export abstract class GraphFilterStore extends PreviewStores implements IConnect
         let body = event.detail;
         this._handleEngineInfo(body);
 
-        this.connections = this.connections.filter( v => body.connection.removed.reduce((p,c) => p || c==v.connectionDefinition,false))
+        this.connections = this.connections.filter( v => !body.connection.removed.reduce((p,c) => p || c.toString()==v.connectionDefinition.toString(),false))
         // due to optimization in adding is redundant while no auto-connect exist
-        // this.connections.push(...body.connection.added.map<ConnectionInfo>(v =>{return {connectionDefinition: v,display: [[0,0],[0,0]]};}))
+        // const uniqueNewConnections = body.connection.added.filter(v => !this.connections.reduce((p,c) => p || c.connectionDefinition==v,false))
+        // this.connections.push(...uniqueNewConnections.map<ConnectionInfo>(v =>{ return {connectionDefinition: v}; }))
         
         this.connectionsListener.forEach(v => v());
         this.nodeListeners.forEach(v => v.listener()); // TODO tmp update
@@ -74,7 +75,7 @@ export abstract class GraphFilterStore extends PreviewStores implements IConnect
     public connectNodes(connection: ConnectionDefinition){
         const [[source,source_handle],[destination,destination_handle]] = connection;
         if (this.engine.connectNodes(source,destination,source_handle,destination_handle)){
-            this.connections = [...this.connections,{connectionDefinition:connection,display:[[0,0],[0,0]]}];
+            this.connections = [...this.connections,{connectionDefinition:connection}];
             this.emitChangeConnections();
         }
         // Store state only update Nodes, connection is between nodes

@@ -22,8 +22,8 @@ export class NotebookStore{
             const list = JSON.parse(cache) as string[];
             list.forEach(name => {
                 const cache = localStorage.getItem("store_"+name);
-                if(cache){
-                    const store = new TypedJSON(TopStore, {knownTypes: Array.from(knownTypes())}).parse(cache)!;
+                const store = new TypedJSON(TopStore, {knownTypes: Array.from(knownTypes())}).parse(cache)!;
+                if(store){
                     this.bindSave(store);
                     store.engine.fixSerialization();
                     this.stores.push([name,store])
