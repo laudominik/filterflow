@@ -101,15 +101,15 @@ export abstract class BaseFilterStore implements INodeStore{
     public addTransform(name: string,params: KVParams = {}):Transform{
         params.engine = this.engine;
         const guid = this.engine.addNode(name, params);
-        this.nodeCollection = [...this.nodeCollection,guid];
-        this.emitChangeNodeCollection();
+        // this.nodeCollection = [...this.nodeCollection,guid];
+        // this.emitChangeNodeCollection();
         return this.engine.getNode(guid)!;
     }
 
     public removeTransform(id: GUID){
         this.engine.removeNode(id);
-        this.nodeCollection = this.nodeCollection.filter(v => v != id);
-        this.emitChangeNodeCollection();
+        // this.nodeCollection = this.nodeCollection.filter(v => v != id);
+        // this.emitChangeNodeCollection();
     }
 
     // #endregion 

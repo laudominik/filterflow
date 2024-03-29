@@ -17,7 +17,10 @@ export abstract class GraphFilterStore extends PreviewStores implements IConnect
         super(new Engine());
         this.connectionsListener = [];
         this.connections = [];
+        this._bindToEngine();
+    }
 
+    protected _bindToEngine(){
         this.engine.addEventListener("update",this.handleEngineInfo.bind(this) as any)
     }
 
@@ -25,15 +28,28 @@ export abstract class GraphFilterStore extends PreviewStores implements IConnect
 
     private handleEngineInfo(event:CustomEvent<ExternalEngineResponse>){
         let body = event.detail;
+
+        if(body.node.added.length || body.node.removed.length){
+            this.nodeCollection = this.nodeCollection.filter(v => !body.node.removed.includes(v));
+            this.nodeCollection = [...this.nodeCollection,...body.node.added];
+        }
+
+        
+        if(body.connection.added.length || body.connection.removed.length){
+            this.connections = this.connections.filter( v => !body.connection.removed.reduce((p,c) => p || c.toString()==v.connectionDefinition.toString(),false))
+            
+            const uniqueNewConnections = body.connection.added.filter(v => !this.connections.reduce((p,c) => 
+            p || v.toString() === c.connectionDefinition.toString() ,false))
+
+            this.connections = [...this.connections,...uniqueNewConnections.map<ConnectionInfo>(v =>{ return {connectionDefinition: v}; })]
+        }
+                
         this._handleEngineInfo(body);
 
-        this.connections = this.connections.filter( v => !body.connection.removed.reduce((p,c) => p || c.toString()==v.connectionDefinition.toString(),false))
-        // due to optimization in adding is redundant while no auto-connect exist
-        // const uniqueNewConnections = body.connection.added.filter(v => !this.connections.reduce((p,c) => p || c.connectionDefinition==v,false))
-        // this.connections.push(...uniqueNewConnections.map<ConnectionInfo>(v =>{ return {connectionDefinition: v}; }))
-        
+
         this.connectionsListener.forEach(v => v());
         this.nodeListeners.forEach(v => v.listener()); // TODO tmp update
+        this.nodeCollectionListener.forEach(v => v());
     }
 
     //#region Connections
@@ -75,8 +91,8 @@ export abstract class GraphFilterStore extends PreviewStores implements IConnect
     public connectNodes(connection: ConnectionDefinition){
         const [[source,source_handle],[destination,destination_handle]] = connection;
         if (this.engine.connectNodes(source,destination,source_handle,destination_handle)){
-            this.connections = [...this.connections,{connectionDefinition:connection}];
-            this.emitChangeConnections();
+            // this.connections = [...this.connections,{connectionDefinition:connection}];
+            // this.emitChangeConnections();
         }
         // Store state only update Nodes, connection is between nodes
     }

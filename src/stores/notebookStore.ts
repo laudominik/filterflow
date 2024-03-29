@@ -25,7 +25,7 @@ export class NotebookStore{
                 const store = new TypedJSON(TopStore, {knownTypes: Array.from(knownTypes())}).parse(cache)!;
                 if(store){
                     this.bindSave(store);
-                    store.engine.fixSerialization();
+                    store.fixSerialization();
                     this.stores.push([name,store])
                 }else{
                     const store = new TopStore();
@@ -48,12 +48,14 @@ export class NotebookStore{
 
     private _handelAsyncSave(store:TopStore){
         const record = this.stores.filter( v => v[1] === store);
-        if (record){
+        if (record.length){
             console.log("Store saved")
             const name = record[0][0];
             const serializer = new TypedJSON(TopStore, {knownTypes: Array.from(knownTypes())});
             const body = serializer.stringify(store);
             window.localStorage.setItem("store_"+name,body);        
+        }else{
+            console.warn("Store not exist so skipping save");
         }
     }
 
@@ -133,7 +135,7 @@ export class NotebookStore{
         this.selected = json.parse(body)!;
         this.bindSave(this.selected);
         this.selectedIx = this.stores.length;
-        this.selected.engine.fixSerialization();
+        this.selected.fixSerialization();
         this.stores.push([name, this.selected])
         this._dispatchStoreListUpdated();
     }

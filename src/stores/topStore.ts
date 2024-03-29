@@ -15,4 +15,9 @@ export class TopStore extends HistoryStore{
             console.log("async not bound")
         }
     }
+
+    public fixSerialization(){
+        this._bindToEngine();
+        this.engine.fixSerialization();
+    }
 }
