@@ -13,12 +13,15 @@ export default function MuxComponent({guid}: {guid: GUID}){
     const nodeContext = useContext(nodeStoreContext);
     const node = useSyncExternalStore(nodeContext.subscribeNode(guid), nodeContext.getNode(guid));
 
-    const [selected, setSelected] = useState(node.value.getParams()["selected"]);
-    const [muxedInputs, setMuxedInputs] = useState(node.value.getParams()["muxedInputs"]);
+    // const [selected, setSelected] = useState(node.value.getParams()["selected"]);
+    // const [muxedInputs, setMuxedInputs] = useState(node.value.getParams()["muxedInputs"]);
+
+    const selected = node.value.getParams()["selected"]
+    const muxedInputs = node.value.getParams()["muxedInputs"];
 
     const handleSelectedChange = (value: string) => {
         const iVal = Number.parseInt(value)
-        setSelected(iVal)
+        // setSelected(iVal)
         nodeContext.updateParam(guid, {
             "selected" : iVal
         })
@@ -28,9 +31,9 @@ export default function MuxComponent({guid}: {guid: GUID}){
     const handleMuxedInputsChange = (value: string) => {
         const iVal = Number.parseInt(value)
         if(iVal < 1 || iVal > maxMuxInputs) return;
-        setMuxedInputs(iVal);
+        // setMuxedInputs(iVal);
         nodeContext.updateParam(guid, {
-            "muxedInputs": muxedInputs
+            "muxedInputs": iVal
         })
     }
 
