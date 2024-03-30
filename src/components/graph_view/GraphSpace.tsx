@@ -163,6 +163,12 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
             const isTouch = (e as TouchEvent).changedTouches && e instanceof TouchEvent;
             
             dragTarget.classList.remove('dragging');
+            if(dragTarget.classList.contains("transformNode")){
+                nodeContext.updateParam(dragTarget.id, {})
+            }
+            if(dragTarget.classList.contains("previewNode")){
+                nodeContext.updateParam(dragTarget.id.slice(2), {})
+            }
             dragTarget = undefined
             
             // dragging is a rare event, so it won't be too much overhead
@@ -180,7 +186,6 @@ export default function GraphSpaceComponent({children=undefined, scale, offset}:
                     clientY: dragMouseStartY
                 }))
             }
-
         }
     }
 

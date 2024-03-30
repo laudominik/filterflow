@@ -104,17 +104,13 @@ export default function GraphEdge({guid0, guid1, inputNumber, highlighted, onCli
     let pos0 = nodeContext.getNode(guid0)().value.getPos();
     let pos1 = nodeContext.getNode(guid1)().value.getPos();
 
-    useEffect(() => {setRerender(true)}, [])
-
+    useEffect(() => {setRerender(!rerender)}, [])
 
     const onClickWrapper = () => {
         if(!onClick) return;
         onClick(guid0, guid1, inputNumber);
     }
     const style= {stroke: highlighted ? "blue" : "hsl(260, 100%, 80%)", strokeWidth: 4 }
-
-    // TODO: check if it doesn't break sometimes (multiple elements with the same id)
-
 
     const draggable0 = document.getElementById(guid0)
     const draggable1 = document.getElementById(guid1)

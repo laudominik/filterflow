@@ -195,11 +195,12 @@ abstract class Transform extends node<Transform> {
 
     updateParams(params: KVParams): void {
         this.params = {...this.params,...params};
-        if (this.edited == false){
+       
+        if (this.edited == false && Object.keys(params).length != 0){
             this.name =  `${this.name}[edited]`
+            this.edited = true;
         }
         this.hash = crypto.randomUUID();
-        this.edited = true;
     }
 
     getParams() : KVParams {

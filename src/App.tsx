@@ -64,8 +64,9 @@ export default function App() {
       <FontAwesomeIcon icon={faList} onClick={() => { setExpanded(true) }} />
     </Button>
   )
-
-  const view = modeGraph ? <GraphView /> : <>{expanded ? <></> : expandButton} {splitPane}</>
+  
+  const view = <GraphView />
+  //const view = modeGraph ? <GraphView /> : <>{expanded ? <></> : expandButton} {splitPane}</>
   // TODO: get selected notebook
   return (
     <StrictMode>

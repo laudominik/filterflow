@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {Button, Form, FormSelect} from 'react-bootstrap';
 import { FilterStoreContext } from '../../stores/simpleFilterStore';
 import { GUID } from '../../engine/engine';
-import { nodeStoreContext } from '../../stores/context';
+import { connectionStoreContext, nodeStoreContext } from '../../stores/context';
 import { previewStoreContext } from '../../stores/context';
 
 const maxMuxInputs = 5;
@@ -12,6 +12,7 @@ const maxMuxInputs = 5;
 export default function MuxComponent({guid}: {guid: GUID}){    
     const nodeContext = useContext(nodeStoreContext);
     const node = useSyncExternalStore(nodeContext.subscribeNode(guid), nodeContext.getNode(guid));
+    const connectionContext = useContext(connectionStoreContext);
 
     // const [selected, setSelected] = useState(node.value.getParams()["selected"]);
     // const [muxedInputs, setMuxedInputs] = useState(node.value.getParams()["muxedInputs"]);
@@ -27,10 +28,19 @@ export default function MuxComponent({guid}: {guid: GUID}){
         })
     };
 
-    // TODO: it doesn't update :\
     const handleMuxedInputsChange = (value: string) => {
         const iVal = Number.parseInt(value)
         if(iVal < 1 || iVal > maxMuxInputs) return;
+        if(iVal < muxedInputs && node.value.inputs.get(iVal)){
+            console.log("Here!")
+            console.log(node)
+            console.log(iVal)
+            const [delGUID, _] = node.value.inputs.get(iVal)!
+            connectionContext.disconnectNodes([
+                [delGUID, 0],
+                [guid, iVal]
+            ])
+        }
         // setMuxedInputs(iVal);
         nodeContext.updateParam(guid, {
             "muxedInputs": iVal
@@ -38,16 +48,17 @@ export default function MuxComponent({guid}: {guid: GUID}){
     }
 
     return <div className="grid">
-        <div>
+        {/* <div>
             <label>
                 Muxed inputs:
                 <input                  type="number"
                                         className="form-control"
                                         value={muxedInputs}
                                         onChange={(e) => handleMuxedInputsChange(e.target.value)}
-                                    />
+                                        onKeyDown={(e) => e.preventDefault()}
+                                        />
             </label>
-        </div>
+        </div> */}
         <label>
             Selected input
             <div key={`inline-radio-${guid}`} className="mb-3">

@@ -44,7 +44,7 @@ const GraphNode: React.FC<NodeProps> = ({ children,
     const handleOpenClick = () => {
         node.value.setExpanded(!open)
         setOpen(!open)
-        connectionContext.forceConnectionsRefresh()
+        nodeContext.updateParam(guid, 0)
     }
     
     const inputs = <div className="circle-container">
@@ -70,7 +70,9 @@ const GraphNode: React.FC<NodeProps> = ({ children,
                             </Button>
                         </div>
                     </Card.Header>
-                    <Collapse in={open} timeout={0}>
+                    <Collapse in={open}  timeout={0}
+                    onExited={() => connectionContext.forceConnectionsRefresh()}
+                    onEntered={() => connectionContext.forceConnectionsRefresh()}>
                         <Card.Body>
                                 {children ?? node.value.paramView(guid)}
                         </Card.Body> 
