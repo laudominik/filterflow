@@ -6,7 +6,7 @@ import { faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import './GraphNode.css';
-import { nodeStoreContext } from "../../stores/context";
+import { connectionStoreContext, nodeStoreContext, persistenceContext } from "../../stores/context";
 
 interface NodeBodyProps {
     children: ReactNode;
@@ -36,29 +36,31 @@ const GraphNode: React.FC<NodeProps> = ({ children,
     ioFunction
     }) => {
     const nodeContext = useContext(nodeStoreContext) 
+    const connectionContext = useContext(connectionStoreContext);
+
     const node = useSyncExternalStore(nodeContext.subscribeNode(guid), nodeContext.getNode(guid));
-    const [open, setOpen] = useState(false);
+    const [open, setOpen] = useState(node.value.getExpanded());
     
     const handleOpenClick = () => {
+        node.value.setExpanded(!open)
         setOpen(!open)
+        nodeContext.updateParam(guid, 0)
     }
-
+    
     const inputs = <div className="circle-container">
         {
             [...Array(node.value.meta.input_size)].map(
-                (_,i) => <div key={i}  className="circle circle-top" onMouseDown={(e) => ioFunction ? ioFunction(e, guid, i) : {}}></div>
+                (_,i) => <div key={`input-${guid}-${i}`}  className="circle circle-top" onMouseDown={(e) => ioFunction ? ioFunction(e, guid, i) : {}}></div>
             )
         }
     </div>
-    
     const outputs = <div className="circle-container"><div className="circle circle-bottom" onMouseDown={(e) => ioFunction ? ioFunction(e, guid, 0) : {}}></div></div>
     return  <div className="draggable transformNode" id={guid} key={guid} style={{left: node.value.getPos().x, top: node.value.getPos().y}}>
             {inputs}
-            <div className="graphNode" id={guid} onMouseDown={onBodyClick}>   
+            <div className="graphNode" onMouseDown={onBodyClick}>   
                 <Card className="transformCard" style={style}>
                     <Card.Header className="cardHeader">
-                        {node.value.getName()}
-                        : {guid}
+                        {`${node.value.getName()} : ${node.value.meta.id}`}
                         <div>
                             <Button 
                                 className='border-0 bg-transparent'
@@ -68,12 +70,12 @@ const GraphNode: React.FC<NodeProps> = ({ children,
                             </Button>
                         </div>
                     </Card.Header>
-                    <Collapse in={open}>
+                    <Collapse in={open}  timeout={0}
+                    onExited={() => connectionContext.forceConnectionsRefresh()}
+                    onEntered={() => connectionContext.forceConnectionsRefresh()}>
                         <Card.Body>
-                            {/* {children} */}
-                            {/* TODO: render node parameters */}
-                            {children ?? node.value.paramView(guid)}
-                        </Card.Body>
+                                {children ?? node.value.paramView(guid)}
+                        </Card.Body> 
                     </Collapse>
                 </Card>
             </div>

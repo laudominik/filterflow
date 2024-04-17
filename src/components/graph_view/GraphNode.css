@@ -2,6 +2,7 @@
     background-color: var(--background-color);
     margin: 0;
     padding: 0;
+    background-color: transparent;
 }
 
 .circle-container {
@@ -32,6 +33,5 @@
 }
 
 .image-boundaries {
-    max-width: 20em;
-    max-height: 20em;
+    height: 30vh;
 }

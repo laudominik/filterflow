@@ -1,36 +1,66 @@
 import { Engine, ExternalEngineResponse } from "../engine/engine"
-import { ConnectionDefinition, ConnectionInfo } from "./storeInterfaces";
+import { ConnectionDefinition, ConnectionInfo, IConnectionStore } from "./storeInterfaces";
 import { PreviewStores } from "./previewStore";
+import { AnyT, TypedJSON, jsonArrayMember, jsonMember, jsonObject } from "typedjson";
+import Transform from "../engine/Transform";
+import { IEngine } from "../engine/iengine"
+import { knownTypes } from "../engine/TransformDeclarations";
 
-
-
-
-
-export class GraphFilterStore extends PreviewStores{
+@jsonObject
+export abstract class GraphFilterStore extends PreviewStores implements IConnectionStore{
+ 
     connectionsListener: CallableFunction[]
+    @jsonArrayMember(AnyT)
     connections: ConnectionInfo[]
 
     constructor() {
-        super("graph",new Engine());
+        super(new Engine());
         this.connectionsListener = [];
         this.connections = [];
+        this._bindToEngine();
+    }
 
+    protected _bindToEngine(){
         this.engine.addEventListener("update",this.handleEngineInfo.bind(this) as any)
     }
+
+    abstract _handleEngineInfo(event:ExternalEngineResponse): void;
 
     private handleEngineInfo(event:CustomEvent<ExternalEngineResponse>){
         let body = event.detail;
 
-        this.connections.filter( v => body.connection.removed.reduce((p,c) => p || c==v.connectionDefinition,false))
-        this.connections.push(...body.connection.added.map<ConnectionInfo>(v =>{return {connectionDefinition: v,display: [[0,0],[0,0]]};}))
+        if(body.node.added.length || body.node.removed.length){
+            this.nodeCollection = this.nodeCollection.filter(v => !body.node.removed.includes(v));
+            this.nodeCollection = [...this.nodeCollection,...body.node.added];
+        }
+
+        
+        if(body.connection.added.length || body.connection.removed.length){
+            this.connections = this.connections.filter( v => !body.connection.removed.reduce((p,c) => p || c.toString()==v.connectionDefinition.toString(),false))
+            
+            const uniqueNewConnections = body.connection.added.filter(v => !this.connections.reduce((p,c) => 
+            p || v.toString() === c.connectionDefinition.toString() ,false))
+
+            this.connections = [...this.connections,...uniqueNewConnections.map<ConnectionInfo>(v =>{ return {connectionDefinition: v}; })]
+        }
+                
+        this._handleEngineInfo(body);
+
+
         this.connectionsListener.forEach(v => v());
         this.nodeListeners.forEach(v => v.listener()); // TODO tmp update
+        this.nodeCollectionListener.forEach(v => v());
     }
 
     //#region Connections
 
     public getConnections(){
         return this.connections;
+    }
+
+    public forceConnectionsRefresh(){
+        this.connections = [...this.connections]
+        this.emitChangeConnections()
     }
 
     public subscribeConnections(listener: CallableFunction) {
@@ -48,7 +78,6 @@ export class GraphFilterStore extends PreviewStores{
     public disconnectNodes(connection: ConnectionDefinition){
         const [[source,source_handle],[destination,destination_handle]] = connection;
         if (this.engine.disconnectNodes(source,destination,source_handle,destination_handle)){
-            console.log("thehee");
             this.connections = this.connections.filter((info) => !(
                 info.connectionDefinition[0][0] === connection[0][0] && 
                 info.connectionDefinition[1][0] === connection[1][0] &&
@@ -62,21 +91,10 @@ export class GraphFilterStore extends PreviewStores{
     public connectNodes(connection: ConnectionDefinition){
         const [[source,source_handle],[destination,destination_handle]] = connection;
         if (this.engine.connectNodes(source,destination,source_handle,destination_handle)){
-            this.connections = [...this.connections,{connectionDefinition:connection,display:[[0,0],[0,0]]}];
-            this.emitChangeConnections();
+            // this.connections = [...this.connections,{connectionDefinition:connection}];
+            // this.emitChangeConnections();
         }
         // Store state only update Nodes, connection is between nodes
-    }
-    //#endregion
-    
-    //#endregion
-    
-    //#region Persistence
-    public saveAs(name: string): void {
-        // TODO 
-    }
-    public load(name: string): void {
-        // TODO 
     }
     //#endregion
 }

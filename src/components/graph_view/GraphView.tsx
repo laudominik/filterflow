@@ -9,6 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import SearchPopup from './SearchPopup';
 import {GraphSpace, GraphSpaceInterface} from './GraphSpace';
 import useWindowDimensions from '../../util/WindowDimensionHook';
+import {useCommand} from '../../util/commands';
 
 // for some f*ckin reason, there's no constanst for button number.. 
 // despite values being specified in standard
@@ -47,6 +48,12 @@ export default function GraphView(){
         const rect = rootRef.current.getBoundingClientRect();
         return {width: rect.width, height: rect.height}
     }
+
+    useCommand({
+        name: "Add Node",
+        binding: ["Shift", "A"],
+        callback: handleOpenSearch
+    })
 
     // TODO: fix this mess, something is wrong
     /**
@@ -150,19 +157,21 @@ export default function GraphView(){
     // the trick to prevent CTRL+Wheel Zoom is to prevent it from root element
     // TODO: convert this to more React-ish solution
     useEffect(()=>{
-        document.getElementById('root')?.addEventListener('wheel', (e: WheelEvent)=>{
+        const preventZoom = (e: WheelEvent)=>{
             if(e.ctrlKey){
                 e.preventDefault();
             }
-        })
+        }
+        document.getElementById('root')?.addEventListener('wheel', preventZoom)
     })
+    
 
     return <div className='graphView' onWheel={handleWheel} onKeyDown={handleKeyDown} onMouseDown={handleMouseDown} onMouseMove={handleMousePan} onMouseUp={handleMouseUp} ref={rootRef}>
         <Grid displacement={[offset.x, offset.y]} scale={scale} size={[viewWidth, viewHeight]}/>
         {/* DEBUG: transformation info */}
-        <div style={{position: 'absolute', top: "1em", left: "0.2vw"}} className='debugOverlay'>{`screen size: ${viewWidth}, ${viewHeight}`}</div>
+        {/* <div style={{position: 'absolute', top: "1em", left: "0.2vw"}} className='debugOverlay'>{`screen size: ${viewWidth}, ${viewHeight}`}</div>
         <div style={{position: 'absolute', top: "3em", left: "0.2vw"}} className='debugOverlay'>{`search pos: ${searchPos[0]}, ${searchPos[1]}`}</div>
-        <div style={{position: 'absolute', top: "5.6em", left: "0.2vw"}} className='debugOverlay'>{`scale: ${scale}`}</div>
+        <div style={{position: 'absolute', top: "5.6em", left: "0.2vw"}} className='debugOverlay'>{`scale: ${scale}`}</div> */}
         {/* END DEBUG */}
  
         <GraphSpace scale={scale} offset={offset} ref={graphSpaceRef}></GraphSpace>

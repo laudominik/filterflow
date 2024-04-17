@@ -1,5 +1,5 @@
 import { ReactElement, ReactNode } from 'react'
-import { AnyT, jsonMember, jsonObject } from 'typedjson';
+import { AnyT, jsonMapMember, jsonMember, jsonObject } from 'typedjson';
 import { node } from './node';
 
 type CanvasPosition = [number,number]; 
@@ -10,7 +10,43 @@ export interface KVParams {
 }
 
 @jsonObject
+class point {
+    @jsonMember(Number)
+    public x: number = 0
+    @jsonMember(Number)
+    public y: number = 0
+
+    constructor(x: number, y: number){
+        this.x = x
+        this.y = y
+    }
+}
+
+@jsonObject
 abstract class Transform extends node<Transform> {
+    @jsonMember(point)
+    pos: point
+    @jsonMember(point)
+    prevPos: point
+    @jsonMember(String)
+    color: string;
+    @jsonMember(String)
+    name: string;
+    @jsonMember(String)
+    image?: string;
+    @jsonMember(Boolean)
+    edited: boolean;
+    @jsonMember(Boolean)
+    enabled: boolean;
+    @jsonMember(Boolean)
+    expanded: boolean;
+    @jsonMember(AnyT)
+    params: KVParams;
+    @jsonMember(String)
+    hash: GUID;
+    canvas: OffscreenCanvas;
+    gl: WebGLRenderingContext;
+    
     constructor(name: string, color: string, inputs?: number){
         super({id:crypto.randomUUID(),inputs: inputs ?? 1,outputs:1});
         this.color = color;
@@ -22,16 +58,32 @@ abstract class Transform extends node<Transform> {
         this.canvas = new OffscreenCanvas(1,1);
         this.gl = this.canvas.getContext("webgl", {preserveDrawingBuffer: true})!;
         this.hash = crypto.randomUUID();
-        this.pos = {x: 0, y: 0}
-        this.prevPos = {x: 0, y: 0}
+        this.pos = new point(0, 0)
+        this.prevPos = new point(0, 0)
     }
 
-    public _update_node(): void {
+    public async _update_node(): Promise<boolean> {
         // based on input connections perform calculations
-        if (this.inputs.has(0)){
-            let [parent,nr] = this.inputs.get(0)!;
-            let input = this.engine.getNode(parent)?.canvas;
-            this.apply(input ? [input] : []);
+        let inputs = []; 
+        for (let i = 0; i < this.meta.input_size; i++) {
+            const input = this.inputs.get(i);
+            if (input){
+                const node = this.engine.getNode(input[0]);
+                if (node && node.valid){
+                    inputs.push(node.canvas);
+                }else{
+                    inputs.push(undefined);
+                }
+            }else{
+                inputs.push(undefined);
+            }
+            
+        }
+        try {
+            return await this.apply(inputs) != undefined;
+        } catch (error) {
+            console.error("apply function failed for Transform");
+            return false;
         }
 
     }
@@ -43,19 +95,19 @@ abstract class Transform extends node<Transform> {
     };
 
     // TODO add meta to promise (about color)
-    async apply(input:Array<OffscreenCanvas>): Promise<OffscreenCanvas|undefined>{
+    async apply(input:Array<OffscreenCanvas | undefined>): Promise<OffscreenCanvas|undefined>{
         if(!this.enabled){
             return input[0];
         }
-        if(!input.length) {
+        if(!input.length || input.includes(undefined)) {
             return undefined
             // this.dispatch_update();
         }
 
         // TODO: remove setting state in transform?
         this.hash = crypto.randomUUID();
-        const ret = await this._apply(input);
-        this.dispatch_update();
+        const ret = await this._apply(input as Array<OffscreenCanvas>);
+        // this.update_node();
         return ret;
     }
 
@@ -114,11 +166,11 @@ abstract class Transform extends node<Transform> {
     }
 
     public setPos(pos: {x: number, y: number}){
-        this.pos = pos
+        this.pos = new point(pos.x, pos.y)
     }
 
     public setPreviewPos(pos: {x: number, y: number}){
-        this.prevPos = pos;
+        this.prevPos = new point(pos.x, pos.y);
     }
 
     async setImageString(image: string) {
@@ -143,11 +195,12 @@ abstract class Transform extends node<Transform> {
 
     updateParams(params: KVParams): void {
         this.params = {...this.params,...params};
-        if (this.edited == false){
+       
+        if (this.edited == false && Object.keys(params).length != 0){
             this.name =  `${this.name}[edited]`
+            this.edited = true;
         }
         this.hash = crypto.randomUUID();
-        this.edited = true;
     }
 
     getParams() : KVParams {
@@ -161,28 +214,6 @@ abstract class Transform extends node<Transform> {
     getName(): string {
         return this.name;
     }
-
-    @jsonMember
-    pos: {x: number, y:number}
-    @jsonMember
-    prevPos: {x: number, y:number}
-    @jsonMember(String)
-    color: string;
-    @jsonMember(String)
-    name: string;
-    @jsonMember(String)
-    image?: string;
-    @jsonMember(Boolean)
-    edited: boolean;
-    @jsonMember(Boolean)
-    enabled: boolean;
-    @jsonMember(Boolean)
-    expanded: boolean;
-    @jsonMember(AnyT)
-    params: KVParams;
-    hash: GUID;
-    canvas: OffscreenCanvas;
-    gl: WebGLRenderingContext;
 }
 
 export default Transform

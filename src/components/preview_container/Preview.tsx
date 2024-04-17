@@ -1,25 +1,30 @@
-import { useState, CSSProperties, useContext, useSyncExternalStore, useRef, useEffect } from 'react'
-import { faMagnifyingGlassPlus, faMagnifyingGlassMinus } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Button } from 'react-bootstrap';
-import { Channel, FilterStoreContext, PreviewSelections } from '../../stores/simpleFilterStore';
-import { nodeStoreContext, previewStoreContext } from '../../stores/context';
+import {useState, CSSProperties, useContext, useSyncExternalStore, useRef, useEffect} from 'react'
+import {faMagnifyingGlassPlus, faMagnifyingGlassMinus} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
+import {Button} from 'react-bootstrap';
+import {Channel, FilterStoreContext, PreviewSelections} from '../../stores/simpleFilterStore';
+import {nodeStoreContext, previewStoreContext} from '../../stores/context';
+import {PreviewStore} from '../../stores/previewStore';
 
-export function InputPreview({ sourceId, allowFullscreen = true }: { sourceId: string, allowFullscreen? : boolean }) {
-
-    return <Preview sourceId={sourceId} title="Input" allowFullscreen={allowFullscreen}/>;
+export function InputPreview({sourceId, previewName, allowFullscreen = true}: {sourceId: string, previewName: string, allowFullscreen?: boolean}) {
+    return <Preview sourceId={sourceId} previewName={previewName} title="Input" allowFullscreen={allowFullscreen} />;
 }
 
-export function OutputPreview({ sourceId, allowFullscreen = true }: { sourceId: string, allowFullscreen?: boolean }) {
-    return <Preview sourceId={sourceId} title="Output" allowFullscreen={allowFullscreen}/>;
+export function OutputPreview({sourceId, allowFullscreen = true}: {sourceId: string, allowFullscreen?: boolean}) {
+    return <Preview sourceId={sourceId} previewName={sourceId} title="Output" allowFullscreen={allowFullscreen} />;
 }
 
 type ColorMask = [boolean, boolean, boolean];
 
-function Preview({ title, sourceId, allowFullscreen }: { title: string, sourceId: string, allowFullscreen: boolean }) {
+function Preview({title, sourceId, allowFullscreen, previewName}: {title: string, sourceId: string, allowFullscreen: boolean, previewName: string}) {
     const nodeContext = useContext(nodeStoreContext);
     const node = useSyncExternalStore(nodeContext.subscribeNode(sourceId), nodeContext.getNode(sourceId));
+    const previewNode = useSyncExternalStore(nodeContext.subscribeNode(previewName), nodeContext.getNode(previewName));
     const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    const previewContext = useContext(previewStoreContext);
+    const previewStore = previewContext.getPreviewStore(previewName)!;
+    const previewSelections = useSyncExternalStore(previewStore.subscribeSelection.bind(previewStore) as any, previewStore.getSelection.bind(previewStore))
 
     const drawImage = (input: OffscreenCanvas, destination: HTMLCanvasElement, mask: ColorMask) => {
         const vertexShaderSource = `
@@ -43,200 +48,167 @@ function Preview({ title, sourceId, allowFullscreen }: { title: string, sourceId
                 }
             `;
 
-            destination.width = input.width;
-            destination.height = input.height;
-            
-            const gl = destination.getContext("webgl")!
-            gl.viewport(0,0, destination.width, destination.height);
+        destination.width = input.width;
+        destination.height = input.height;
 
-            const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
-                gl.shaderSource(vertexShader, vertexShaderSource);
-                gl.compileShader(vertexShader);
+        const gl = destination.getContext("webgl")!
+        gl.viewport(0, 0, destination.width, destination.height);
 
-            const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)!;
-                gl.shaderSource(fragmentShader, fragmentShaderSource);
-                gl.compileShader(fragmentShader);
+        const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
+        gl.shaderSource(vertexShader, vertexShaderSource);
+        gl.compileShader(vertexShader);
 
-            const program = gl.createProgram()!;
-                gl.attachShader(program, vertexShader);
-                gl.attachShader(program, fragmentShader);
-                gl.linkProgram(program);
-                gl.useProgram(program);
+        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)!;
+        gl.shaderSource(fragmentShader, fragmentShaderSource);
+        gl.compileShader(fragmentShader);
 
-            const positionBuffer = gl.createBuffer()!;
-                gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-                    -1,    -1, 
-                    1,     -1, 
-                    -1,    1,
-                    1,     1
-                ]), gl.STATIC_DRAW);
-            
-            const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
-                gl.enableVertexAttribArray(positionAttributeLocation);
-                gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);  
-            
-            const texture = gl.createTexture();
-                gl.bindTexture(gl.TEXTURE_2D, texture);
+        const program = gl.createProgram()!;
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+        gl.useProgram(program);
 
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, input);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        
-            gl.clearColor(0, 0, 0, 0);
-            gl.clear(gl.COLOR_BUFFER_BIT);
-            gl.colorMask(mask[0], mask[1], mask[2], true);
-            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-        
-            gl.deleteShader(vertexShader);
-            gl.deleteShader(fragmentShader);
-            gl.deleteProgram(program);
-            gl.deleteBuffer(positionBuffer);
-            gl.deleteTexture(texture);
+        const positionBuffer = gl.createBuffer()!;
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+            -1, -1,
+            1, -1,
+            -1, 1,
+            1, 1
+        ]), gl.STATIC_DRAW);
+
+        const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
+        gl.enableVertexAttribArray(positionAttributeLocation);
+        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+
+        const texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, input);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.colorMask(mask[0], mask[1], mask[2], true);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+        gl.deleteShader(vertexShader);
+        gl.deleteShader(fragmentShader);
+        gl.deleteProgram(program);
+        gl.deleteBuffer(positionBuffer);
+        gl.deleteTexture(texture);
     }
 
-    useEffect(() =>{
-        const offscreenCanvas = node.value.canvas;
-        if (offscreenCanvas && canvasRef.current){
-                // copy here
-                drawImage(offscreenCanvas, canvasRef.current, [true, true, true])
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    const handleMouse = (e: React.MouseEvent) => {
+        if (!canvasRef.current) return;
+        if (previewStore.getSelectionLocked()) return
+        let rect = e.currentTarget.getBoundingClientRect();
+
+        let x = (e.clientX - rect.x) * canvasRef.current.width / rect.width;
+        let y = (rect.height - (e.clientY - rect.y)) * canvasRef.current.height / rect.height;
+
+        let pos: [number, number] = [Math.floor(x), Math.floor(y)]
+        let selection = previewStore.getSelection()
+
+        // if output
+        if (sourceId == previewName) {
+            selection.pointer = {
+                source: node.value.fromDestinationToSourcePosition(pos),
+                destination: pos
+            }
+            selection.preview = {
+                source: node.value.fromPositionToSourceSelection(selection.pointer.source),
+                destination: node.value.fromPositionToSelection(selection.pointer.destination)
+            }
+        } else {
+            // something wrong here!
+            selection.pointer = {
+                source: pos,
+                destination: previewNode.value.fromSourceToDestinationPosition(pos)
+            }
+            selection.preview = {
+                source: previewNode.value.fromPositionToSourceSelection(selection.pointer.source),
+                destination: previewNode.value.fromPositionToSelection(selection.pointer.destination)
+            }
+        }
+        previewStore.updateSelection(
+            selection.pointer,
+            selection.preview,
+            selection.channel
+        )
+    }
+
+    const overlayPos = (pos: PreviewSelections): CSSProperties => {
+        if (!canvasRef.current)
+            return {}
+        let res
+
+        if (sourceId == previewName) {
+            res = pos.destination
+        } else {
+            res = pos.source
         }
 
-    },[node]);
-    
-    const [isFullscreen, setIsFullscreen] = useState(false);
+        if (!res) return {}
+
+        let x = res.start[0] >= 0 ? res.start[0] / canvasRef.current.width : 0
+        let y = res.start[1] >= 0 ? res.start[1] / canvasRef.current.height : 0
+        let w = res.size[0] / canvasRef.current.width
+        let h = res.size[1] / canvasRef.current.height
+
+        if (res.start[0] < 0) w = (res.size[0] + res.start[0]) / canvasRef.current.width
+        if (res.start[1] < 0) h = (res.size[1] + res.start[1]) / canvasRef.current.height
+        if (res.start[0] + res.size[0] > canvasRef.current.width) w = 1 - x
+        if (res.start[1] + res.size[1] > canvasRef.current.height) h = 1 - y
+        // using css percent to skip container height retrieval
+        return {
+            left: `${x * 100}%`,
+            top: `${(1 - y - h) * 100}%`,
+            width: `${w * 100}%`,
+            height: `${h * 100}%`,
+        }
+    }
+
+    useEffect(() => {
+        const offscreenCanvas = node.value.canvas;
+        if (offscreenCanvas && canvasRef.current) {
+            let mask: ColorMask = [true, true, true]
+
+            if (previewSelections.channel != Channel.NONE && previewSelections.channel != Channel.GRAY) {
+                mask = [
+                    previewSelections.channel == Channel.RED,
+                    previewSelections.channel == Channel.GREEN,
+                    previewSelections.channel == Channel.BLUE
+                ]
+            }
+            drawImage(offscreenCanvas, canvasRef.current, mask)
+        }
+    }, [previewStore, previewSelections, node])
+
+
     return <div className="preview" style={componentStyle(isFullscreen)}>
         <div className="pipelineBar">
             <div>{title}</div>
             {
-                allowFullscreen ? 
-                <Button className="border-0 bg-transparent" onClick={() => setIsFullscreen(!isFullscreen)}>
-                    <FontAwesomeIcon className="iconInCard" icon={isFullscreen ? faMagnifyingGlassMinus : faMagnifyingGlassPlus} />
-                </Button> 
-                : 
-                <></>
+                allowFullscreen ?
+                    <Button className="border-0 bg-transparent" onClick={() => setIsFullscreen(!isFullscreen)}>
+                        <FontAwesomeIcon className="iconInCard" icon={isFullscreen ? faMagnifyingGlassMinus : faMagnifyingGlassPlus} />
+                    </Button>
+                    :
+                    <></>
             }
-            
         </div>
         <div className="imageContainer">
-            <div className='centeredImage'>
-                    <canvas ref={canvasRef} />
+            <div className='centeredImage' onMouseMove={handleMouse} onClick={() => previewStore.updateSelectionLocked(!previewStore.getSelectionLocked())}>
+                {node.value.valid ? <canvas ref={canvasRef} /> : <>ERROR</>}
+                {previewStore.getSelection().channel != Channel.NONE ? <div className='overlay' style={overlayPos(previewSelections.preview)}></div> : <></>}
             </div>
         </div>
     </div>
-    // TODO: change API
-    // const previewContext = useContext(previewStoreContext);
-    // const previewStore = previewContext.getPreviewStore(guid)!;
-
-    // const preview = useSyncExternalStore(previewStore.subscribeContext, previewStore.getContext);
-    // const inputId = preview.inputs[0];
-
-    // const node = useSyncExternalStore(nodeContext.subscribeNode(guid), nodeContext.getNode(guid));
-    // const inputNode = useSyncExternalStore(nodeContext.subscribeNode(inputId), nodeContext.getNode(inputId));
-    
-    
-    // const selection = useSyncExternalStore(previewStore.subscribeSelection, previewStore.getSelection);
-
-
-    // const filterStore = useContext(FilterStoreContext);
-
-    // const offscreen_canvas = useSyncExternalStore(filterStore.subscribe(sourceId) as any, filterStore.getView(sourceId));
-    // const canvas_hash = useSyncExternalStore(filterStore.subscribe(sourceId) as any, filterStore.getHash(sourceId));
-    
-    // const canvasRef = useRef<HTMLCanvasElement>(null);
-    // const previewSelections = useSyncExternalStore(filterStore.subscribeCanvasSelections.bind(filterStore) as any, filterStore.getPreviewSelections.bind(filterStore))
-
-    // const preview = useSyncExternalStore(filterStore.subscribePreview.bind(filterStore), filterStore.getPreview.bind(filterStore))
-    // TODO: decide whenever to visualize or not
-    
-    // const handleMouse = (e : React.MouseEvent) => {
-    //     if (!canvasRef.current) return;
-    //     //if (filterStore.previewMouseLocked) return; TODO: change it to new API
-    //     let rect = e.currentTarget.getBoundingClientRect();
-
-    //     let x = (e.clientX - rect.x)*canvasRef.current.width/rect.width;
-    //     let y = (rect.height - (e.clientY - rect.y))*canvasRef.current.height/rect.height;
-
-    //     // Math.floor() should be good enought for positive numbers
-        
-    //     let pos: [number, number] = [Math.floor(x), Math.floor(y)]
-    //     // TODO: redundant if we know on what node we are
-    //     if(preview.start === sourceId)
-    //         filterStore.setCanvasSourcePointer(pos)
-    //     else if(preview.end === sourceId)
-    //         filterStore.setCanvasDestinationPointer(pos)
-    // }
-
-    // const overlayPos = (pos: PreviewSelections):CSSProperties => {
-    //     if (!canvasRef.current)
-    //     return {}
-    //     let res
-
-    //     // TODO: can be cleaner
-    //     if(preview.start === sourceId)
-    //         res = pos.source
-    //     else if (preview.end === sourceId)
-    //         res = pos.destination
-
-    //     if(!res) return {}
-
-    //     let x = res.start[0]/canvasRef.current.width
-    //     let y = res.start[1]/canvasRef.current.height
-    //     let w = res.size[0]/canvasRef.current.width
-    //     let h = res.size[1]/canvasRef.current.height
-
-    //     // using css percent to skip container height retrieval
-    //     return {
-    //         left: `${x*100}%`,
-    //         top: `${(1-y-h)*100}%`,
-    //         width: `${w*100}%`,
-    //         height: `${h*100}%`,
-    //     }
-    // }
-
-
-    // useEffect(()=>{
-    //     if(offscreen_canvas && canvasRef.current){
-    //         let mask: ColorMask = {red: true, green: true, blue: true};
-    //         if (preview.previewChannels[0] != Channel.NONE && preview.previewChannels[0] != Channel.GRAY){
-    //             mask = {red: false,green: false, blue: false};
-    //             preview.previewChannels.forEach((value) =>{
-    //                 switch(value){
-    //                     case Channel.RED:
-    //                         mask.red = true;
-    //                         break;
-    //                     case Channel.GREEN:
-    //                         mask.green = true;
-    //                         break;
-    //                     case Channel.BLUE:
-    //                         mask.blue = true;
-    //                         break;
-    //                 }
-    //             })
-    //         }
-    //         drawImage(offscreen_canvas, canvasRef.current, mask)
-    //     }
-    // },[offscreen_canvas, canvas_hash, preview])
-
-  
-
-
-    // return <div className="preview" style={componentStyle(isFullscreen)}>
-    //     <div className="pipelineBar">
-    //         <div>{title}</div>
-    //         <Button className="border-0 bg-transparent" onClick={() => setIsFullscreen(!isFullscreen)}>
-    //             <FontAwesomeIcon className="iconInCard" icon={isFullscreen ? faMagnifyingGlassMinus : faMagnifyingGlassPlus} />
-    //         </Button>
-    //     </div>
-    //     <div className="imageContainer">
-    //         <div className='centeredImage' onMouseMove={handleMouse} onClick={() => filterStore.previewMouseLocked = !filterStore.previewMouseLocked}>
-    //             {/* somehow onMouseMove on canvas don't works */}
-    //             <canvas ref={canvasRef}/>
-    //             {(preview.distance == 1 || preview.distance == 0) ? <div className='overlay' style={overlayPos(previewSelections)}></div> : <></>}
-    //         </div>
-    //     </div>
-    // </div>
 }
 
 function componentStyle(isFullscreen: Boolean): CSSProperties {

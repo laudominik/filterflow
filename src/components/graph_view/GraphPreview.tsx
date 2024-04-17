@@ -1,6 +1,6 @@
-import { useContext, useState } from "react";
+import { useContext, useState, useSyncExternalStore } from "react";
 import { GUID } from "../../engine/nodeResponse";
-import { nodeStoreContext } from "../../stores/context";
+import { nodeStoreContext, previewStoreContext } from "../../stores/context";
 import PreviewContainer from "../preview_container/PreviewContainer";
 import { InputPreview, OutputPreview } from "../preview_container/Preview";
 
@@ -9,6 +9,8 @@ import { Button, FormControl } from "react-bootstrap";
 import { faArrowLeft, faArrowRight, faLeftLong, faRightLong } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import FormRange from "react-bootstrap/esm/FormRange";
+import { CircleSwitch } from "../CircleSwitch";
+import { Channel } from "../../stores/storeInterfaces";
 
 export default function GraphPreview({guid, onBodyClick}: {guid: GUID, onBodyClick?: (e : React.MouseEvent)=>void}){
     
@@ -17,16 +19,48 @@ export default function GraphPreview({guid, onBodyClick}: {guid: GUID, onBodyCli
     let noInputs = node.value.meta.input_size;
     const pos = node.value.getPreviewPos();
     const [selectedInput, setSelectedInput] = useState(1)
+    const colorsChannels = [Channel.RED, Channel.GREEN, Channel.BLUE];
+    const previewContext = useContext(previewStoreContext);
+    const previewStore = previewContext.getPreviewStore(guid)!;
+    const previewSelections = useSyncExternalStore(previewStore.subscribeSelection.bind(previewStore) as any, previewStore.getSelection.bind(previewStore))
+    const context = useSyncExternalStore(previewStore.subscribeContext.bind(previewStore) as any, previewStore.getContext.bind(previewStore))
+    
+    function handleChooseChannel(channel: Channel){
+        const selection = previewStore.getSelection()
+        if(selection.channel == channel){
+            channel = Channel.NONE
+        }
+        previewStore.updateSelection(selection.pointer, selection.preview, channel)
+    }
 
     return <div id={"pr" + guid} style={{left: pos.x, top: pos.y}} onMouseDown={onBodyClick} className="draggable previewNode">
             <div className="previewNode">
                 <div className="pipelineBar">
                     <div>{node.value.name} Preview</div> 
-                    {noInputs == 1 ? <></> : <InputSelection selectedInput={selectedInput} setSelectedInput={setSelectedInput} noInputs={noInputs}/>}
+                    {noInputs == 1 && previewStore.getContext().visualizationEnabled ? <></> : <InputSelection selectedInput={selectedInput} setSelectedInput={setSelectedInput} noInputs={noInputs}/>}
                 </div>
-                {node.value.inputs.get(selectedInput - 1) ?
-                <div><InputPreview sourceId={node.value.inputs.get(selectedInput - 1)![0]} allowFullscreen={false}/></div> : <></>}
+                
+                {previewStore.getContext().visualizationEnabled && node.value.inputs.get(selectedInput - 1) ?
+                <div><InputPreview sourceId={node.value.inputs.get(selectedInput - 1)![0]} previewName={guid} allowFullscreen={false}/></div> : <></>}
                 <OutputPreview sourceId={guid} allowFullscreen={false}/>
+                {
+                    previewStore.getContext().visualizationEnabled ? 
+                        <>
+                        <center>
+                            <div className='border-0 bg-transparent'>
+                                    {
+                                        colorsChannels.map((item, i) => 
+                                            <CircleSwitch key={i} color={item} state={previewSelections.channel == item} toggleState={() => {handleChooseChannel(item)}}/>
+                                        )
+                                    }
+                            </div>
+                        </center>
+                        {previewSelections.channel != Channel.NONE ? node.value.visualizationView(guid) : <></>}
+                        </>
+                        : <></>
+                }
+                    
+                    
             </div>
          </div>
 }

@@ -12,6 +12,12 @@
 
 }
 
+@media (max-width: 992px) {
+  :root {
+    --navbar-height: 5%;
+  }
+}
+
 
 html{
   color: var(--primary-color);

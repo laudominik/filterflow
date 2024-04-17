@@ -1,3 +1,5 @@
+import 'reflect-metadata'
+
 import { ReactNode } from "react";
 import Transform from "../Transform";
 import { jsonObject } from "typedjson";
@@ -5,17 +7,25 @@ import { jsonObject } from "typedjson";
 @jsonObject
 export default class SourceTransform extends Transform{
 
-    image?: string
 
     constructor(){
-        super("source","#HEX", 0);
+        super("source","#FFFFFF", 0);
     }
 
-    async apply(input: Array<OffscreenCanvas> | undefined): Promise<OffscreenCanvas | undefined> {
+    public could_update(): boolean {
+        return this.params["image"]
+    }
+
+    async apply(input: Array<OffscreenCanvas | undefined>): Promise<OffscreenCanvas | undefined> {
         // for the source node we ignore inputs
 
-        if(this.image === undefined || this.image === null || this.image === "") return undefined;
-        
+        // TODO: For serialization purposes
+        // create canvas there if not exist and image string is set
+        if(!this.params["image"]) return undefined;
+
+        if (!this.valid){
+            await this.loadImage();
+        }
 
         return this.canvas;
     }
@@ -44,7 +54,7 @@ export default class SourceTransform extends Transform{
         this.drawImage(image)
 
         this.hash = crypto.randomUUID();
-        this.dispatch_update();
+        this.engine.requestUpdate(this.meta.id);
     }
 
     drawImage(input: HTMLImageElement) {

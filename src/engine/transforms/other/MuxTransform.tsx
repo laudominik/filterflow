@@ -1,42 +1,40 @@
 import { ReactElement, JSXElementConstructor } from "react";
 import Transform from "../../Transform";
+import { jsonObject } from "typedjson";
+import MuxComponent from "../../../components/transforms/MuxComponent";
 
+@jsonObject
 export default class MuxTransform extends Transform {
     constructor(name?: string) {
-        super("Mux", '#E6F4E2');
+        super("Mux", '#F8B195');
         this.selected = 0;
-        this.params = {...this.params, "selected" : this.selected};
         this.meta.input_size = 2;
-    }
-    public _update_node(): void {
-        // based on input connections perform calculations
-        let [parent1, _] = this.inputs.get(0)!;
-        let [parent2, __] = this.inputs.get(1)!;
-
-        let input1 = this.engine.getNode(parent1)?.canvas;
-        let input2 = this.engine.getNode(parent2)?.canvas;
-
-        this.applyTwo(input1, input2);
+        this.params = {...this.params, "selected" : this.selected, "muxedInputs": this.meta.input_size};
     }
 
+    public could_update(): boolean {
+        return this.inputs.has(this.params["selected"]);
+    }
 
     paramView(guid: string): ReactElement<any, string | JSXElementConstructor<any>> {
-        return <></>
+        return <MuxComponent guid={guid}/>
     }
 
-    async applyTwo(input1: OffscreenCanvas | undefined, input2: OffscreenCanvas | undefined){
-        if(!input1 || !input2){
-            return;
+    async apply(input:Array<OffscreenCanvas | undefined>): Promise<OffscreenCanvas|undefined>{
+        this.selected = this.params["selected"];
+        if(!input.length || input[this.selected] === undefined) {
+            return undefined
         }
-        
         this.hash = crypto.randomUUID();
-        
-        this.selected = this.params["selected"]
-        if(this.selected){
-            this.canvas = input2;
-        } else {
-            this.canvas = input1;
-        }
+        const ret = await this._apply(input as Array<OffscreenCanvas>);
+        return ret;
+    }
+
+    _apply(input: OffscreenCanvas[]): Promise<OffscreenCanvas> {
+        this.meta.input_size = this.params["muxedInputs"]
+        this.canvas = input[this.selected]
+        //@ts-ignore
+        return this.canvas;
     }
 
     selected: number;

@@ -1,14 +1,17 @@
 // Engine core functionalities
 
+import { jsonArrayMember, jsonMember, jsonObject } from "typedjson";
 import Transform, { KVParams } from "../engine/Transform";
 import { IEngine, GUID } from "../engine/iengine"
 import { INodeStore } from "./storeInterfaces";
+import { Engine } from "../engine/engine";
 
 type MarkedListener = CallableFunction & { id: GUID }
 
+@jsonObject
 export abstract class BaseFilterStore implements INodeStore{
-    filename: string
-    engine: IEngine<Transform>
+    @jsonMember(() => Engine)
+    engine: Engine
 
     // listen on node change
     nodeListeners: {listener: CallableFunction,id: GUID}[] 
@@ -16,10 +19,10 @@ export abstract class BaseFilterStore implements INodeStore{
     nodeWrappers:  Map<GUID,{value: Transform,hash: string}>
     
     nodeCollectionListener: CallableFunction[]
+    @jsonArrayMember(String)
     nodeCollection: GUID[]
 
-    constructor(filename: string, engine: IEngine<Transform>){
-        this.filename = filename;
+    constructor(engine: Engine){
         this.engine = engine;
         this.nodeListeners = [];
         this.nodeWrappers = new Map();
@@ -55,6 +58,11 @@ export abstract class BaseFilterStore implements INodeStore{
             }
         }else{
             const transform = this.engine.getNode(id)!;
+            if(!transform){
+                debugger;
+                console.trace()
+                throw "calling not existent node from frontend";
+            }
             transformWatch = {value:transform,hash: transform.hash};
             this.nodeWrappers.set(id,transformWatch);
         }
@@ -93,24 +101,19 @@ export abstract class BaseFilterStore implements INodeStore{
     public addTransform(name: string,params: KVParams = {}):Transform{
         params.engine = this.engine;
         const guid = this.engine.addNode(name, params);
-        this.nodeCollection = [...this.nodeCollection,guid];
-        this.emitChangeNodeCollection();
-        this.save();
+        // this.nodeCollection = [...this.nodeCollection,guid];
+        // this.emitChangeNodeCollection();
         return this.engine.getNode(guid)!;
     }
 
     public removeTransform(id: GUID){
         this.engine.removeNode(id);
-        this.nodeCollection = this.nodeCollection.filter(v => v != id);
-        this.emitChangeNodeCollection();
-        this.save();
+        // this.nodeCollection = this.nodeCollection.filter(v => v != id);
+        // this.emitChangeNodeCollection();
     }
 
     // #endregion 
 
     //#region Persistence
-    public save():void{this.saveAs(this.filename);}
-    public abstract saveAs(name: string): void;
-    public abstract load(name: string):void;
     // #endregion
 }

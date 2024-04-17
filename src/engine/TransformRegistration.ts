@@ -3,11 +3,16 @@ import ConvolutionTransform from "./transforms/ConvolutionTransform"
 import GaussianTransform from "./transforms/convolution/GaussianTransform"
 import { Conn4LaplaceTransform, Conn8LaplaceTransform } from "./transforms/convolution/LaplaceTransform"
 import { SobelXTransform, SobelYTransform } from "./transforms/convolution/SobelTransform"
+import BinaryAndTransform from "./transforms/logical/BinaryAndTransform"
+import BinaryOrTransform from "./transforms/logical/BinaryOrTransform"
+import BinaryXorTransform from "./transforms/logical/BinaryXorTransform"
 import DilatationTransform from "./transforms/morphologic/DilatationTransform"
 import ErosionTransform from "./transforms/morphologic/ErosionTransform"
 import MuxTransform from "./transforms/other/MuxTransform"
 import { AndTransform } from "./transforms/point/AndTransform"
 import { BrightnessTransform } from "./transforms/point/BrightnessTransform"
+import ChannelCombinationTransform from "./transforms/point/ChannelCombinationTransform"
+import { BChannelExtractionTransform, GChannelExtractionTransform, RChannelExtractionTransform } from "./transforms/point/ChannelExtractionTransform"
 import { GrayscaleTransform } from "./transforms/point/GrayscaleTransform"
 import { OrTransform } from "./transforms/point/OrTransform"
 import { ThresholdTransform } from "./transforms/point/ThresholdTransform"
@@ -37,11 +42,18 @@ export default function declareOps(){
     .declareLogical("xor", XorTransform)
     .declareLogical("or", OrTransform)
     .declareLogical("and", AndTransform)
+    .declareLogical("binary and", BinaryAndTransform)
+    .declareLogical("binary or", BinaryOrTransform)
+    .declareLogical("binary xor", BinaryXorTransform)
     .declarePoint("brightness", BrightnessTransform)
     .declarePoint("threshold", ThresholdTransform)
     .declarePoint("grayscale", GrayscaleTransform)
     .declarePoint("to YCbCr", ToYCbCrTransform)
     .declarePoint("from YCbCr", FromYCbCrTransform)
+    .declarePoint("R channel", RChannelExtractionTransform)
+    .declarePoint("G channel", GChannelExtractionTransform)
+    .declarePoint("B channel", BChannelExtractionTransform)
+    .declarePoint("Channel combination", ChannelCombinationTransform)
     .declareMorphologic("erosion", ErosionTransform)
     .declareMorphologic("dilatation", DilatationTransform)
     .declareOther("mux", MuxTransform)

@@ -1,6 +1,7 @@
-import { CSSProperties, useContext, useEffect, useRef } from "react";
+import { CSSProperties, useContext, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { GUID } from "../../engine/engine";
 import { nodeStoreContext } from "../../stores/context";
+import { node } from "../../engine/node";
 
 
 /*
@@ -42,6 +43,11 @@ export function Edge({pos0, pos1, onClick, style, marker=true}:{pos0: [number, n
 
 export function AnimationEdge({guid, isInput, mousePos, inputNo}: {guid : GUID, isInput: boolean, mousePos: {x: number, y: number}, inputNo: number}){
     const nodeContext = useContext(nodeStoreContext);
+
+    if(!nodeContext.getNodeCollection().find(el => el == guid)){
+        return <></>
+    }
+
     let pos0 = nodeContext.getNode(guid)().value.getPos();
     let pos1 = {x: pos0.x, y: pos0.y};
 
@@ -67,18 +73,24 @@ export function AnimationEdge({guid, isInput, mousePos, inputNo}: {guid : GUID, 
 
 export function PreviewEdge({guid}: {guid: GUID}){
     const nodeContext = useContext(nodeStoreContext);
+    const [rerender, setRerender] = useState(false)
     const node = nodeContext.getNode(guid)().value;
     const pos0 = node.getPreviewPos();
     let pos1 = node.getPos();
 
-    const draggableTransform = document.getElementById(guid)!
+    useEffect(() => {setRerender(true)}, [])
+
+    const draggableTransform = document.getElementById(guid)
+    if(!draggableTransform){
+        return <></>
+    }
 
     const card = draggableTransform.getElementsByClassName("card")[0]!;
 
     if(card instanceof HTMLElement){
         pos1 = {x: pos1.x + card.offsetLeft, y: pos1.y + card.offsetTop}
     }
-    
+
     const style= {stroke: "orange", strokeWidth: 1, strokeDasharray: "10,5" };            
     return <Edge pos0={[pos0.x, pos0.y]} pos1={[pos1.x, pos1.y]} style={style} marker={false}/>
 }
@@ -87,8 +99,12 @@ export function PreviewEdge({guid}: {guid: GUID}){
 export default function GraphEdge({guid0, guid1, inputNumber, highlighted, onClick} : {guid0 : GUID, guid1 : GUID, inputNumber: number, highlighted : boolean, onClick?: (guid0: GUID, guid1: GUID, inputNo: number)=>void}){
     
     const nodeContext = useContext(nodeStoreContext);
+    const [rerender, setRerender] = useState(false)
+
     let pos0 = nodeContext.getNode(guid0)().value.getPos();
     let pos1 = nodeContext.getNode(guid1)().value.getPos();
+
+    useEffect(() => {setRerender(!rerender)}, [])
 
     const onClickWrapper = () => {
         if(!onClick) return;
@@ -96,7 +112,6 @@ export default function GraphEdge({guid0, guid1, inputNumber, highlighted, onCli
     }
     const style= {stroke: highlighted ? "blue" : "hsl(260, 100%, 80%)", strokeWidth: 4 }
 
-    // TODO: check if it doesn't break sometimes (multiple elements with the same id)
     const draggable0 = document.getElementById(guid0)
     const draggable1 = document.getElementById(guid1)
 
@@ -115,6 +130,9 @@ export default function GraphEdge({guid0, guid1, inputNumber, highlighted, onCli
         pos1 = {x: pos1.x + input.offsetLeft + input.offsetWidth/2, y: pos1.y + input.offsetTop + input.offsetHeight/2}
     }
 
+
+    
+   
     // for now top left corner connects to top left corner
     return <Edge pos0={[pos0.x, pos0.y]} pos1={[pos1.x, pos1.y]} onClick={onClickWrapper} style={style}/>
 }

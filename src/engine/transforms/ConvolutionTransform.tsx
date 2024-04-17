@@ -69,7 +69,7 @@ class ConvolutionTransform extends Transform {
         const kernelN = this.params["kernel"].length;
         const x = position[0] - Math.floor((kernelN-1)/2)
         const y = position[1] - Math.floor((kernelN-1)/2)
-
+        // console.log("start:", x, y)
         return {start: [x,y], size: [kernelN, kernelN], center: position}
     }
 
@@ -86,6 +86,7 @@ class ConvolutionTransform extends Transform {
 
     async _apply(input: Array<OffscreenCanvas>): Promise<OffscreenCanvas> {
         this.kernel = this.params["kernel"]
+        const weight = this.params["weight"] ?? 1
         const vertexShaderSource = `
                 attribute vec2 a_position;
                 varying vec2 v_texCoord;
@@ -138,7 +139,7 @@ class ConvolutionTransform extends Transform {
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
                 gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         
-            const kernelF = new Float32Array(this.kernel!.flat());
+            const kernelF = new Float32Array(this.kernel!.flat()).map(el => el/weight);
             const kernelN = this.kernel.length
             let kernelLocation = gl.getUniformLocation(program, 'u_kernel2');
                 gl.uniformMatrix2fv(kernelLocation, false, kernelF);

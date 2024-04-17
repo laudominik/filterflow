@@ -14,7 +14,7 @@ export type CanvasPosition = [number,number]; // x y
 export type CanvasArrow = [CanvasPosition,CanvasPosition]
 export interface ConnectionInfo{
     connectionDefinition: ConnectionDefinition
-    display: CanvasArrow
+    // display: CanvasArrow
 }
 
 export type PreviewType = {start: GUID, end: GUID, distance: number, visualizationChannel: Channel, previewChannels: Channel[]}
@@ -51,6 +51,7 @@ export interface INodeStore{
 export interface IConnectionStore{
     getConnections():  ConnectionInfo[]
     subscribeConnections(listener: Func): CallableFunction
+    forceConnectionsRefresh(): void
     
     disconnectNodes(connection: ConnectionDefinition): void
     connectNodes(connection: ConnectionDefinition): void
@@ -58,6 +59,8 @@ export interface IConnectionStore{
 
 // this layer must exist for compatibility 
 export interface IPreviewStores{
+    subscribePreviews(listener: Func): CallableFunction
+    getPreviews(): Map<string, IPreviewStore>
     getPreviewStore(name:string): IPreviewStore | undefined
     addPreviewStore(name:string,inputs: GUID[],output: GUID): void
     removePreviewStore(name: string): void // this will not close any windows
@@ -73,8 +76,15 @@ export interface IPreviewStore{
     }
     subscribeSelection(listener: Func): Func
     updateSelection(pointer: CanvasPointer, preview: PreviewSelections, channel: Channel): void
-    updateContext(inputs: GUID[],output: GUID): void
-    getContext(): {inputs: GUID[],output: GUID}
+    updateContext(inputs: GUID[],output: GUID, visualization: boolean): void
+    updateSelectionLocked(locked: boolean): void
+    getSelectionLocked() : boolean
+    getContext(): {inputs: GUID[],output: GUID, visualizationEnabled: boolean}
     subscribeContext(listener: Func): Func
 
+}
+
+export interface IPersistentStore {
+    history_rollback(): void
+    history_redo(): void
 }
