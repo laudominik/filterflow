@@ -1,54 +1,56 @@
-import { AnyT, jsonMapMember, jsonMember, jsonObject } from "typedjson";
-import { IEngine, GUID } from "./iengine"
-import { NodeResponse, NodeResponseError, NodeResponseUpdated } from "./nodeResponse"
+import {AnyT, jsonMapMember, jsonMember, jsonObject} from "typedjson";
+import {IEngine, GUID} from "./iengine"
+import {NodeResponse, NodeResponseError, NodeResponseUpdated} from "./nodeResponse"
 
 
 export function connect<T extends node<T>>(source: T, source_nr: number, destination: T, destination_nr: number): boolean {
-    if(source.meta.output_size <= source_nr || destination.meta.input_size <= destination_nr) return false;
+    if (source.meta.output_size <= source_nr || destination.meta.input_size <= destination_nr) return false;
 
     const src_output = source.connected_to_outputs.get(source_nr) || [];
     const dst_input = destination.inputs.get(destination_nr);
-    
-    if(dst_input !== undefined){
+
+    if (dst_input !== undefined) {
         console.log("Input claimed")
-        return false; 
+        return false;
     }
 
     // connect 
-    src_output.push([destination.meta.id,destination_nr]);
-    source.connected_to_outputs.set(source_nr,src_output);
+    src_output.push([destination.meta.id, destination_nr]);
+    source.connected_to_outputs.set(source_nr, src_output);
 
-    destination.inputs.set(destination_nr,[source.meta.id,source_nr]);
+    destination.inputs.set(destination_nr, [source.meta.id, source_nr]);
 
     // inform engine
-    source.engine.dispatchEvent(new CustomEvent("connection_added",{detail:[[source.meta.id,source_nr],[destination.meta.id,destination_nr]]}))
+    source.engine.dispatchEvent(new CustomEvent("connection_added", {detail: [[source.meta.id, source_nr], [destination.meta.id, destination_nr]]}))
     destination.engine.requestUpdate(destination.meta.id);
     return true;
 }
 
 export function disconnect<T extends node<T>>(source: T, source_nr: number, destination: T, destination_nr: number) {
-    if(source.meta.output_size <= source_nr || destination.meta.input_size <= destination_nr) return false;
+    if (source.meta.output_size <= source_nr || destination.meta.input_size <= destination_nr) return false;
 
     const src_output = source.connected_to_outputs.get(source_nr) || [];
     const dst_input = destination.inputs.get(destination_nr);
-    
-    if(dst_input === undefined){
+    if (dst_input === undefined) {
         console.log("Input empty")
-        return false; 
+        return false;
     }
-
     // disconnect 
-    const new_output = src_output.filter(v => v[0]!== destination.meta.id && v[1]!== destination_nr);
-    if(new_output.length === src_output.length){
+    console.log("meta id: ", destination.meta.id)
+    console.log(src_output)
+    const new_output = src_output.filter(v => !(v[0] == destination.meta.id && v[1] == destination_nr));
+    console.log(new_output)
+
+    if (new_output.length === src_output.length) {
         console.log("Output empty")
         return false;
     }
-    source.connected_to_outputs.set(source_nr,new_output);
+    source.connected_to_outputs.set(source_nr, new_output);
 
     destination.inputs.delete(destination_nr);
 
     // inform engine
-    source.engine.dispatchEvent(new CustomEvent("connection_removed",{detail:[[source.meta.id,source_nr],[destination.meta.id,destination_nr]]}))
+    source.engine.dispatchEvent(new CustomEvent("connection_removed", {detail: [[source.meta.id, source_nr], [destination.meta.id, destination_nr]]}))
     destination.engine.requestUpdate(destination.meta.id);
     return true;
 }
@@ -93,22 +95,22 @@ export abstract class node<T extends node<T>>{
         }
     }
 
-    
+
     public disconnect() {
         this.inputs.forEach(([parent, parent_nr], key) => {
             // TODO: here it sometimes crashes (no parent, this.inputs most likely not updated), find why's that, for now adding check
             const parentNode = this.engine.getNode(parent)
-            if(!parentNode){
+            if (!parentNode) {
                 console.log("[WARNING] missing parent in node.ts::remove()")
                 console.trace()
                 console.log(this.engine)
                 return;
             }
-            disconnect(parentNode,parent_nr,this.engine.getNode(this.meta.id)!,key);
+            disconnect(parentNode, parent_nr, this.engine.getNode(this.meta.id)!, key);
         })
         this.connected_to_outputs.forEach((childrens, key) => {
             childrens.forEach(([child, child_nr]) => {
-                disconnect(this.engine.getNode(this.meta.id)!,key,this.engine.getNode(child)!,child_nr);
+                disconnect(this.engine.getNode(this.meta.id)!, key, this.engine.getNode(child)!, child_nr);
             })
         })
         this.engine.requestUpdate(this.meta.id); // self invalidate
@@ -120,13 +122,13 @@ export abstract class node<T extends node<T>>{
     // disconnect (disconnect one of input/outputs)
     // remove (only disconnect and send msg about remove)
     // update (on child element)
-    
+
     /**
      * This function should update internal state (canvas, meta,...) and return true if update resulted in stable and proper state 
      * if return false node will be invalidated 
     */
     public abstract _update_node(): Promise<boolean>;
-    
+
     /**
      * return true if all required connections are present
      */
@@ -138,13 +140,13 @@ export abstract class node<T extends node<T>>{
      * call _update and depending on return return type dispatch updated succesfully or error
      */
     public async update_node(): Promise<void> {
-        if(this.could_update()){
-            if (await this._update_node()){
+        if (this.could_update()) {
+            if (await this._update_node()) {
                 this.dispatch_updated_successfully();
-            }else{
+            } else {
                 this.dispatch_updated_error("Transforming error");
             }
-        }else{
+        } else {
             this.dispatch_updated_error("Not all required connections connected");
         }
     }
@@ -160,15 +162,15 @@ export abstract class node<T extends node<T>>{
         } else {
             this.dependency.inputs += 1;
         }
-        if (!this.could_update()){
-            if (this.dependency.inputs == 1){
+        if (!this.could_update()) {
+            if (this.dependency.inputs == 1) {
                 this.dispatch_updated_error("Not all inputs connected");
                 return true;
-            }else{
+            } else {
                 return false;
             }
         }
-        if (this.dependency.inputs === this.inputs.size) { 
+        if (this.dependency.inputs === this.inputs.size) {
             // using this in case some input are optional(if all are needed handle it by returning error to engine)
             this.update_node();
             return true;
@@ -191,7 +193,7 @@ export abstract class node<T extends node<T>>{
         }
 
         console.log(`UPDATE: success for ${this.meta.id}`)
-        this.engine.internal.dispatchEvent(new CustomEvent<NodeResponse>("info", { detail: msg }))
+        this.engine.internal.dispatchEvent(new CustomEvent<NodeResponse>("info", {detail: msg}))
     }
 
     public dispatch_updated_error(err: string) {
@@ -210,6 +212,6 @@ export abstract class node<T extends node<T>>{
         }
 
         console.log(`UPDATE: error for ${this.meta.id}`)
-        this.engine.internal.dispatchEvent(new CustomEvent<NodeResponse>("info", { detail: msg }))
+        this.engine.internal.dispatchEvent(new CustomEvent<NodeResponse>("info", {detail: msg}))
     }
 }
