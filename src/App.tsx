@@ -13,6 +13,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import GraphView from './components/graph_view/GraphView';
 import { connectionStoreContext as ConnectionStoreContext, nodeStoreContext as NodeStoreContext, notebookStoreContext as NotebookStoreContext, previewStoreContext as PreviewStoreContext } from './stores/context';
 import { useKeybinds } from './util/commands';
+import ShortcutSheet from './components/commands/ShotcutSheet';
 
 export default function App() {
   const notebookStore = useContext(NotebookStoreContext);
@@ -76,6 +77,7 @@ export default function App() {
                 <div className="App">
                   <BrandNavBar />
                   {view}
+                  <ShortcutSheet/>
                 </div>
             </PreviewStoreContext.Provider>
           </ConnectionStoreContext.Provider>

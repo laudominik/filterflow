@@ -18,6 +18,7 @@ interface ICommand{
 // based on https://n1ghtmare.github.io/2022-01-14/implement-a-keyboard-shortcuts-handler-in-typescript/
 class CommandRegistry {
     private commands: Map<string, ICommand> = new Map();
+    private commandsListeners: CallableFunction[] = [];
     private bindingsTree: HotKeyNode = {children: new Map()};
     private buffer : KeyboardEventKey[] = [];
 
@@ -118,6 +119,17 @@ class CommandRegistry {
 
     getCommands() : Map<string, ICommand> {
         return this.commands;
+    }
+
+    subscribeCommands(listener: CallableFunction) {
+        this.commandsListeners = [...this.commandsListeners, listener];
+        return () => {
+            this.commandsListeners = this.commandsListeners.filter(l => l != listener);
+        }
+    } 
+
+    emmitChangeCommands(){
+        this.commandsListeners.forEach(v => v());
     }
 }
 
