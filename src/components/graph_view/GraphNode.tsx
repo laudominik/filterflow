@@ -20,7 +20,7 @@ interface NodeProps {
     children: ReactNode;
     guid: GUID;
     style?: React.CSSProperties;
-    onBodyClick?: (e : NodeMouseEvent)=>void;
+    onBodyClick?: (e : React.PointerEvent)=>void;
     ioFunction?: IOFunctionType
     // mouseOver&touchOver (for inputs/node itselt) - for creating edges
     // touch (handle click and drag) - for selecting and drag
@@ -57,7 +57,7 @@ const GraphNode: React.FC<NodeProps> = ({ children,
     const outputs = <div className="circle-container"><div className="circle circle-bottom" onMouseDown={(e) => ioFunction ? ioFunction(e, guid, 0) : {}}></div></div>
     return  <div className="draggable transformNode" id={guid} key={guid} style={{left: node.value.getPos().x, top: node.value.getPos().y}}>
             {inputs}
-            <div className="graphNode" onMouseDown={onBodyClick}>   
+            <div className="graphNode" onPointerDown={onBodyClick}>   
                 <Card className="transformCard" style={style}>
                     <Card.Header className="cardHeader">
                         {`${node.value.getName()} : ${node.value.meta.id}`}

@@ -12,7 +12,7 @@ import FormRange from "react-bootstrap/esm/FormRange";
 import { CircleSwitch } from "../CircleSwitch";
 import { Channel } from "../../stores/storeInterfaces";
 
-export default function GraphPreview({guid, onBodyClick}: {guid: GUID, onBodyClick?: (e : React.MouseEvent)=>void}){
+export default function GraphPreview({guid, onBodyClick}: {guid: GUID, onBodyClick?: (e : React.PointerEvent)=>void}){
     
     const nodeContext = useContext(nodeStoreContext)    
     const node = nodeContext.getNode(guid)();
@@ -33,7 +33,7 @@ export default function GraphPreview({guid, onBodyClick}: {guid: GUID, onBodyCli
         previewStore.updateSelection(selection.pointer, selection.preview, channel)
     }
 
-    return <div id={"pr" + guid} style={{left: pos.x, top: pos.y}} onMouseDown={onBodyClick} className="draggable previewNode">
+    return <div id={"pr" + guid} style={{left: pos.x, top: pos.y}} onPointerDown={onBodyClick} className="draggable previewNode">
             <div className="previewNode">
                 <div className="pipelineBar">
                     <div>{node.value.name} Preview</div> 

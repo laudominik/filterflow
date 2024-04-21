@@ -99,30 +99,16 @@ export default function GraphSpaceComponent({children = undefined, scale, offset
     let dragTargetStartX = 0, dragTargetStartY = 0;
     let dragDistance = 0;
 
-    //#region node MouseEvents
-    // adding moving elements in space instead element wise, allows to controll z-index
-    function dragStart(e: React.SyntheticEvent) {
-        // typescript type checking
-        if (!(e.nativeEvent.target instanceof HTMLElement)) return;
-        // TODO: check if this really do anything (yes, now it does)
+    function dragStart(e: React.PointerEvent){
+        if(!(e.nativeEvent.target instanceof HTMLElement)) return;
         let closest = e.nativeEvent.target.closest('.draggable');
-        if (!(closest instanceof HTMLElement)) return;
+        if(!(closest instanceof HTMLElement)) return;
 
-
-        // e.preventDefault();
         e.stopPropagation();
 
-        // https://github.com/grafana/grafana/pull/79508/files#diff-0713145d1754d5f4b090224a1d1cdf818fe5cbdcc23c8d3aabff8fb82bf2f6baR186-R190
-        const isTouch = (e.nativeEvent as TouchEvent).changedTouches && e.nativeEvent instanceof TouchEvent;
-        if ((e.nativeEvent as TouchEvent).changedTouches && e.nativeEvent instanceof TouchEvent) {
-            dragMouseStartX = e.nativeEvent.touches[0].pageX
-            dragMouseStartY = e.nativeEvent.touches[0].pageY
-        } else {
-            dragMouseStartX = (e.nativeEvent as MouseEvent).pageX
-            dragMouseStartY = (e.nativeEvent as MouseEvent).pageY
-        }
+        dragMouseStartX = e.nativeEvent.pageX;
+        dragMouseStartY = e.nativeEvent.pageY;
 
-        // get real position
         dragMouseStartX = dragMouseStartX / scale - offset.x
         dragMouseStartY = dragMouseStartY / scale - offset.y
 
@@ -137,8 +123,8 @@ export default function GraphSpaceComponent({children = undefined, scale, offset
         dragTargetStartX = rect ? (window.scrollX + (rect.left - viewRect!.x) / scale) : 0;
         dragTargetStartY = rect ? (window.scrollY + (rect.top - viewRect!.y) / scale) : 0;
         // move to front
-        window.addEventListener(isTouch ? 'touchmove' : 'mousemove', dragMove, {passive: false});
-        window.addEventListener(isTouch ? 'touchend' : 'mouseup', dragStop, {passive: false});
+        window.addEventListener('pointermove', dragMove, {passive: false});
+        window.addEventListener('pointerup', dragStop, {passive: false});
         if (!dragTarget) return;
 
 
@@ -152,15 +138,13 @@ export default function GraphSpaceComponent({children = undefined, scale, offset
             setHightlightedEdge({guid0: "", guid1: "", inputNo: 0})
             return;
         }
-
     }
 
-    function dragStop(e: MouseEvent | TouchEvent) {
+
+    function dragStop(e: PointerEvent) {
         if (dragTarget) {
             e.preventDefault();
             e.stopPropagation();
-
-            const isTouch = (e as TouchEvent).changedTouches && e instanceof TouchEvent;
 
             dragTarget.classList.remove('dragging');
             if (dragTarget.classList.contains("transformNode")) {
@@ -172,11 +156,11 @@ export default function GraphSpaceComponent({children = undefined, scale, offset
             dragTarget = undefined
 
             // dragging is a rare event, so it won't be too much overhead
-            window.removeEventListener(isTouch ? 'touchmove' : 'mousemove', dragMove)
-            window.removeEventListener(isTouch ? 'touchend' : 'mouseup', dragStop)
+            window.removeEventListener('pointermove', dragMove)
+            window.removeEventListener('pointerup', dragStop)
 
             // we are forcing to drag by default, handle tap
-            if (isTouch && dragDistance === 0) {
+            if (dragDistance === 0) {
                 const clickElem = document.elementFromPoint(dragMouseStartX, dragMouseStartY);
                 clickElem?.dispatchEvent(new MouseEvent('click', {
                     bubbles: true,
@@ -233,14 +217,13 @@ export default function GraphSpaceComponent({children = undefined, scale, offset
     }
 
 
-    function dragMove(e: MouseEvent | TouchEvent) {
+    function dragMove(e: PointerEvent) {
         if (dragTarget) {
             e.preventDefault();
             e.stopPropagation();
 
-            const isTouch = (e as TouchEvent).changedTouches && e instanceof TouchEvent;
-            const vx = (isTouch ? e.touches[0].pageX : (e as MouseEvent).pageX);
-            const vy = (isTouch ? e.touches[0].pageY : (e as MouseEvent).pageY)
+            const vx = (e.pageX);
+            const vy = (e.pageY)
             const dx = (vx / scale - offset.x - dragMouseStartX)
             const dy = (vy / scale - offset.y - dragMouseStartY)
             dragDistance += dx + dy;
@@ -365,7 +348,7 @@ export default function GraphSpaceComponent({children = undefined, scale, offset
     return <>
         <div id="graphSpace" className="graphSpace" ref={viewRef} style={{transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`, outline: "1px solid green"}}>
             {/* a gnome here represent a plank size */}
-            <div onMouseDown={dragStart} className='draggable' style={{backgroundImage: 'url(filterflow/gnome.webp)', backgroundSize: "0.0085px 0.0085px", width: "0.0085px", height: "0.0085px", top: "-0.0085px"}} />
+            <div onPointerDown={dragStart} className='draggable' style={{backgroundImage: 'url(filterflow/gnome.webp)', backgroundSize: "0.0085px 0.0085px", width: "0.0085px", height: "0.0085px", top: "-0.0085px"}} />
 
             {/* DEBUG: coordinates markers */}
             <div style={{position: 'absolute', top: "-2.5rem", left: "-1.5rem"}} className='debugSpaceOverlay'>0, 0</div>

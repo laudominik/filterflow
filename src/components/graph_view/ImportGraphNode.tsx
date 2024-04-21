@@ -9,7 +9,7 @@ import { nodeStoreContext } from "../../stores/context";
 
 type ColorMask = [boolean, boolean, boolean];
 
-export default function ImportGraphNode({ guid, style, onBodyClick, ioFunction }: { guid: GUID, style: React.CSSProperties, onBodyClick?: (e : React.MouseEvent)=>void, ioFunction?: IOFunctionType }){    
+export default function ImportGraphNode({ guid, style, onBodyClick, ioFunction }: { guid: GUID, style: React.CSSProperties, onBodyClick?: (e : React.PointerEvent)=>void, ioFunction?: IOFunctionType }){    
     const nodeContext = useContext(nodeStoreContext);    
     const node = useSyncExternalStore(nodeContext.subscribeNode(guid), nodeContext.getNode(guid));
     const canvasRef = useRef<HTMLCanvasElement>(null);
