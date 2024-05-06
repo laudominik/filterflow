@@ -30,7 +30,17 @@ export default function ShortcutSheet({show, setShow}: {show: boolean, setShow: 
             <table>
                 {Array.from(commands.values()).map(v => {
                     return <tr>
-                        <td className="KeyBindings"><span className="SheetDialogKey">{v.binding?.sort().filter(v => v !== "Shift")}</span></td>
+                        <td className="KeyBindings">
+                            {
+                                v.binding?.includes("Shift") ?
+                                    <><span className="SheetDialogKey">Shift</span> <>+</></>
+                                    : <></>
+                            }
+                            {
+                                v.binding?.sort().filter(v => v !== "Shift").map(v => <span className="SheetDialogKey">{v}</span>)
+                            }
+
+                        </td>
                         <td></td>
                         <td>{v.name}</td>
                     </tr>

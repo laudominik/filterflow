@@ -1,30 +1,39 @@
-import { ChangeEvent, useContext } from "react";
-import { Form, Nav, Navbar } from "react-bootstrap";
-import { useSessionStorage } from "usehooks-ts";
-import { notebookStoreContext } from "../../stores/context";
-import { serialize } from "v8";
+import {ChangeEvent, useContext} from "react";
+import {Form, Nav, Navbar} from "react-bootstrap";
+import {useSessionStorage} from "usehooks-ts";
+import {notebookStoreContext} from "../../stores/context";
+import {serialize} from "v8";
+import {useCommand} from "../../util/commands";
 
-export default function FileComponent() {    
+export default function FileComponent() {
     const notebookStore = useContext(notebookStoreContext)
 
-    function handleNewNotebook(){
+
+    useCommand({
+        name: "New notebook",
+        description: "Opens new notebook",
+        callback: handleNewNotebook,
+        binding: ["Shift", "N"]
+    })
+
+    function handleNewNotebook() {
         notebookStore.newNotebook();
     }
 
-    function handleSaveNotebook(){
+    function handleSaveNotebook() {
         const data = notebookStore.saveNotebook()
-        const blob = new Blob([data], {type:""})
+        const blob = new Blob([data], {type: ""})
         const url = URL.createObjectURL(blob);
-        
+
         const link = document.createElement('a');
         link.href = url;
-        link.download =  notebookStore.stores[notebookStore.getSelectedIx()][0] + ".ffnb"
-    
+        link.download = notebookStore.stores[notebookStore.getSelectedIx()][0] + ".ffnb"
+
         link.click();
         URL.revokeObjectURL(url);
     }
 
-    function handleLoadNotebook(e: ChangeEvent<HTMLInputElement>){
+    function handleLoadNotebook(e: ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
         if (!file) {
             return;
@@ -32,24 +41,24 @@ export default function FileComponent() {
         const reader = new FileReader();
         reader.onload = (event) => {
             const serialized = event.target?.result as string
-            if(!serialized) return;
+            if (!serialized) return;
             const fileName = file.name.split('.').slice(0, -1).join('.');
-            notebookStore.loadNotebook(fileName,serialized);
+            notebookStore.loadNotebook(fileName, serialized);
         }
         reader.readAsText(file);
     }
 
     return <Nav className="mr-auto">
-            <Nav.Link onClick={handleNewNotebook}>New</Nav.Link>
-            <Nav.Link onClick={handleSaveNotebook}>Download</Nav.Link>
+        <Nav.Link onClick={handleNewNotebook}>New</Nav.Link>
+        <Nav.Link onClick={handleSaveNotebook}>Download</Nav.Link>
 
-            <input
-                type="file"
-                accept=".ffnb"
-                id="loadNotebook"
-                style={{ display: 'none' }}
-                onChange={handleLoadNotebook}
-            />
-            <Nav.Link onClick={() => {document.getElementById("loadNotebook")?.click()}} type="file">Load</Nav.Link>
-        </Nav>
+        <input
+            type="file"
+            accept=".ffnb"
+            id="loadNotebook"
+            style={{display: 'none'}}
+            onChange={handleLoadNotebook}
+        />
+        <Nav.Link onClick={() => {document.getElementById("loadNotebook")?.click()}} type="file">Load</Nav.Link>
+    </Nav>
 }
