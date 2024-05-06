@@ -99,10 +99,10 @@ export default function GraphSpaceComponent({children = undefined, scale, offset
     let dragTargetStartX = 0, dragTargetStartY = 0;
     let dragDistance = 0;
 
-    function dragStart(e: React.PointerEvent){
-        if(!(e.nativeEvent.target instanceof HTMLElement)) return;
+    function dragStart(e: React.PointerEvent) {
+        if (!(e.nativeEvent.target instanceof HTMLElement)) return;
         let closest = e.nativeEvent.target.closest('.draggable');
-        if(!(closest instanceof HTMLElement)) return;
+        if (!(closest instanceof HTMLElement)) return;
 
         e.stopPropagation();
 
@@ -305,6 +305,10 @@ export default function GraphSpaceComponent({children = undefined, scale, offset
         previewContext.removePreviewStore(highlightedGUID)
         setOpenedPreviewsState(crypto.randomUUID())
 
+        // connectionContext.disconnectNodes([
+        //     [highlightedEdge.guid0, 0],
+        //     [highlightedEdge.guid1, highlightedEdge.inputNo]
+        // ])
         nodeContext.removeTransform(highlightedGUID)
         setHighlightedGUID("")
         setConnectionComponent(handleConnections())

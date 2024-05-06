@@ -92,6 +92,8 @@ export class Engine extends EventTarget implements IEngine<Transform>{
         }
     }
     public _direct_update(id: GUID) {
+        console.log(id)
+        console.trace()
         if (!this.batchState.startedUpdates.has(id)) {
             this.batchState.startedUpdates.add(id);
             this.batchState.pendingUpdates.add(id);

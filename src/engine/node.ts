@@ -28,7 +28,7 @@ export function connect<T extends node<T>>(source: T, source_nr: number, destina
 
 export function disconnect<T extends node<T>>(source: T, source_nr: number, destination: T, destination_nr: number) {
     if (source.meta.output_size <= source_nr || destination.meta.input_size <= destination_nr) return false;
-
+    console.log("skibidi toilet", source_nr, destination_nr)
     const src_output = source.connected_to_outputs.get(source_nr) || [];
     const dst_input = destination.inputs.get(destination_nr);
     if (dst_input === undefined) {

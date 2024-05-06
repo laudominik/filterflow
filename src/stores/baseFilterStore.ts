@@ -1,40 +1,40 @@
 // Engine core functionalities
 
-import { jsonArrayMember, jsonMember, jsonObject } from "typedjson";
-import Transform, { KVParams } from "../engine/Transform";
-import { IEngine, GUID } from "../engine/iengine"
-import { INodeStore } from "./storeInterfaces";
-import { Engine } from "../engine/engine";
+import {jsonArrayMember, jsonMember, jsonObject} from "typedjson";
+import Transform, {KVParams} from "../engine/Transform";
+import {IEngine, GUID} from "../engine/iengine"
+import {INodeStore} from "./storeInterfaces";
+import {Engine} from "../engine/engine";
 
-type MarkedListener = CallableFunction & { id: GUID }
+type MarkedListener = CallableFunction & {id: GUID}
 
 @jsonObject
-export abstract class BaseFilterStore implements INodeStore{
+export abstract class BaseFilterStore implements INodeStore {
     @jsonMember(() => Engine)
     engine: Engine
 
     // listen on node change
-    nodeListeners: {listener: CallableFunction,id: GUID}[] 
+    nodeListeners: {listener: CallableFunction, id: GUID}[]
     // store Transform in new object to trigger react update
-    nodeWrappers:  Map<GUID,{value: Transform,hash: string}>
-    
+    nodeWrappers: Map<GUID, {value: Transform, hash: string}>
+
     nodeCollectionListener: CallableFunction[]
     @jsonArrayMember(String)
     nodeCollection: GUID[]
 
-    constructor(engine: Engine){
+    constructor(engine: Engine) {
         this.engine = engine;
         this.nodeListeners = [];
         this.nodeWrappers = new Map();
         this.nodeCollection = [];
         this.nodeCollectionListener = [];
     }
-    
+
     //#region Node
 
     // internal function register listening on specific id
     private _subscribeNode(id: GUID, listener: CallableFunction) {
-        this.nodeListeners = [...this.nodeListeners, {listener,id}]
+        this.nodeListeners = [...this.nodeListeners, {listener, id}]
         return () => {
             this.nodeListeners = this.nodeListeners.filter(l => l.listener != listener);
         };
@@ -42,29 +42,29 @@ export abstract class BaseFilterStore implements INodeStore{
 
     public subscribeNode(id: GUID) {
         return this._subscribeNode.bind(this, id);
-    } 
-
-    public getNode(id:GUID){
-        return this._getNode.bind(this,id)
     }
 
-    private _getNode(id: GUID): {value: Transform,hash: string}{
-        let transformWatch = this.nodeWrappers.get(id);
-        if (transformWatch){
+    public getNode(id: GUID) {
+        return this._getNode.bind(this, id)
+    }
 
-            if (transformWatch.hash != transformWatch.value.hash){
-                transformWatch = {...transformWatch,hash: transformWatch.value.hash};
-                this.nodeWrappers.set(id,transformWatch);
+    private _getNode(id: GUID): {value: Transform, hash: string} {
+        let transformWatch = this.nodeWrappers.get(id);
+        if (transformWatch) {
+
+            if (transformWatch.hash != transformWatch.value.hash) {
+                transformWatch = {...transformWatch, hash: transformWatch.value.hash};
+                this.nodeWrappers.set(id, transformWatch);
             }
-        }else{
+        } else {
             const transform = this.engine.getNode(id)!;
-            if(!transform){
+            if (!transform) {
                 debugger;
                 console.trace()
                 throw "calling not existent node from frontend";
             }
-            transformWatch = {value:transform,hash: transform.hash};
-            this.nodeWrappers.set(id,transformWatch);
+            transformWatch = {value: transform, hash: transform.hash};
+            this.nodeWrappers.set(id, transformWatch);
         }
         return transformWatch
     }
@@ -75,7 +75,7 @@ export abstract class BaseFilterStore implements INodeStore{
     //#endregion
 
     //#region Node Collection
-    public getNodeCollection(){
+    public getNodeCollection() {
         return this.nodeCollection;
     }
 
@@ -86,30 +86,26 @@ export abstract class BaseFilterStore implements INodeStore{
         };
     }
 
-    public emitChangeNodeCollection(){
+    public emitChangeNodeCollection() {
         this.nodeCollectionListener.forEach((v) => v())
     }
 
     //#endregion
 
     //#region Engine exports
-    
-    public updateParam(id: GUID,param: KVParams){
-        this.engine.updateNodeParams(id,param)
+
+    public updateParam(id: GUID, param: KVParams) {
+        this.engine.updateNodeParams(id, param)
     }
 
-    public addTransform(name: string,params: KVParams = {}):Transform{
+    public addTransform(name: string, params: KVParams = {}): Transform {
         params.engine = this.engine;
         const guid = this.engine.addNode(name, params);
-        // this.nodeCollection = [...this.nodeCollection,guid];
-        // this.emitChangeNodeCollection();
         return this.engine.getNode(guid)!;
     }
 
-    public removeTransform(id: GUID){
+    public removeTransform(id: GUID) {
         this.engine.removeNode(id);
-        // this.nodeCollection = this.nodeCollection.filter(v => v != id);
-        // this.emitChangeNodeCollection();
     }
 
     // #endregion 
