@@ -4,6 +4,7 @@ import {useSessionStorage} from "usehooks-ts";
 import {notebookStoreContext} from "../../stores/context";
 import {serialize} from "v8";
 import {useCommand} from "../../util/commands";
+import {ImageStore} from "../../stores/imageStore";
 
 export default function FileComponent() {
     const notebookStore = useContext(notebookStoreContext)
@@ -27,9 +28,21 @@ export default function FileComponent() {
         notebookStore.newNotebook();
     }
 
-    function handleSaveNotebook() {
+    async function handleSaveNotebook() {
         const data = notebookStore.saveNotebook()
-        const blob = new Blob([data], {type: ""})
+        const imageList = ImageStore.getImageList()
+        const imageDataList: string[] = []
+        for (let imageHash of imageList) {
+            const imageData = await ImageStore.get(imageHash)
+            imageDataList.push(imageData!)
+        }
+        const obj = {
+            'notebook': data,
+            'imageList': imageList,
+            'imageDataList': imageDataList
+        }
+
+        const blob = new Blob([JSON.stringify(obj)], {type: ""})
         const url = URL.createObjectURL(blob);
 
         const link = document.createElement('a');
@@ -50,7 +63,16 @@ export default function FileComponent() {
             const serialized = event.target?.result as string
             if (!serialized) return;
             const fileName = file.name.split('.').slice(0, -1).join('.');
-            notebookStore.loadNotebook(fileName, serialized);
+            const obj = JSON.parse(serialized)
+            const name = notebookStore.availableName(fileName)
+
+            for (let i = 0; i < obj['imageList'].length; i++) {
+                const hash = obj['imageList'][i]
+                const data = obj['imageDataList'][i]
+                ImageStore.add(data, name, hash)
+            }
+
+            notebookStore.loadNotebook(fileName, obj['notebook']);
         }
         reader.readAsText(file);
     }

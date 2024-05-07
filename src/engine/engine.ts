@@ -137,7 +137,9 @@ export class Engine extends EventTarget implements IEngine<Transform>{
         this.batchState.response.node.removed_nodes = [...this.batchState.response.node.removed.map(v => this.getNode(v)!)]
         this.dispatchEvent(new CustomEvent<ExternalEngineResponse>("update", {detail: this.batchState.response}))
         // clean detached nodes
+        this.batchState.response.node.removed_nodes.forEach(n => n.onDelete());
         this.batchState.response.node.removed.forEach(v => this.nodes.delete(v));
+
         const tick = this.batchState.tick + 1;
         this.batchState = {
             startedUpdates: new Set(),

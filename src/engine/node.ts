@@ -94,6 +94,9 @@ export abstract class node<T extends node<T>>{
         }
     }
 
+    public onDelete() {
+
+    }
 
     public disconnect() {
         this.inputs.forEach(([parent, parent_nr], key) => {

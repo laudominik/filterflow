@@ -4,6 +4,7 @@ import {TopStore} from "./topStore";
 import KVHandlerIfc from "../persistence/kvhandler";
 import LSHandler from "../persistence/lshandler";
 import DebugHandler from "../persistence/debughandler";
+import {ImageStore} from "./imageStore";
 
 export class NotebookStore {
     stores: Array<[string, TopStore]>
@@ -15,8 +16,7 @@ export class NotebookStore {
     persistence: KVHandlerIfc
 
     constructor() {
-
-        this.selectedIx = 0;
+        this.selectedIx = 0
         this.selected = new TopStore();
         this.selectedListeners = [];
         this.collectionListeners = [];
@@ -41,15 +41,16 @@ export class NotebookStore {
                 }
             })
             this.selected = this.stores[0][1];
-            this.selectedIx = 0;
+            this.selectedIx = 0
         } else {
             const name = "unnamed";
             this.selected = new TopStore();
-            this.selectedIx = 0;
+            this.selectedIx = 0
             this.bindSave(this.selected);
             this.stores.push([name, this.selected])
             this._updateStoresList();
         }
+        this.setSelectedIx(0)
 
     }
 
@@ -107,16 +108,15 @@ export class NotebookStore {
     }
 
     public newNotebook() {
-        this.selectedIx = 0
         const name = this.availableName("unnamed")
         this.selected = new TopStore();
-        this.selectedIx = this.stores.length;
         this.bindSave(this.selected)
         this.stores.push([name, this.selected])
+        this.setSelectedIx(this.stores.length - 1)
         this._dispatchStoreListUpdated();
     }
 
-    private availableName(name: string): string {
+    public availableName(name: string): string {
         let name_ = name;
         let i = 1;
         while (this.stores.map(el => el[0]).includes(name_)) {
@@ -130,8 +130,6 @@ export class NotebookStore {
     public saveNotebook() {
         const serializer = new TypedJSON(TopStore, {knownTypes: Array.from(knownTypes())});
         const body = serializer.stringify(this.selected);
-        // console.log(body)
-        // TODO: save to some storage
         return body;
     }
 
@@ -141,25 +139,45 @@ export class NotebookStore {
         let json = new TypedJSON(TopStore, {knownTypes: Array.from(knownTypes())});
         this.selected = json.parse(body)!;
         this.bindSave(this.selected);
-        this.selectedIx = this.stores.length;
         this.selected.fixSerialization();
         this.stores.push([name, this.selected])
+        this.setSelectedIx(this.stores.length - 1)
         this._dispatchStoreListUpdated();
     }
 
+    private setSelectedIx(ix: number) {
+        this.selectedIx = ix
+        ImageStore.setSelectedName(this.stores[ix][0])
+    }
+
     public changeNotebook(ix: number) {
-        this.selectedIx = ix;
+        this.setSelectedIx(ix)
         this.selected = this.stores[ix][1];
         this._dispatchStoreListUpdated();
     }
 
     public renameNotebook(ix: number, newName: string) {
         const name = this.stores[ix][0];
+        newName = this.availableName(newName)
         this.stores[ix][0] = newName;
         this.persistence.write("store_" + newName, this.persistence.read("store_" + name)!);
+        this.persistence.write("imageList" + newName, this.persistence.read("imageList" + name)!)
         this.persistence.delete("store_" + name)
+        this.persistence.delete("imageList" + name)
         this.notebookCollectionHash = crypto.randomUUID()
         this._dispatchStoreListUpdated();
+        this.setSelectedIx(this.selectedIx)
+    }
+
+    public canRemoveImage(hash: string, skipName: string) {
+        for (const store of this.stores) {
+            const name = store[0]
+            if (name == skipName) continue;
+            if (ImageStore.getImageList(name).includes(hash)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public deleteNotebook(ix: number) {
@@ -168,13 +186,20 @@ export class NotebookStore {
         this.stores = this.stores.slice(0, ix).concat(this.stores.slice(ix + 1))
         this.persistence.delete("store_" + name);
 
+        // delete all images associated with that notebook & also it's image list
+        const images = ImageStore.getImageList(name)
+        for (const image of images) {
+            ImageStore.remove(image)
+        }
+        this.persistence.delete("imageList" + name)
+
         if (this.selectedIx == ix) {
-            this.selectedIx = 0;
             if (!this.stores.length) {
                 this.newNotebook();
             }
+            this.setSelectedIx(0)
         } else if (this.selectedIx > ix) {
-            this.selectedIx -= 1;
+            this.setSelectedIx(this.selectedIx - 1)
         }
 
         this.selected = this.stores[this.selectedIx][1]
