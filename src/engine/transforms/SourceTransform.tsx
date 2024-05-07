@@ -2,26 +2,32 @@ import 'reflect-metadata'
 
 import { ReactNode } from "react";
 import Transform from "../Transform";
-import { jsonObject } from "typedjson";
+import { jsonMember, jsonObject } from "typedjson";
+import { ImageStore } from '../../stores/imageStore';
 
 @jsonObject
 export default class SourceTransform extends Transform{
-
+    @jsonMember(String)
+    imageId: string
 
     constructor(){
         super("source","#FFFFFF", 0);
+
         // todo: load image blob from store
+        this.imageId = "";
+        
     }
 
     public could_update(): boolean {
-        return this.image != undefined
+        return this.image != undefined || this.imageId != ""
     }
 
     async apply(input: Array<OffscreenCanvas | undefined>): Promise<OffscreenCanvas | undefined> {
-        // for the source node we ignore inputs
 
-        // TODO: For serialization purposes
-        // create canvas there if not exist and image string is set
+        if(this.imageId != "" && !this.image){
+            this.image = await ImageStore.get(this.imageId) 
+        }
+
         if(!this.image) return undefined;
 
         // if (!this.valid){
@@ -32,7 +38,12 @@ export default class SourceTransform extends Transform{
     }
 
     async setImageString(imageString: string) {
+        if(this.image){
+            ImageStore.remove(this.imageId)
+        }
         this.image = imageString
+        this.imageId = await ImageStore.add(imageString)
+        
         await this.loadImage()
     }
 
