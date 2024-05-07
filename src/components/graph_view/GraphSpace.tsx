@@ -13,6 +13,7 @@ import GraphPreview from "./GraphPreview";
 import {useSessionStorage} from "usehooks-ts";
 import {PreviewStore} from "../../stores/previewStore";
 import {useCommand} from "../../util/commands";
+import SourceTransform from "../../engine/transforms/SourceTransform";
 
 
 export interface GraphSpaceInterface {
@@ -459,6 +460,8 @@ function NodeContextMenu({highlightedGUID,
         const reader = new FileReader();
         reader.onload = (event) => {
             nodeContext.updateParam(highlightedGUID, {image: event.target?.result as string})
+            const src = nodeContext.getNode(highlightedGUID)().value as SourceTransform
+            src.loadImage()
         }
 
         reader.readAsDataURL(file);

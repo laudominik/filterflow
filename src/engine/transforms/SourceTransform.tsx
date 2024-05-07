@@ -10,10 +10,11 @@ export default class SourceTransform extends Transform{
 
     constructor(){
         super("source","#FFFFFF", 0);
+        // todo: load image blob from store
     }
 
     public could_update(): boolean {
-        return this.params["image"]
+        return this.image != undefined
     }
 
     async apply(input: Array<OffscreenCanvas | undefined>): Promise<OffscreenCanvas | undefined> {
@@ -21,22 +22,22 @@ export default class SourceTransform extends Transform{
 
         // TODO: For serialization purposes
         // create canvas there if not exist and image string is set
-        if(!this.params["image"]) return undefined;
+        if(!this.image) return undefined;
 
-        if (!this.valid){
-            await this.loadImage();
-        }
+        // if (!this.valid){
+        // }
+        await this.loadImage();
 
         return this.canvas;
     }
 
     async setImageString(imageString: string) {
-        this.params["image"] = imageString
+        this.image = imageString
         await this.loadImage()
     }
 
     async loadImage(){
-        if(!this.params["image"]) return
+        if(!this.image) return
 
         const image = new Image()
         const loadImage = async (img: HTMLImageElement) => {
@@ -46,7 +47,7 @@ export default class SourceTransform extends Transform{
                 };
             });
         };
-        image.src = this.params["image"];
+        image.src = this.image;
         await loadImage(image);
         
         this.canvas.width = image.width;
@@ -134,6 +135,7 @@ export default class SourceTransform extends Transform{
     updateParams(params: { [key: string]: any; }): void {
         if (params["image"]){
             this.setImageString(params["image"])
+            // todo: save image blob to store
         }
     }
     paramView() {

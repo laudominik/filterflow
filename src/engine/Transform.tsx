@@ -32,7 +32,7 @@ abstract class Transform extends node<Transform> {
     color: string;
     @jsonMember(String)
     name: string;
-    @jsonMember(String)
+    // @jsonMember(String)
     image?: string;
     @jsonMember(Boolean)
     edited: boolean;

@@ -5,6 +5,7 @@ import "../preview_container/Preview.css"
 import "./GraphNode.css"
 import GraphNode, { IOFunctionType } from "./GraphNode";
 import { nodeStoreContext } from "../../stores/context";
+import SourceTransform from "../../engine/transforms/SourceTransform";
 
 
 type ColorMask = [boolean, boolean, boolean];
