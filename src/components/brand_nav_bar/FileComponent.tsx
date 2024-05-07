@@ -16,6 +16,13 @@ export default function FileComponent() {
         binding: ["Shift", "N"]
     })
 
+    useCommand({
+        name: "Download notebook",
+        description: "Downloads active notebook",
+        callback: handleSaveNotebook,
+        binding: ["Shift", "W"]
+    })
+
     function handleNewNotebook() {
         notebookStore.newNotebook();
     }
