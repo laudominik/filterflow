@@ -19,6 +19,7 @@ interface ICommand{
 // based on https://n1ghtmare.github.io/2022-01-14/implement-a-keyboard-shortcuts-handler-in-typescript/
 class CommandRegistry {
     private commands: Map<string, ICommand> = new Map();
+    private commandsList : ICommand[] = [];
     private commandsListeners: CallableFunction[] = [];
     private bindingsTree: HotKeyNode = {children: new Map()};
     private buffer : KeyboardEventKey[] = [];
@@ -59,7 +60,7 @@ class CommandRegistry {
         if (!command.binding) return;
 
         let currentNode : HotKeyNode | undefined = this.bindingsTree;
-        command.binding.sort().forEach(key => {
+        [...command.binding].sort().forEach(key => {
             if(!currentNode?.children?.get(key)){
                 const node : HotKeyNode = {children: new Map()}
                 currentNode?.children.set(key, node);
@@ -75,7 +76,7 @@ class CommandRegistry {
         if(!command.binding) return;
         let currentNode = this.bindingsTree;
         const chain: HotKeyNode[] = [];
-        for (const key of command.binding.sort()){
+        for (const key of [...command.binding].sort()){
             const {children} = currentNode;
             if(!children) return;
 
@@ -106,6 +107,7 @@ class CommandRegistry {
     register(command : ICommand){
         const uuid = crypto.randomUUID();
         this.commands.set(uuid, command);
+        this.commandsList = [...this.commandsList, command];
         this.bind(command);
         return uuid;
     }
@@ -115,11 +117,12 @@ class CommandRegistry {
         if(!command) return;
 
         this.unbind(command)
+        this.commandsList = this.commandsList.filter(v => v != this.commands.get(uuid))
         this.commands.delete(uuid);
     }
 
-    getCommands() : Map<string, ICommand> {
-        return this.commands;
+    getCommands() : Array<ICommand> {
+        return this.commandsList;
     }
 
     subscribeCommands(listener: CallableFunction) {

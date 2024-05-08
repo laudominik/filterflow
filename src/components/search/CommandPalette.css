@@ -1,0 +1,44 @@
+.commandPaletteList{
+    display: flex;
+    flex-direction: column;
+
+    max-height: 20vh;
+    overflow-y: scroll;
+    padding: 2px;
+}
+
+.commandPaletteList button{
+    text-align: left;
+}
+
+.fuse-highlight{
+    font-weight: bold;
+}
+
+.mouseSelected{
+    background-color: rgba(115, 115, 118, 0.185);
+}
+
+
+.selected{
+    background-color: rgba(70, 70, 223, 0.381);
+    outline: 2px solid black;
+}
+
+
+.commandDiv{
+    display: flex;
+    justify-content: space-between;
+}
+
+.commandBindingKey{
+    color: var(--secondary-background-color);
+    background: var(--secondary-color);
+    border-radius: 5px;
+    text-align: center;
+
+    padding: 1px 4px;
+}
+.commandBindingPlus{
+    padding: 0 1px;
+}

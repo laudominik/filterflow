@@ -6,7 +6,6 @@ import "./ShortcutSheet.css"
 
 export default function ShortcutSheet({show, setShow}: {show: boolean, setShow: (_: boolean) => void}) {
     const handleClose = () => setShow(false);
-    const handleShow = () => setShow(true);
     const toggle = () => setShow(!show);
 
     useCommand({
@@ -28,16 +27,13 @@ export default function ShortcutSheet({show, setShow}: {show: boolean, setShow: 
 
         <Modal.Body>
             <table>
-                {Array.from(commands.values()).filter(v => v.hidden !== true).map(v => {
-                    return <tr>
+                <tbody>
+
+                {commands.filter(v => v.hidden !== true).map(v => {
+                    return <tr key={v.name}>
                         <td className="KeyBindings">
                             {
-                                v.binding?.includes("Shift") ?
-                                    <><span className="SheetDialogKey">Shift</span> <>+</></>
-                                    : <></>
-                            }
-                            {
-                                v.binding?.sort().filter(v => v !== "Shift").map(v => <span className="SheetDialogKey">{v}</span>)
+                                v.binding?.map(v => <span key={v} className="SheetDialogKey">{v}</span>)
                             }
 
                         </td>
@@ -45,6 +41,7 @@ export default function ShortcutSheet({show, setShow}: {show: boolean, setShow: 
                         <td>{v.name}</td>
                     </tr>
                 })}
+                </tbody>
             </table>
         </Modal.Body>
     </Modal>

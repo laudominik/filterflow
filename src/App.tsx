@@ -14,6 +14,7 @@ import GraphView from './components/graph_view/GraphView';
 import {connectionStoreContext as ConnectionStoreContext, nodeStoreContext as NodeStoreContext, notebookStoreContext as NotebookStoreContext, previewStoreContext as PreviewStoreContext} from './stores/context';
 import {useKeybinds} from './util/commands';
 import ShortcutSheet from './components/commands/ShotcutSheet';
+import { CommandPalette } from './components/search/CommandPalette';
 
 export default function App() {
   const notebookStore = useContext(NotebookStoreContext);
@@ -66,6 +67,9 @@ export default function App() {
     </Button>
   )
 
+  // TODO: move down into separate compontent
+  const [cpVis, setCpVis] = useState(false);
+
   const view = <GraphView />
   //const view = modeGraph ? <GraphView /> : <>{expanded ? <></> : expandButton} {splitPane}</>
   // TODO: get selected notebook
@@ -76,6 +80,7 @@ export default function App() {
           <PreviewStoreContext.Provider value={graphStore}>
             <div className="App">
               <BrandNavBar />
+              <CommandPalette show={cpVis} setShow={setCpVis}/>
               {view}
             </div>
           </PreviewStoreContext.Provider>
