@@ -82,13 +82,16 @@ export default function GraphSpaceComponent({children = undefined, scale, offset
 
     useCommand({
         name: "Delete Node",
+        hidden: true,
         binding: ["Delete"],
         callback: handleNodeTrashIcon,
-        dependencies: [highlightedGUID]
+        dependencies: [highlightedGUID],
+        
     });
 
     useCommand({
         name: "Delete Edge",
+        hidden: true,
         binding: ["Delete"],
         callback: handleEdgeTrashIcon,
         dependencies: [highlightedEdge]

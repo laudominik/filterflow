@@ -28,7 +28,7 @@ export default function ShortcutSheet({show, setShow}: {show: boolean, setShow: 
 
         <Modal.Body>
             <table>
-                {Array.from(commands.values()).map(v => {
+                {Array.from(commands.values()).filter(v => v.hidden !== true).map(v => {
                     return <tr>
                         <td className="KeyBindings">
                             {

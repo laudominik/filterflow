@@ -13,6 +13,7 @@ interface ICommand{
     description?: string
     binding?: KeyBinding
     callback : CommandHandler
+    hidden?: boolean 
 }
 
 // based on https://n1ghtmare.github.io/2022-01-14/implement-a-keyboard-shortcuts-handler-in-typescript/
@@ -159,7 +160,7 @@ useCommand({
     dependencies: [highlightedGUID]
 })
  */
-export function useCommand(command: {name: string, description?: string, binding?: KeyBinding, callback: CallableFunction, dependencies?: DependencyList}) {
+export function useCommand(command: {name: string, description?: string, hidden?: boolean, binding?: KeyBinding, callback: CallableFunction, dependencies?: DependencyList}) {
     // based on https://github.com/JohannesKlauss/react-hotkeys-hook/blob/main/src/useHotkeys.ts
     const deps = command.dependencies;
     const memoizedCallback = useCallback(command.callback, deps ?? [])
@@ -172,7 +173,7 @@ export function useCommand(command: {name: string, description?: string, binding
     }
     
     useEffect(() => {
-        const cmd : ICommand = {binding: command.binding, name: command.name, callback: callbackRef}
+        const cmd : ICommand = {binding: command.binding, name: command.name, callback: callbackRef, hidden: command.hidden}
         const uuid = commandRegistry.register(cmd)
         return () => {commandRegistry.unregister(uuid);}
     }, []);
