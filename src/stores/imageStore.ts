@@ -2,7 +2,7 @@
 export type ImageId = string
 
 /*
-TODO: change to OPFS
+note: OPFS support - chrome 86, edge 86, firefox 111, safari 15.2
 */
 export namespace ImageStore {
 
@@ -11,17 +11,38 @@ export namespace ImageStore {
         if (precalculatedHash) {
             hash = precalculatedHash;
         }
-        localStorage.setItem(hash, imageString)
+        saveOpfs(hash, imageString)
+        //localStorage.setItem(hash, imageString)
         setImageList([...getImageList(storeName), hash], storeName)
         return hash
     }
 
     async function saveOpfs(key: string, value: string) {
+        const root = await navigator.storage.getDirectory()
+        const file = await root.getFileHandle(key, {
+            create: true,
+        })
+        //@ts-ignore
+        const wrt = await file.createWritable()
 
+        await wrt.write(value)
+        await wrt.close()
     }
 
     async function loadOpfs(key: string) {
+        const root = await navigator.storage.getDirectory()
+        const file = await root.getFileHandle(key)
+        if (!file) {
+            return undefined
+        }
 
+        const f = await file.getFile()
+        return await f.text()
+    }
+
+    async function removeOpfs(key: string) {
+        const root = await navigator.storage.getDirectory()
+        await root.removeEntry(key)
     }
 
     function canRemoveImage(key: string, skipName: string) {
@@ -47,11 +68,14 @@ export namespace ImageStore {
 
         // check if it can be safely removed (i.e. if it is not used by anything else)
         if (!canRemoveImage(hash, storeName)) return
-        localStorage.removeItem(hash)
+        removeOpfs(hash)
+        await listAllOpfs()
+        //localStorage.removeItem(hash)
     }
 
     export async function get(hash: ImageId): Promise<string | undefined> {
-        return localStorage.getItem(hash) ?? undefined
+        const result = loadOpfs(hash)
+        return result ?? undefined
     }
 
     const imageListName = "imageList"
@@ -78,4 +102,23 @@ export namespace ImageStore {
     export function setSelectedName(name: string) {
         selectedName = name
     }
+
+    async function listAllOpfs() {
+        const root = await navigator.storage.getDirectory()
+
+        //@ts-ignore
+        for await (let name of root.keys()) {
+            console.debug("OPFS:" + name)
+        }
+    }
+
+    async function cleanOpfs() {
+        const root = await navigator.storage.getDirectory()
+
+        //@ts-ignore
+        for await (let name of root.keys()) {
+            root.removeEntry(name)
+        }
+    }
 }
+
