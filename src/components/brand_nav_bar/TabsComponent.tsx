@@ -6,12 +6,20 @@ import {useSessionStorage} from 'usehooks-ts'
 
 import "./TabsComponent.css"
 import {notebookStoreContext} from "../../stores/context";
+import {useCommand} from "../../util/commands";
 
 export default function TabsComponent() {
     const notebooksContext = useContext(notebookStoreContext)
     const selectedNotebook = useSyncExternalStore(notebooksContext.subscribeSelected.bind(notebooksContext), notebooksContext.getSelectedIx.bind(notebooksContext))
     const _ = useSyncExternalStore(notebooksContext.subscribeNotebookCollection.bind(notebooksContext), notebooksContext.getNotebookCollection.bind(notebooksContext))
     const [cursorPos, setCursorPos] = useState(notebooksContext.stores[0][0].length)
+
+    useCommand({
+        name: "Close active notebook",
+        description: "Closes currently active notebook",
+        callback: handleCloseActiveNotebook,
+        binding: ["Shift", "Q"]
+    })
 
     useEffect(() => {
         const el = document.getElementById("selectednbinput") as HTMLInputElement
@@ -26,6 +34,10 @@ export default function TabsComponent() {
 
     function handleCloseNotebook(ix: number) {
         notebooksContext.deleteNotebook(ix);
+    }
+
+    function handleCloseActiveNotebook() {
+        handleCloseNotebook(selectedNotebook)
     }
 
     function handleRenameNotebook(ix: number, event: React.FormEvent<HTMLInputElement>) {

@@ -86,7 +86,7 @@ export default function GraphSpaceComponent({children = undefined, scale, offset
         binding: ["Delete"],
         callback: handleNodeTrashIcon,
         dependencies: [highlightedGUID],
-        
+
     });
 
     useCommand({
@@ -293,13 +293,14 @@ export default function GraphSpaceComponent({children = undefined, scale, offset
 
     function addMove(e: MouseEvent) {
         const rectum = document.getElementById("brandNav")!.getClientRects()[0];
-        setAddMovePos({x: (e as MouseEvent).pageX, y: (e as MouseEvent).pageY - rectum.height * scale})
+        setAddMovePos({x: (e as MouseEvent).pageX, y: (e as MouseEvent).pageY - rectum.height})
         setAddingEdgeAnimationComponent(handleAddingEdgeAnimation())
     }
 
     //#endregion
 
     function handleNodeTrashIcon() {
+        if (highlightedGUID == "") return;
         if ((addingInputConnection || addingOutputConnection) && addingGUID == highlightedGUID) {
             setAddingInputConnection(false);
             setAddingOutputConnection(false);
@@ -309,10 +310,6 @@ export default function GraphSpaceComponent({children = undefined, scale, offset
         previewContext.removePreviewStore(highlightedGUID)
         setOpenedPreviewsState(crypto.randomUUID())
 
-        // connectionContext.disconnectNodes([
-        //     [highlightedEdge.guid0, 0],
-        //     [highlightedEdge.guid1, highlightedEdge.inputNo]
-        // ])
         nodeContext.removeTransform(highlightedGUID)
         setHighlightedGUID("")
         setConnectionComponent(handleConnections())

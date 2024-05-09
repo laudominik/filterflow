@@ -62,7 +62,8 @@ const GraphNode: React.FC<NodeProps> = ({children,
         <div className="graphNode" onPointerDown={onBodyClick}>
             <Card className="transformCard" style={style}>
                 <Card.Header className="cardHeader">
-                    {`${node.value.getName()} : ${node.value.meta.id}`}
+                    {/* {`${node.value.getName()} : ${node.value.meta.id}`} */}
+                    {node.value.getName()}
                     <div>
                         <Button
                             className='border-0 bg-transparent'

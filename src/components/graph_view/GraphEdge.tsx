@@ -1,7 +1,7 @@
-import { CSSProperties, useContext, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { GUID } from "../../engine/engine";
-import { nodeStoreContext } from "../../stores/context";
-import { node } from "../../engine/node";
+import {CSSProperties, useContext, useEffect, useRef, useState, useSyncExternalStore} from "react";
+import {GUID} from "../../engine/engine";
+import {nodeStoreContext} from "../../stores/context";
+import {node} from "../../engine/node";
 
 
 /*
@@ -9,8 +9,8 @@ import { node } from "../../engine/node";
     edge is from pos0 to pos1 (i.e. pos0 -> pos1)
 */
 
-export function Edge({pos0, pos1, onClick, style, marker=true}:{pos0: [number, number], pos1: [number, number], onClick?: ()=>void, style? : CSSProperties, marker?: boolean}){
- 
+export function Edge({pos0, pos1, onClick, style, marker = true}: {pos0: [number, number], pos1: [number, number], onClick?: () => void, style?: CSSProperties, marker?: boolean}) {
+
     const margin = 25;
     const arrowHead = [10, 10]
     const dx = pos1[0] - pos0[0];
@@ -28,50 +28,51 @@ export function Edge({pos0, pos1, onClick, style, marker=true}:{pos0: [number, n
     const markerEnd = `url(#${arrowMarkUUID})`
 
     const defaultStyle = {stroke: "hsl(260, 100%, 80%)", strokeWidth: 4}
+    const invisibleStyle = {stroke: "rgba(0,0,0,0)", strokeWidth: 40}
 
 
-    return <svg className="arrows" style={{pointerEvents: 'none', position: 'absolute', top: top-margin, left: left-margin, width: Math.abs(dx) + 2*margin, height: Math.abs(dy) + 2 * margin}}>
+    return <svg className="arrows" style={{pointerEvents: 'none', position: 'absolute', top: top - margin, left: left - margin, width: Math.abs(dx) + 2 * margin, height: Math.abs(dy) + 2 * margin}}>
         <defs>
             {/* from https://webgl2fundamentals.org/webgl/lessons/resources/webgl-state-diagram.html#no-help */}
-            <marker id={arrowMarkUUID} viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill={style ? style.stroke : "hsl(260, 100%, 80%)"}><path d={`M 0 0 L ${arrowHead[0]} ${arrowHead[1]/2} L 0 ${arrowHead[1]} z`}></path></marker>
-          
+            <marker id={arrowMarkUUID} viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill={style ? style.stroke : "hsl(260, 100%, 80%)"}><path d={`M 0 0 L ${arrowHead[0]} ${arrowHead[1] / 2} L 0 ${arrowHead[1]} z`}></path></marker>
+
         </defs>
-        <line x1={x1+margin} y1={y1+margin} x2={x2+margin} y2={y2+margin} style={style ?? defaultStyle} markerEnd={marker ? markerEnd: ""} onClick={onClick} pointerEvents='auto'/>
- 
+        <line x1={x1 + margin} y1={y1 + margin} x2={x2 + margin} y2={y2 + margin} style={invisibleStyle} onClick={onClick} pointerEvents='auto' />
+        <line x1={x1 + margin} y1={y1 + margin} x2={x2 + margin} y2={y2 + margin} style={style ?? defaultStyle} markerEnd={marker ? markerEnd : ""} onClick={onClick} pointerEvents={'auto'} />
     </svg>
 }
 
-export function AnimationEdge({guid, isInput, mousePos, inputNo}: {guid : GUID, isInput: boolean, mousePos: {x: number, y: number}, inputNo: number}){
+export function AnimationEdge({guid, isInput, mousePos, inputNo}: {guid: GUID, isInput: boolean, mousePos: {x: number, y: number}, inputNo: number}) {
     const nodeContext = useContext(nodeStoreContext);
 
-    if(!nodeContext.getNodeCollection().find(el => el == guid)){
+    if (!nodeContext.getNodeCollection().find(el => el == guid)) {
         return <></>
     }
 
     let pos0 = nodeContext.getNode(guid)().value.getPos();
     let pos1 = {x: pos0.x, y: pos0.y};
 
-    if(isInput){
+    if (isInput) {
         const draggable = document.getElementById(guid)!
         const input = draggable.getElementsByClassName("circle-top")[inputNo]!;
-        if(input instanceof HTMLElement){
-            pos1 = {x: pos1.x + input.offsetLeft + input.offsetWidth/2, y: pos1.y + input.offsetTop + input.offsetHeight/2}
+        if (input instanceof HTMLElement) {
+            pos1 = {x: pos1.x + input.offsetLeft + input.offsetWidth / 2, y: pos1.y + input.offsetTop + input.offsetHeight / 2}
             pos0 = mousePos
         }
     } else {
         const draggable = document.getElementById(guid)!
         const output = draggable.getElementsByClassName("circle-bottom")[0]!
-        if(output instanceof HTMLElement){
-            pos0 = {x: pos0.x + output.offsetLeft + output.offsetWidth/2, y: pos0.y + output.offsetTop + output.offsetHeight/2}
+        if (output instanceof HTMLElement) {
+            pos0 = {x: pos0.x + output.offsetLeft + output.offsetWidth / 2, y: pos0.y + output.offsetTop + output.offsetHeight / 2}
             pos1 = mousePos
         }
     }
 
 
-    return <Edge pos0={[pos0.x, pos0.y]} pos1={[pos1.x, pos1.y]}/>
+    return <Edge pos0={[pos0.x, pos0.y]} pos1={[pos1.x, pos1.y]} />
 }
 
-export function PreviewEdge({guid}: {guid: GUID}){
+export function PreviewEdge({guid}: {guid: GUID}) {
     const nodeContext = useContext(nodeStoreContext);
     const [rerender, setRerender] = useState(false)
     const node = nodeContext.getNode(guid)().value;
@@ -81,23 +82,23 @@ export function PreviewEdge({guid}: {guid: GUID}){
     useEffect(() => {setRerender(true)}, [])
 
     const draggableTransform = document.getElementById(guid)
-    if(!draggableTransform){
+    if (!draggableTransform) {
         return <></>
     }
 
     const card = draggableTransform.getElementsByClassName("card")[0]!;
 
-    if(card instanceof HTMLElement){
+    if (card instanceof HTMLElement) {
         pos1 = {x: pos1.x + card.offsetLeft, y: pos1.y + card.offsetTop}
     }
 
-    const style= {stroke: "orange", strokeWidth: 1, strokeDasharray: "10,5" };            
-    return <Edge pos0={[pos0.x, pos0.y]} pos1={[pos1.x, pos1.y]} style={style} marker={false}/>
+    const style = {stroke: "orange", strokeWidth: 1, strokeDasharray: "10,5"};
+    return <Edge pos0={[pos0.x, pos0.y]} pos1={[pos1.x, pos1.y]} style={style} marker={false} />
 }
 
 
-export default function GraphEdge({guid0, guid1, inputNumber, highlighted, onClick} : {guid0 : GUID, guid1 : GUID, inputNumber: number, highlighted : boolean, onClick?: (guid0: GUID, guid1: GUID, inputNo: number)=>void}){
-    
+export default function GraphEdge({guid0, guid1, inputNumber, highlighted, onClick}: {guid0: GUID, guid1: GUID, inputNumber: number, highlighted: boolean, onClick?: (guid0: GUID, guid1: GUID, inputNo: number) => void}) {
+
     const nodeContext = useContext(nodeStoreContext);
     const [rerender, setRerender] = useState(false)
 
@@ -107,32 +108,32 @@ export default function GraphEdge({guid0, guid1, inputNumber, highlighted, onCli
     useEffect(() => {setRerender(!rerender)}, [])
 
     const onClickWrapper = () => {
-        if(!onClick) return;
+        if (!onClick) return;
         onClick(guid0, guid1, inputNumber);
     }
-    const style= {stroke: highlighted ? "blue" : "hsl(260, 100%, 80%)", strokeWidth: 4 }
+    const style = {stroke: highlighted ? "blue" : "hsl(260, 100%, 80%)", strokeWidth: 5}
 
     const draggable0 = document.getElementById(guid0)
     const draggable1 = document.getElementById(guid1)
 
-    if(!draggable0 || !draggable1){
+    if (!draggable0 || !draggable1) {
         return <></>
     }
-    
+
     const output = draggable0.getElementsByClassName("circle-bottom")[0]!
     const input = draggable1.getElementsByClassName("circle-top")[inputNumber]!;
-    
-    if(output instanceof HTMLElement){
-        pos0 = {x: pos0.x + output.offsetLeft + output.offsetWidth/2, y: pos0.y + output.offsetTop + output.offsetHeight/2}
+
+    if (output instanceof HTMLElement) {
+        pos0 = {x: pos0.x + output.offsetLeft + output.offsetWidth / 2, y: pos0.y + output.offsetTop + output.offsetHeight / 2}
     }
 
-    if(input instanceof HTMLElement){
-        pos1 = {x: pos1.x + input.offsetLeft + input.offsetWidth/2, y: pos1.y + input.offsetTop + input.offsetHeight/2}
+    if (input instanceof HTMLElement) {
+        pos1 = {x: pos1.x + input.offsetLeft + input.offsetWidth / 2, y: pos1.y + input.offsetTop + input.offsetHeight / 2}
     }
 
 
-    
-   
+
+
     // for now top left corner connects to top left corner
-    return <Edge pos0={[pos0.x, pos0.y]} pos1={[pos1.x, pos1.y]} onClick={onClickWrapper} style={style}/>
+    return <Edge pos0={[pos0.x, pos0.y]} pos1={[pos1.x, pos1.y]} onClick={onClickWrapper} style={style} />
 }
