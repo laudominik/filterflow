@@ -11,8 +11,11 @@ export namespace ImageStore {
         if (precalculatedHash) {
             hash = precalculatedHash;
         }
-        saveOpfs(hash, imageString)
-        //localStorage.setItem(hash, imageString)
+        if(await opfsAvailable()){
+            saveOpfs(hash, imageString)
+        } else {
+            warningNoOPFSSupport()
+        }
         setImageList([...getImageList(storeName), hash], storeName)
         return hash
     }
@@ -45,6 +48,15 @@ export namespace ImageStore {
         await root.removeEntry(key)
     }
 
+    async function opfsAvailable(){
+        const root = await navigator.storage.getDirectory()
+        const file = await root.getFileHandle("storage", {
+            create: true,
+        })
+        //@ts-ignore
+        return file.createWritable != undefined
+    }
+
     function canRemoveImage(key: string, skipName: string) {
         const cache = localStorage.getItem("stores_list");
         if (!cache) return;
@@ -58,6 +70,13 @@ export namespace ImageStore {
         return true
     }
 
+    function warningNoOPFSSupport(){
+        console.warn(`[FilterFlow]
+        Origin Private File System (OPFS) is not fully supported on that browser, 
+        either use a browser that supports OPFS or use the app normally without refreshing (images will be lost on refresh)
+    `)
+    }
+
     export async function remove(hash: ImageId, storeName?: string) {
         if (!storeName) {
             storeName = selectedName
@@ -68,13 +87,22 @@ export namespace ImageStore {
 
         // check if it can be safely removed (i.e. if it is not used by anything else)
         if (!canRemoveImage(hash, storeName)) return
-        removeOpfs(hash)
-        await listAllOpfs()
+
+        if(await opfsAvailable()){
+            removeOpfs(hash)
+        } else {
+            warningNoOPFSSupport()
+        }
         //localStorage.removeItem(hash)
     }
 
     export async function get(hash: ImageId): Promise<string | undefined> {
-        const result = loadOpfs(hash)
+        let result : string|undefined = undefined
+        if(await opfsAvailable()){
+            result = await loadOpfs(hash)
+        } else {
+            warningNoOPFSSupport()
+        }
         return result ?? undefined
     }
 
