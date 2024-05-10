@@ -44,6 +44,7 @@ abstract class Transform extends node<Transform> {
     params: KVParams;
     @jsonMember(String)
     hash: GUID;
+    isSource: boolean
     canvas: OffscreenCanvas;
     gl: WebGLRenderingContext;
 
@@ -60,6 +61,7 @@ abstract class Transform extends node<Transform> {
         this.hash = crypto.randomUUID();
         this.pos = new point(0, 0)
         this.prevPos = new point(0, 0)
+        this.isSource = false;
     }
 
     public async _update_node(): Promise<boolean> {

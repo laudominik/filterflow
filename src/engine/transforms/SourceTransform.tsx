@@ -10,11 +10,13 @@ export default class SourceTransform extends Transform {
     @jsonMember(String)
     imageId: string
 
-    constructor() {
-        super("source", "#FFFFFF", 0);
+
+    constructor(name: string = "source") {
+        super(name, "#FFFFFF", 0);
 
         // todo: load image blob from store
         this.imageId = "";
+        this.isSource = true;
 
     }
 

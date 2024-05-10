@@ -5,11 +5,15 @@ import {Conn4LaplaceTransform, Conn8LaplaceTransform} from "./transforms/convolu
 import {SobelXTransform, SobelYTransform} from "./transforms/convolution/SobelTransform"
 import BinaryAndTransform from "./transforms/logical/BinaryAndTransform"
 import BinaryOrTransform from "./transforms/logical/BinaryOrTransform"
+import BinarySubstractTransform from "./transforms/logical/BinarySubstractTransform"
 import BinaryXorTransform from "./transforms/logical/BinaryXorTransform"
 import DilatationTransform from "./transforms/morphologic/DilatationTransform"
 import ErosionTransform from "./transforms/morphologic/ErosionTransform"
 import SkeletonizationTransform from "./transforms/morphologic/SkeletonizationTransform"
 import MuxTransform from "./transforms/other/MuxTransform"
+import PerlinNoiseTransform from "./transforms/other/PerlinNoiseTransform"
+import RedSourceTransform from "./transforms/other/RedSourceTransform"
+import WhiteNoiseTransform from "./transforms/other/WhiteNoiseTransform"
 import {AndTransform} from "./transforms/point/AndTransform"
 import {BrightnessTransform} from "./transforms/point/BrightnessTransform"
 import ChannelCombinationTransform from "./transforms/point/ChannelCombinationTransform"
@@ -46,6 +50,7 @@ export default function declareOps() {
         .declareLogical("binary and", BinaryAndTransform)
         .declareLogical("binary or", BinaryOrTransform)
         .declareLogical("binary xor", BinaryXorTransform)
+        .declareLogical("binary substract", BinarySubstractTransform)
         .declarePoint("brightness", BrightnessTransform)
         .declarePoint("threshold", ThresholdTransform)
         .declarePoint("grayscale", GrayscaleTransform)
@@ -59,5 +64,8 @@ export default function declareOps() {
         .declareMorphologic("dilatation", DilatationTransform)
         .declareMorphologic("skeletonization", SkeletonizationTransform)
         .declareOther("mux", MuxTransform)
+        .declareSource("white noise", WhiteNoiseTransform)
+        .declareSource("red", RedSourceTransform)
+        .declareSource("perlin noise", PerlinNoiseTransform)
 }
 

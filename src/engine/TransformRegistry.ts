@@ -3,8 +3,8 @@ import SourceTransform from "./transforms/SourceTransform"
 
 
 class TransformBuilder {
-    constructor(private type: new ()=>Transform){}
-    build(){
+    constructor(private type: new () => Transform) {}
+    build() {
         return new this.type()
     }
 }
@@ -12,9 +12,9 @@ class TransformBuilder {
 export default class TransformRegistry {
     private registry: Map<string, TransformBuilder>
     private transformType: Map<string, string[]>
-    private knownTypes: Set<new ()=> Transform>
+    private knownTypes: Set<new () => Transform>
 
-    constructor(){
+    constructor() {
         this.registry = new Map()
         this.knownTypes = new Set();
         // TODO: better name; either for knownTypes or transformType (knownType referst to concrete transformations, transformType reffers to collections)
@@ -31,18 +31,18 @@ export default class TransformRegistry {
         this.declare("source", "source", SourceTransform)
     }
 
-    private declare(type: string, name: string, transform: new ()=>Transform): TransformRegistry {
+    private declare(type: string, name: string, transform: new () => Transform): TransformRegistry {
         this.registry.set(name, new TransformBuilder(transform))
         this.knownTypes.add(transform)
         this.transformType.get(type)?.push(name)
         return this;
     }
 
-    getKnownTypes(){
+    getKnownTypes() {
         return this.knownTypes;
     }
 
-    getTransformType(){
+    getTransformType() {
         return this.transformType;
     }
 
@@ -50,31 +50,35 @@ export default class TransformRegistry {
         return this.transformType.get(type)
     }
 
-    declareLinear(name: string, transform: new ()=>Transform) {
+    declareSource(name: string, transform: new () => Transform) {
+        return this.declare("source", name, transform)
+    }
+
+    declareLinear(name: string, transform: new () => Transform) {
         return this.declare("linear", name, transform)
     }
 
-    declarePooling(name: string, transform: new ()=>Transform) {
+    declarePooling(name: string, transform: new () => Transform) {
         return this.declare("pooling", name, transform)
     }
 
-    declareLogical(name: string, transform: new ()=>Transform) {
+    declareLogical(name: string, transform: new () => Transform) {
         return this.declare("logical", name, transform)
     }
 
-    declarePoint(name: string, transform: new ()=>Transform) {
+    declarePoint(name: string, transform: new () => Transform) {
         return this.declare("point", name, transform)
     }
 
-    declareMorphologic(name: string, transform: new ()=>Transform) {
+    declareMorphologic(name: string, transform: new () => Transform) {
         return this.declare("morphologic", name, transform)
     }
 
-    declareOther(name: string, transform: new ()=>Transform){
+    declareOther(name: string, transform: new () => Transform) {
         return this.declare("other", name, transform);
     }
 
-    build(name: string){
+    build(name: string) {
         return this.registry.get(name)?.build()
     }
 

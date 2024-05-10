@@ -392,11 +392,11 @@ export default function GraphSpaceComponent({children = undefined, scale, offset
                         color: "black",
                     }
 
-                    if (trf.name != "source") {
+                    if (!trf.isSource) {
                         style.width = "400px"
                     }
 
-                    return (trf.name == "source" ?
+                    return (trf.isSource ?
                         () => <ImportGraphNode key={guid} guid={guid} style={style} onBodyClick={dragStart} ioFunction={connectionToggle} /> :
                         () => <TransformGraphNode key={guid} guid={guid} style={style} onBodyClick={dragStart} ioFunction={connectionToggle} />
                     )()
@@ -477,14 +477,14 @@ function NodeContextMenu({highlightedGUID,
     return <div className='nodeContextMenu'>
         <Button title="delete transformation" onClick={handleNodeTrashIcon}><FontAwesomeIcon icon={faTrash} /></Button>
         {
-            node.value.name == "source" ? <></> :
+            node.value.isSource ? <></> :
                 <>
                     <Button title="preview" onClick={handleNodePreviewIcon}>{previewIcon}</Button>
                     <Button title="visualization" onClick={handleNodeVisualizationIcon}>{visualizationIcon}</Button>
                 </>
         }
         {
-            node.value.name == "source" && node.value.canvas.height != 1 && node.value.canvas.width != 1 ?
+            node.value.isSource && node.value.canvas.height != 1 && node.value.canvas.width != 1 ?
                 <>
                     {form}
                     <Button title="choose image" onClick={() => document.getElementById("preview_chooser" + highlightedGUID)?.click()}>{chooseImageIcon}</Button>

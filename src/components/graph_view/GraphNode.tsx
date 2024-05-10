@@ -43,7 +43,7 @@ const GraphNode: React.FC<NodeProps> = ({children,
     //const inputSize = useSyncExternalStore(nodeContext.subscribeNode(guid), node.value.getInputSize.bind(node.val))
     const [open, setOpen] = useState(node.value.getExpanded());
 
-    const handleOpenClick = (e: NodeMouseEvent)  => {
+    const handleOpenClick = (e: NodeMouseEvent) => {
         e.preventDefault()
         node.value.setExpanded(!open)
         setOpen(!open)
@@ -65,11 +65,12 @@ const GraphNode: React.FC<NodeProps> = ({children,
                 <Card.Header className="cardHeader">
                     {/* {`${node.value.getName()} : ${node.value.meta.id}`} */}
                     {node.value.getName()}
-                    <div>
+                    <div onPointerDown={e => handleOpenClick(e)}>
                         <Button
                             className='border-0 bg-transparent'
-                            aria-expanded={open}>
-                            <FontAwesomeIcon className="iconInCard" icon={open ? faChevronDown : faChevronUp} onClick={e => handleOpenClick(e)}/>
+                            aria-expanded={open}
+                        >
+                            <FontAwesomeIcon className="iconInCard" icon={open ? faChevronDown : faChevronUp} />
                         </Button>
                     </div>
                 </Card.Header>
