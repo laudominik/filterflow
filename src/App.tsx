@@ -12,7 +12,7 @@ import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import GraphView from './components/graph_view/GraphView';
 import {connectionStoreContext as ConnectionStoreContext, nodeStoreContext as NodeStoreContext, notebookStoreContext as NotebookStoreContext, previewStoreContext as PreviewStoreContext} from './stores/context';
-import {useKeybinds} from './util/commands';
+import {useCommand, useKeybinds} from './util/commands';
 import ShortcutSheet from './components/commands/ShotcutSheet';
 import { CommandPalette } from './components/search/CommandPalette';
 
@@ -69,6 +69,11 @@ export default function App() {
 
   // TODO: move down into separate compontent
   const [cpVis, setCpVis] = useState(false);
+
+  useCommand({
+    name: "force reload",
+    callback: ()=>{window.localStorage.clear(); window.location.reload()}
+  })
 
   const view = <GraphView />
   //const view = modeGraph ? <GraphView /> : <>{expanded ? <></> : expandButton} {splitPane}</>
