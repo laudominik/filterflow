@@ -73,8 +73,7 @@ export default function TabsComponent() {
                                     borderStyle: "solid"
                                 }}
                                 value={name}
-                                onChange={(e) => handleRenameNotebook(ix, e)}
-                                autoFocus />
+                                onChange={(e) => handleRenameNotebook(ix, e)}/>
                             :
                             <input type="text" className="tabText"
                                 style={{
