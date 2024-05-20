@@ -146,10 +146,7 @@ export default function GraphView() {
         }
     }
 
-    // TODO: add handle by shortcut???
     function handleOpenSearch(position?: [number, number]) {
-        // set visibility,
-        // set position
         handleSearchPos(position)
         setSearchVisibiilty(true);
     }
@@ -181,7 +178,7 @@ export default function GraphView() {
             {/* END DEBUG */}
 
             <GraphSpace scale={scale} offset={offset} ref={graphSpaceRef}></GraphSpace>
-            <SearchPopup visible={searchVisible} position={searchPos}></SearchPopup>
+            <SearchPopup visible={searchVisible} setVisible={setSearchVisibiilty} position={searchPos}></SearchPopup>
 
             <div className='graphViewTooltip'>
                 <Button title="add transformation" onClick={(e) => {e.preventDefault(); e.stopPropagation(); handleOpenSearch()}}><FontAwesomeIcon icon={faPlus} /></Button>

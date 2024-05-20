@@ -1,0 +1,13 @@
+.fuse-highlight{
+    font-weight: bold;
+}
+
+.mouseSelected{
+    background-color: rgba(115, 115, 118, 0.185);
+}
+
+
+.selected{
+    background-color: rgba(70, 70, 223, 0.381);
+    outline: 2px solid black;
+}

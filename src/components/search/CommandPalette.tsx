@@ -3,6 +3,7 @@ import {useEffect, useMemo, useRef, useState, useSyncExternalStore} from "react"
 import {Modal} from "react-bootstrap";
 import {commandRegistry, useCommand} from "../../util/commands";
 import './CommandPalette.css'
+import './CommonSearchStyle.css'
 import {highlightMatches} from '../graph_view/SearchPopup';
 import {KeyboardEventKey} from '../../util/keys';
 
