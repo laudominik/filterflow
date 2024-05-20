@@ -1,3 +1,7 @@
+
+.commandPaletteModal{
+    top: 20vh;
+}
 .commandPaletteList{
     display: flex;
     flex-direction: column;

@@ -114,7 +114,7 @@ export function CommandPalette({show, setShow}: {show: boolean, setShow: (_: Rea
         }
     }, [show])
 
-    return <Modal show={show} centered onHide={handleClose} animation={false}>
+    return <Modal className='commandPaletteModal' show={show} onHide={handleClose} animation={false}>
         <Modal.Header>
             <input ref={inputRef}
                 onKeyDown={handleControlls}
