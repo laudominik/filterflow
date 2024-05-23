@@ -24,7 +24,7 @@ export default function TresholdVisualizationComponent({guid}: {guid: GUID}) {
     const value: number = pixels[ChannelValue[selection.channel]]
     const threshold: number = node.value.params["argument"]
     const result: number = 255 * (value > threshold ? 1 : 0)  
-    console.log(value, threshold, result)
+    // console.log(value, threshold, result)
     
     return <>
     {PixelComponent([255,255,255], selection.channel)} * <ruby>

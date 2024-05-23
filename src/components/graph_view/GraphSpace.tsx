@@ -318,7 +318,7 @@ export default function GraphSpaceComponent({children = undefined, scale, offset
 
     function handleEdgeTrashIcon() {
         if (highlightedEdge.guid0 === "" || highlightedEdge.guid1 === "") return;
-        console.log(highlightedEdge)
+        // console.log(highlightedEdge)
         connectionContext.disconnectNodes([
             [highlightedEdge.guid0, 0],
             [highlightedEdge.guid1, highlightedEdge.inputNo]

@@ -153,7 +153,7 @@ export default function GraphView() {
     // TODO: handle middle mouse click
     // TODO: handle touch pinch, and pan
     function handleKeyDown(event: React.KeyboardEvent) {
-        console.log()
+        // console.log()
     }
 
     // the trick to prevent CTRL+Wheel Zoom is to prevent it from root element

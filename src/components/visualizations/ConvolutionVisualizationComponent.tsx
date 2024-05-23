@@ -13,7 +13,7 @@ export default function ConvolutionVisualizationComponent({guid}: {guid: GUID}) 
     const previewStore = previewContext.getPreviewStore(guid)!;
     const selection = useSyncExternalStore(previewStore.subscribeSelection.bind(previewStore), previewStore.getSelection.bind(previewStore));
 
-    console.log(node.value.getParams())
+    // console.log(node.value.getParams())
     const input = node.value.inputs.get(0)
     let inputId = guid;
     if(input){

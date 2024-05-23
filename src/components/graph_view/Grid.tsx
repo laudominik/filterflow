@@ -4,7 +4,7 @@ export default function Grid({displacement, scale, size, clusterSize=5, baseSize
     
     const canvasRef = useRef<HTMLCanvasElement>(null);
     useEffect(()=>{
-        console.log("updated component")
+        // console.log("updated component")
     }, [])
 
 

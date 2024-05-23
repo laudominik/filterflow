@@ -214,6 +214,22 @@ export abstract class node<T extends node<T>>{
         }
 
         console.log(`UPDATE: error for ${this.meta.id}`)
+        console.log(this.engine)
+        // debugger
         this.engine.internal.dispatchEvent(new CustomEvent<NodeResponse>("info", {detail: msg}))
+    }
+
+    public String(): String{
+        let inputs = ""
+        this.inputs.forEach(v => inputs+= `${v[0]} ${v[1]}`)
+        
+        let outputs = ""
+        this.connected_to_outputs.forEach(v => v.forEach(p => outputs+= `${v[0]}->${p[0]} ${p[1]}`))
+        return`
+        ${this.meta.id}
+        Connections:
+            Inputs: ${inputs}
+            Outputs: ${outputs}
+        `
     }
 }

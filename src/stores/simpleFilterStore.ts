@@ -48,6 +48,8 @@ class simpleFilterStore {
             this.preview = {start: this.source,end: this.source, distance: 0, visualizationChannel: Channel.NONE,previewChannels:[Channel.NONE]}
             this.canvasPointers = {source: [0,0],destination:[0,0]} 
             this.previewSelections = {source: {start: [0,0], size: [0,0], center:[0,0]},destination:{start: [0,0], size: [0,0], center: [0,0]}} 
+            console.log("SIMPLE STORE: END");
+
             return;
         }
 
@@ -60,10 +62,12 @@ class simpleFilterStore {
         this.canvasPointers = JSON.parse(storedCanvasPointers!);
         this.previewSelections = JSON.parse(storedPreviewSelections!);
         let source = this.engine.nodes.get(this.source)! as SourceTransform;
+        // debugger
         source.loadImage().then(()=>{ // this is easier than async constructor 
             console.log(this.engine)
             this.applyTransforms()
             this.emitSequenceChange();
+            console.log("SIMPLE STORE: END");
         });
         
     }
