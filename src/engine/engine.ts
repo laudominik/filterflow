@@ -107,7 +107,15 @@ export class Engine extends EventTarget implements IEngine<Transform>{
         if (!updates.started.has(id)) {
             updates.needed.add(id);
             updates.started.add(id);
-            this.getNode(id)!.update_node();
+            let node = this.getNode(id)
+            if(node){
+                node.update_node();
+            }else{
+                debugger
+                updates.needed.delete(id)
+                updates.done.delete(id)
+                updates.started.delete(id)
+            }
         }else{
             debugger
             console.log("Direct update called more than once")
@@ -152,7 +160,12 @@ export class Engine extends EventTarget implements IEngine<Transform>{
         this.dispatchEvent(new CustomEvent<ExternalEngineResponse>("update", {detail: this.batchState.response}))
         // clean detached nodes
         this.batchState.response.node.removed_nodes.forEach(n => n.onDelete());
-        this.batchState.response.node.removed.forEach(v => this.nodes.delete(v));
+        if(this.batchState.response.node.removed.length){
+            debugger
+            console.log("ENGINE FLUSH: DELETE");
+            
+            this.batchState.response.node.removed.forEach(v => this.nodes.delete(v));
+        }
 
         const tick = this.batchState.tick + 1;
         this.batchState = {
@@ -216,7 +229,7 @@ export class Engine extends EventTarget implements IEngine<Transform>{
 
     public removeNode(guid: GUID) {
         let node = this.getNode(guid);
-        node?.disconnect(); // this will not trigger update, only request them
+        node!.disconnect(); // this will not trigger update, only request them
         // this.nodes.delete(guid);
         this.batchState.response.node.removed.push(guid);
         this.source_nodes = this.source_nodes.filter((v) => v != guid);
