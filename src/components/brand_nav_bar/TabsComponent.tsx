@@ -62,7 +62,7 @@ export default function TabsComponent() {
     return <Nav className="mr-auto">
         {notebooksContext.stores.map((el, ix) => {
             const name = `${el[0]}`;
-            return <Nav.Link key={name} style={{cursor: "default"}}>
+            return <Nav.Link key={ix} style={{cursor: "default"}}>
                 <div style={tabStyle} onClick={() => handleSelectNotebook(ix)}>
                     {
                         ix === selectedNotebook ?
