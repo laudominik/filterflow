@@ -5,7 +5,6 @@ import PointTransform from "../PointTransform";
 
 @jsonObject
 export class BrightnessTransform extends PointTransform {
-    image?:string
     constructor() {
         super('Brightness', true,    `
         precision mediump float;

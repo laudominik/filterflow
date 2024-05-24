@@ -5,7 +5,6 @@ import ConvolutionTransform from "../ConvolutionTransform";
 
 @jsonObject
 class SobelTransform extends ConvolutionTransform {
-    image?:string
     constructor(dirX: boolean) {
         super('Sobel');
         this.kernel = dirX ? 

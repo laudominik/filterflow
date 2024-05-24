@@ -52,7 +52,6 @@ const linearConvolutionShader = `
 @jsonObject
 class ConvolutionTransform extends Transform {
     
-    image?:string
     kernel: Array<Array<number>>
     fragment: string;
     

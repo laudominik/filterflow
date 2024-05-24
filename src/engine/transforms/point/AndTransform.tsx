@@ -5,7 +5,6 @@ import { BitwiseTransform } from "./BitwiseTransform";
 
 @jsonObject
 export class AndTransform extends BitwiseTransform {
-    image?:string
 
     // AND = v1 * v2
     constructor() {

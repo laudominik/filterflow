@@ -7,7 +7,6 @@ import TresholdVisualizationComponent from "../../../components/visualizations/T
 
 @jsonObject
 export class ThresholdTransform extends PointTransform {
-    image?:string
     constructor() {
         super('Threshold', true,    `
         precision mediump float;
