@@ -13,7 +13,8 @@ interface ICommand{
     description?: string
     binding?: KeyBinding
     callback : CommandHandler
-    hidden?: boolean 
+    hidden?: boolean,
+    guid: string
 }
 
 // based on https://n1ghtmare.github.io/2022-01-14/implement-a-keyboard-shortcuts-handler-in-typescript/
@@ -106,6 +107,7 @@ class CommandRegistry {
     
     register(command : ICommand){
         const uuid = crypto.randomUUID();
+        command.guid = uuid;
         this.commands.set(uuid, command);
         this.commandsList = [...this.commandsList, command];
         this.bind(command);
@@ -176,7 +178,7 @@ export function useCommand(command: {name: string, description?: string, hidden?
     }
     
     useEffect(() => {
-        const cmd : ICommand = {binding: command.binding, name: command.name, callback: callbackRef, hidden: command.hidden}
+        const cmd : ICommand = {binding: command.binding, name: command.name, callback: callbackRef, hidden: command.hidden, description: command.description, guid: ""} //guid is automaticly filled by `register`
         const uuid = commandRegistry.register(cmd)
         return () => {commandRegistry.unregister(uuid);}
     }, []);

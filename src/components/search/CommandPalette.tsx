@@ -37,13 +37,13 @@ export function CommandPalette({show, setShow}: {show: boolean, setShow: (_: Rea
 
 
     const defaultResult = <>{commands.map((v, i) =>
-        <div className={'commandDiv' + (selected === i ? ' selected' : '') + (mouseSelected === i ? ' mouseSelected' : '')} key={v.name} onMouseOver={() => {setMouseSelected(i)}} onClick={() => {v.callback.current(); handleClose()}}>
+        <div className={'commandDiv' + (selected === i ? ' selected' : '') + (mouseSelected === i ? ' mouseSelected' : '')} key={v.guid} onMouseOver={() => {setMouseSelected(i)}} onClick={() => {v.callback.current(); handleClose()}}>
             <div className='commandLabel'>{v.name}</div>
             <div className='commandBindings'>{
-                v.binding?.map((key, i, a) => <>
+                v.binding?.map((key, i, a) => <span key={key}>
                     <span className='commandBindingKey'>{key}</span>
                     {i < a.length - 1 ? <span className='commandBindingPlus'>+</span> : <></>}
-                </>)
+                </span>)
             }</div>
         </div>
     )}</>
@@ -51,7 +51,7 @@ export function CommandPalette({show, setShow}: {show: boolean, setShow: (_: Rea
     const searchResult = <>{queryResultData.filter(v => v.matches != null).map((v, i) => {
         const matches = new Map(v.matches!.map(value => [value.key, value]));
         const fullMatch = matches.has('name') ? matches.get('name')?.indices : [];
-        return <div className={'commandDiv' + (selected === i ? ' selected' : '') + (mouseSelected === i ? ' mouseSelected' : '')} key={v.item.name} onMouseOver={() => {setMouseSelected(i)}} onClick={() => {v.item.callback.current(); handleClose()}}>
+        return <div className={'commandDiv' + (selected === i ? ' selected' : '') + (mouseSelected === i ? ' mouseSelected' : '')} key={v.item.guid} onMouseOver={() => {setMouseSelected(i)}} onClick={() => {v.item.callback.current(); handleClose()}}>
             <div>{highlightMatches(v.item.name, fullMatch)}</div>
             <div className='commandBindings'>{
                 v.item.binding?.map((key, i, a) => <>
