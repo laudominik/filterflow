@@ -7,9 +7,11 @@
 
 
 .graphView {
-    width: 100%;
-    height: calc(100% - var(--navbar-height));   
-    position: relative;
+    width: 100vw;
+    height: 100vh;   
+    position: absolute;
+    top: 0;
+    left: 0;
 }
 
 .graphViewGrid{
@@ -115,3 +117,11 @@
     height: 100%;
 }
 /* #endregion */
+
+.transformNode{
+    cursor: grab;
+}
+
+.transformNode.dragging{
+    cursor: grabbing;
+}

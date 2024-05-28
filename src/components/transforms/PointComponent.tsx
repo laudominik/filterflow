@@ -28,6 +28,7 @@ export default function PointComponent({guid, parametrized}: {guid: GUID, parame
                                         className="form-control"
                                         value={argument}
                                         onChange={(e) => handleInputChange(e.target.value)}
+                                        onPointerDown={e => e.stopPropagation()}
                                     />
             </label>
         </div>

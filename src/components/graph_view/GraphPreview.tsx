@@ -12,7 +12,15 @@ import FormRange from "react-bootstrap/esm/FormRange";
 import {CircleSwitch} from "../CircleSwitch";
 import {Channel} from "../../stores/storeInterfaces";
 
-export default function GraphPreview({guid, onBodyClick}: {guid: GUID, onBodyClick?: (e: React.PointerEvent) => void}) {
+type PreviewPointerEvent = (e: React.PointerEvent, guid : GUID) => void;
+
+type graphPreviewEvents = {
+    onPointerDown?: PreviewPointerEvent;
+    onPointerMove?: PreviewPointerEvent;
+    onPointerUp?: PreviewPointerEvent;
+};
+
+export default function GraphPreview({guid, pointerEvents}: {guid: GUID, pointerEvents?: graphPreviewEvents}) {
 
     const nodeContext = useContext(nodeStoreContext)
     const node = nodeContext.getNode(guid)();
@@ -33,7 +41,7 @@ export default function GraphPreview({guid, onBodyClick}: {guid: GUID, onBodyCli
         previewStore.updateSelection(selection.pointer, selection.preview, channel)
     }
 
-    return <div id={"pr" + guid} style={{left: pos.x, top: pos.y}} onPointerDown={onBodyClick} className="draggable previewNode">
+    return <div id={"pr-" + guid} style={{left: pos.x, top: pos.y}} onPointerDown={(e) => {pointerEvents?.onPointerDown?.(e, guid)}} onPointerMove={(e) => {pointerEvents?.onPointerMove?.(e, guid)}} onPointerUp={(e) => {pointerEvents?.onPointerUp?.(e, guid)}} className="draggable previewNode">
         <div className="previewNode">
             <div className="pipelineBar">
                 <div>{node.value.name} Preview</div>

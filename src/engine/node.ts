@@ -59,6 +59,8 @@ export type NodeInit<T extends node<T>> = {
     id: string, inputs: number, outputs: number, engine?: IEngine<T>
 }
 
+export type IOType = "input"|"output";
+
 @jsonObject
 export abstract class node<T extends node<T>>{
     valid: boolean = false; // not included in json to reset state

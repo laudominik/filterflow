@@ -4,6 +4,8 @@ import {ReactNode} from "react";
 import Transform from "../Transform";
 import {jsonMember, jsonObject} from "typedjson";
 import {ImageStore} from '../../stores/imageStore';
+import ImportComponent from '../../components/transforms/ImportComponent';
+import { GUID } from '../iengine';
 
 @jsonObject
 export default class SourceTransform extends Transform {
@@ -151,8 +153,8 @@ export default class SourceTransform extends Transform {
             // todo: save image blob to store
         }
     }
-    paramView() {
-        return <></>
+    paramView(guid: GUID) {
+        return <ImportComponent guid={guid}></ImportComponent>
     }
 
     visualizationView(guid: string) {

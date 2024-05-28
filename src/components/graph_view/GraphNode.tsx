@@ -1,49 +1,62 @@
 import React from "react"
 import {ReactNode, useContext, useState, useSyncExternalStore} from "react";
 import {GUID} from "../../engine/engine";
-import {Button, Card, CardBody, CardHeader, CardTitle, Collapse} from "react-bootstrap";
+import {Button, Card, Collapse} from "react-bootstrap";
 import {faChevronDown, faChevronUp} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 
 import './GraphNode.css';
-import {connectionStoreContext, nodeStoreContext, persistenceContext} from "../../stores/context";
+import {connectionStoreContext, nodeStoreContext} from "../../stores/context";
 import Transform from "../../engine/Transform";
+import { IOType } from "../../engine/node";
+import { selectedIOContext } from "./GraphSpace";
 
 interface NodeBodyProps {
     children: ReactNode;
 }
 
-type NodeMouseEvent = React.MouseEvent;
-export type IOFunctionType = (e: React.SyntheticEvent, myGUID: GUID, inputNo: number) => void;
 
+export type NodePointerEvent = (e: React.PointerEvent, node: Transform, guid : GUID) => void;
+export type IOFunctionType = (e: React.PointerEvent, type: IOType, myGUID: GUID, inputNo: number) => void;
 
-interface NodeProps {
+export interface GraphNodeEvents {
+    nodeEvents?: {
+        onPointerDown?: NodePointerEvent;
+        onPointerMove?: NodePointerEvent;
+        onPointerUp?: NodePointerEvent;
+    }
+    ioEvents?: {
+        onPointerDown?: IOFunctionType;
+        onPointerMove?: IOFunctionType;
+        onPointerUp?: IOFunctionType;
+    }
+}
+
+interface NodeProps extends GraphNodeEvents{
     children: ReactNode;
     guid: GUID;
+    className?: string;
     style?: React.CSSProperties;
-    onBodyClick?: (e: React.PointerEvent) => void;
-    ioFunction?: IOFunctionType
-    // mouseOver&touchOver (for inputs/node itselt) - for creating edges
-    // touch (handle click and drag) - for selecting and drag
-    // touch (handle click and drag)
 
-}
+};
 
 
 const GraphNode: React.FC<NodeProps> = ({children,
     guid,
+    className,
     style,
-    onBodyClick,
-    ioFunction
+    nodeEvents,
+    ioEvents
 }) => {
     const nodeContext = useContext(nodeStoreContext)
     const connectionContext = useContext(connectionStoreContext);
+    const selectedIO = useContext(selectedIOContext);
 
     const node = useSyncExternalStore(nodeContext.subscribeNode(guid), nodeContext.getNode(guid));
     //const inputSize = useSyncExternalStore(nodeContext.subscribeNode(guid), node.value.getInputSize.bind(node.val))
     const [open, setOpen] = useState(node.value.getExpanded());
 
-    const handleOpenClick = (e: NodeMouseEvent) => {
+    const handleOpenClick = (e: React.MouseEvent) => {
         e.preventDefault()
         node.value.setExpanded(!open)
         setOpen(!open)
@@ -53,26 +66,25 @@ const GraphNode: React.FC<NodeProps> = ({children,
     const inputs = <div className="circle-container">
         {
             [...Array(node.value.meta.input_size)].map(
-                (_, i) => <button key={`input-${guid}-${i}`} className="circle circle-top" onMouseDown={(e) => ioFunction ? ioFunction(e, guid, i) : {}}></button>
+                (_, i) => <button key={`input-${guid}-${i}`} id={`input-${guid}-${i}`} className={"circle circle-top input-circle " + (selectedIO?.type === "input" ? "non-selectable-circle" : "") } onPointerDown={(e) => ioEvents?.onPointerDown?.(e, "input", guid, i)}></button>
             )
         }
     </div>
-    const outputs = <div className="circle-container"><button className="circle circle-bottom" onMouseDown={(e) => ioFunction ? ioFunction(e, guid, 0) : {}}></button></div>
-    return <div className="draggable transformNode" id={guid} key={guid} style={{left: node.value.getPos().x, top: node.value.getPos().y}}>
+    const outputs = <div className="circle-container"><button id={`output-${guid}-0`} className={"circle circle-bottom output-circle " + (selectedIO?.type === "output" ? "non-selectable-circle" : "")} onPointerDown={(e) => ioEvents?.onPointerDown?.(e, "output", guid, 0)}></button></div>
+    return <div className={"draggable transformNode " + className} id={`node-${guid}`} key={guid} style={{left: node.value.getPos().x, top: node.value.getPos().y, transform: "translate(-50%, -50%)"}}>
         {inputs}
-        <div className="graphNode" onPointerDown={onBodyClick}>
+        <div className="graphNode" onPointerDown={(e)=>{nodeEvents?.onPointerDown?.(e, node.value, guid)}} onPointerMove={(e)=>{nodeEvents?.onPointerMove?.(e, node.value, guid)}} onPointerUp={(e)=>{nodeEvents?.onPointerUp?.(e, node.value, guid)}}>
             <Card className="transformCard" style={style}>
                 <Card.Header className="cardHeader">
                     {/* {`${node.value.getName()} : ${node.value.meta.id}`} */}
                     {node.value.getName()}
-                    <div onPointerDown={e => handleOpenClick(e)}>
                         <Button
                             className='border-0 bg-transparent'
                             aria-expanded={open}
+                            onClick={e => handleOpenClick(e)}
                         >
                             <FontAwesomeIcon className="iconInCard" icon={open ? faChevronDown : faChevronUp} />
                         </Button>
-                    </div>
                 </Card.Header>
                 <Collapse in={open} timeout={0}
                     onExited={() => connectionContext.forceConnectionsRefresh()}

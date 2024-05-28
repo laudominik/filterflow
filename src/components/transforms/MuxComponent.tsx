@@ -52,6 +52,7 @@ export default function MuxComponent({guid}: {guid: GUID}) {
                     value={muxedInputs}
                     onChange={(e) => handleMuxedInputsChange(e.target.value)}
                     onKeyDown={(e) => e.preventDefault()}
+                    onPointerDown={e => e.stopPropagation()}
                 />
             </label>
         </div>
@@ -68,6 +69,7 @@ export default function MuxComponent({guid}: {guid: GUID}) {
                             value={ix}
                             checked={selected == ix}
                             onChange={(e) => handleSelectedChange(e.target.value)}
+                            onPointerDown={e => e.stopPropagation()}
                         />
                     })
 

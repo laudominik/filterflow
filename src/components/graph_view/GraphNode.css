@@ -32,6 +32,20 @@
     border-color: #0f0;
 }
 
+.non-selectable-circle{
+    cursor: pointer;
+    border-width: 2%;
+    border-color: gray;
+}
+
 .image-boundaries {
     height: 30vh;
+}
+
+.selectedNode .transformCard{
+    outline: solid 3px blue;
+}
+
+.transformCard {
+    width: 400px;
 }

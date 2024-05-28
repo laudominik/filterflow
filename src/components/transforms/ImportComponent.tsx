@@ -1,34 +1,29 @@
-import { ChangeEvent, useContext, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { GUID } from "../../engine/engine";
+import { ChangeEvent, useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalStore } from "react";
+import { nodeStoreContext } from "../../stores/context";
+import { GUID } from "../../engine/iengine";
 import { Form } from "react-bootstrap";
 import "../preview_container/Preview.css"
-import "./GraphNode.css"
-import GraphNode, { GraphNodeEvents } from "./GraphNode";
-import { nodeStoreContext } from "../../stores/context";
-
+import "../graph_view/GraphNode.css"
 
 type ColorMask = [boolean, boolean, boolean];
 
-export default function ImportGraphNode({ guid, style, ioEvents, nodeEvents }: { guid: GUID, style: React.CSSProperties} & GraphNodeEvents){    
-    const nodeContext = useContext(nodeStoreContext);    
+
+export default function ImportComponent({guid} : {guid: GUID}){
+    const nodeContext = useContext(nodeStoreContext);
     const node = useSyncExternalStore(nodeContext.subscribeNode(guid), nodeContext.getNode(guid));
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    const isValid = useSyncExternalStore(nodeContext.subscribeNode(guid), () => nodeContext.getNode(guid)().value.valid)
+    const isValid = node.value.valid;
     const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (!file) {
-            return;
-        }
-
+        if(!file) return;
         const reader = new FileReader();
         reader.onload = (event) => {
-            nodeContext.updateParam(guid,{image: event.target?.result as string})
+            nodeContext.updateParam(guid, {image: event.target?.result as string})
         }
-        
+
         reader.readAsDataURL(file);
     }
-
 
     const drawImage = (input: OffscreenCanvas, destination: HTMLCanvasElement, mask: ColorMask) => {
         const vertexShaderSource = `
@@ -112,18 +107,18 @@ export default function ImportGraphNode({ guid, style, ioEvents, nodeEvents }: {
         }
 
     },[node]);
-
-    const form = <Form>       
+    
+    const form = <Form>
         <Form.Group controlId="formFile" className="mb-3">
             <Form.Label>Choose an image</Form.Label>
             <Form.Control type="file" accept=".png,.jpg,.bmp,.jpeg" onChange={handleImageChange} />
         </Form.Group>
     </Form>
 
-    const img = <div className="imageContainer"><div className="centeredImage"><canvas ref={canvasRef} /></div></div>
-    
-    return <GraphNode guid={guid} nodeEvents={nodeEvents} ioEvents={ioEvents} style={style}>
-            {isValid ? img : form}
-        </GraphNode>
+const img = <div className="imageContainer"><div className="centeredImage"><canvas ref={canvasRef} /></div></div>
+
+    return <>
+        {isValid ? img : form}
+    </> 
     
 }

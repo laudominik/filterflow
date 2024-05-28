@@ -1,13 +1,16 @@
-import {CSSProperties, useContext, useEffect, useRef, useState, useSyncExternalStore} from "react";
+import {CSSProperties, useContext, useEffect, useReducer, useRef, useState, useSyncExternalStore} from "react";
 import {GUID} from "../../engine/engine";
 import {nodeStoreContext} from "../../stores/context";
 import {node} from "../../engine/node";
+import { ScaleOffsetContext } from "./GraphView";
 
 
 /*
     pos0, pos1 - positions in graph space
     edge is from pos0 to pos1 (i.e. pos0 -> pos1)
 */
+
+export interface EdgeEvents {}
 
 export function Edge({pos0, pos1, onClick, style, marker = true}: {pos0: [number, number], pos1: [number, number], onClick?: () => void, style?: CSSProperties, marker?: boolean}) {
 
@@ -37,7 +40,7 @@ export function Edge({pos0, pos1, onClick, style, marker = true}: {pos0: [number
             <marker id={arrowMarkUUID} viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill={style ? style.stroke : "hsl(260, 100%, 80%)"}><path d={`M 0 0 L ${arrowHead[0]} ${arrowHead[1] / 2} L 0 ${arrowHead[1]} z`}></path></marker>
 
         </defs>
-        <line x1={x1 + margin} y1={y1 + margin} x2={x2 + margin} y2={y2 + margin} style={invisibleStyle} onClick={onClick} pointerEvents='auto' />
+        {onClick && <line x1={x1 + margin} y1={y1 + margin} x2={x2 + margin} y2={y2 + margin} style={invisibleStyle} onClick={onClick} pointerEvents='auto' />}
         <line x1={x1 + margin} y1={y1 + margin} x2={x2 + margin} y2={y2 + margin} style={style ?? defaultStyle} markerEnd={marker ? markerEnd : ""} onClick={onClick} pointerEvents={'auto'} />
     </svg>
 }
@@ -70,6 +73,51 @@ export function AnimationEdge({guid, isInput, mousePos, inputNo}: {guid: GUID, i
 
 
     return <Edge pos0={[pos0.x, pos0.y]} pos1={[pos1.x, pos1.y]} />
+}
+
+//TODO(@tad1): rename this 
+export function NewEdge({handlesId:{src, dst}, observables: {deep, shallow}, style}: {handlesId: {src: string, dst: string}, observables: {deep: string[], shallow: string[]}, style?: React.CSSProperties}){
+    const [, forceUpdate] = useReducer(x => x + 1, 0);
+    const {scale, offset} = useContext(ScaleOffsetContext);
+
+    const srcHandle = document.getElementById(src);
+    const dstHandle = document.getElementById(dst);
+    const deepEls = deep.map(id => document.getElementById(id));
+    const shallowEls = shallow.map(id => document.getElementById(id));
+    const deps = deepEls.concat(shallowEls);
+    const depsId = deep.concat(shallow)
+
+    // we increase complexity here (basicaly we create our little react here), to get a perfect position update; and element deptendent component mounting
+    useEffect(() => {
+        if(!deps.reduce((p,e) => p && e)) {
+            const observer = new MutationObserver(mutations => {
+                if(depsId.reduce((p,e) => !!document.getElementById(`#${e}`) && p, true as boolean)){
+                    forceUpdate()
+                }  
+            });
+            observer.observe(document.body, {childList: true, subtree: true})
+
+            return ()=>{observer.disconnect()};
+        }
+
+        const observer = new MutationObserver(() => {forceUpdate()});
+        deepEls.forEach(el => {
+            observer.observe(el!, {attributes: true, subtree: true, attributeFilter: ['style']})
+        })
+        shallowEls.forEach(el => {
+            observer.observe(el!, {attributes: true, subtree: false, attributeFilter: ['style']})
+        })
+
+        return () => {observer.disconnect()}
+    }, [deps])
+
+    if(!srcHandle || !dstHandle) return <></>;
+    const srcRect = srcHandle.getBoundingClientRect();
+    const dstRect = dstHandle.getBoundingClientRect();
+    const pos0 : [number, number] = [srcRect.left + srcRect.width/2, srcRect.top + srcRect.height/2]
+    const pos1 : [number, number] = [dstRect.left + dstRect.width/2, dstRect.top + dstRect.height/2]
+
+    return <Edge pos0={[(pos0[0]-offset[0])/scale, (pos0[1]-offset[1])/scale]} pos1={[(pos1[0]-offset[0])/scale, (pos1[1]-offset[1])/scale]} style={style}></Edge>
 }
 
 export function PreviewEdge({guid}: {guid: GUID}) {

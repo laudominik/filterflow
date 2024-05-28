@@ -1,14 +1,12 @@
-import {forwardRef, useContext, useEffect, useRef, useState, useSyncExternalStore} from 'react';
+import {createContext, useContext, useEffect, useMemo, useRef, useState} from 'react';
 import './GraphSpace.css'
 import {FilterStoreContext} from '../../stores/simpleFilterStore';
-import GraphNode from './GraphNode';
 import Grid from './Grid';
-import {Button, ButtonGroup, ButtonToolbar} from 'react-bootstrap';
-import {faCircleQuestion, faExpand, faMagnifyingGlassMinus, faMagnifyingGlassPlus, faMinus, faPlus, faQuestion, faQuestionCircle, faRotateLeft} from '@fortawesome/free-solid-svg-icons';
+import {Button, ButtonGroup} from 'react-bootstrap';
+import {faMagnifyingGlassMinus, faMagnifyingGlassPlus, faPlus, faQuestion, faRotateLeft} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import SearchPopup from './SearchPopup';
 import {GraphSpace, GraphSpaceInterface} from './GraphSpace';
-import useWindowDimensions from '../../util/WindowDimensionHook';
 import {useCommand} from '../../util/commands';
 import ShortcutSheet from '../commands/ShotcutSheet';
 
@@ -16,13 +14,17 @@ import ShortcutSheet from '../commands/ShotcutSheet';
 // despite values being specified in standard
 const MIDDLE_BUTTON = 1;
 
+
+
+type ScaleOffset = {scale: number, offset: [number, number]}
+export const ScaleOffsetContext = createContext<ScaleOffset>({scale: 0, offset: [0,0]})
+
 // exposing stuff based https://github.com/PaulLeCam/react-leaflet/blob/master/packages/react-leaflet/src/MapContainer.tsx
 export default function GraphView() {
     const filterStore = useContext(FilterStoreContext);
     const gridRef = useRef<HTMLCanvasElement>(null);
     const rootRef = useRef<HTMLDivElement>(null);
     const graphSpaceRef = useRef<GraphSpaceInterface>(null);
-    const nodes = useSyncExternalStore(filterStore.subscribeSequence.bind(filterStore), filterStore.getSequence.bind(filterStore));
 
     // TODO: make this use element size instead of screen size??
     // TODO: remove couping
@@ -33,6 +35,8 @@ export default function GraphView() {
     const [searchVisible, setSearchVisibiilty] = useState(false)
     const [searchPos, setSearchPos] = useState<[number, number]>([0, 0]);
     const [shortcutSheetVisible, setShortcutSheetVisible] = useState(false);
+
+    const scaleOffset = useMemo<ScaleOffset>(()=> {return {scale: scale, offset: [offset.x, offset.y]}}, [scale, offset])
 
     useEffect(() => {
         function handleResize() {
@@ -150,11 +154,6 @@ export default function GraphView() {
         handleSearchPos(position)
         setSearchVisibiilty(true);
     }
-    // TODO: handle middle mouse click
-    // TODO: handle touch pinch, and pan
-    function handleKeyDown(event: React.KeyboardEvent) {
-        // console.log()
-    }
 
     // the trick to prevent CTRL+Wheel Zoom is to prevent it from root element
     // TODO: convert this to more React-ish solution
@@ -168,16 +167,12 @@ export default function GraphView() {
     })
 
 
-    return <>
-        <div className='graphView' onWheel={handleWheel} onKeyDown={handleKeyDown} onMouseDown={handleMouseDown} onMouseMove={handleMousePan} onMouseUp={handleMouseUp} ref={rootRef}>
-            <Grid displacement={[offset.x, offset.y]} scale={scale} size={[viewWidth, viewHeight]} />
-            {/* DEBUG: transformation info */}
-            {/* <div style={{position: 'absolute', top: "1em", left: "0.2vw"}} className='debugOverlay'>{`screen size: ${viewWidth}, ${viewHeight}`}</div>
-            <div style={{position: 'absolute', top: "3em", left: "0.2vw"}} className='debugOverlay'>{`search pos: ${searchPos[0]}, ${searchPos[1]}`}</div>
-            <div style={{position: 'absolute', top: "5.6em", left: "0.2vw"}} className='debugOverlay'>{`scale: ${scale}`}</div> */}
-            {/* END DEBUG */}
+    return <ScaleOffsetContext.Provider value={scaleOffset}>
+        <div className='graphView' onWheel={handleWheel} onMouseDown={handleMouseDown} onMouseMove={handleMousePan} onMouseUp={handleMouseUp} ref={rootRef}>
+            <Grid size={[viewWidth, viewHeight]} />
 
-            <GraphSpace scale={scale} offset={offset} ref={graphSpaceRef}></GraphSpace>
+            <GraphSpace ref={graphSpaceRef}>
+            </GraphSpace>
             <SearchPopup visible={searchVisible} setVisible={setSearchVisibiilty} position={searchPos}></SearchPopup>
 
             <div className='graphViewTooltip'>
@@ -194,6 +189,6 @@ export default function GraphView() {
             </div>
         </div>
         <ShortcutSheet show={shortcutSheetVisible} setShow={setShortcutSheetVisible} />
-    </>
+    </ScaleOffsetContext.Provider>
 
 }

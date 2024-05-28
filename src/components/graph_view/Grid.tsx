@@ -1,14 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useContext, useEffect, useRef } from "react";
+import { ScaleOffsetContext } from "./GraphView";
 
-export default function Grid({displacement, scale, size, clusterSize=5, baseSize=80, levels=3, levelsVisibility=[50,70, 70], repeat=true}:{displacement: [number, number], scale: number, size: [number, number], clusterSize?: number, baseSize?: number, levels?:number, levelsVisibility?: Array<number>, repeat?: boolean}){
-    
+export default function Grid({size, clusterSize=5, baseSize=80, levels=3, levelsVisibility=[50,70, 70], repeat=true}:{size: [number, number], clusterSize?: number, baseSize?: number, levels?:number, levelsVisibility?: Array<number>, repeat?: boolean}){
+    const {scale, offset} = useContext(ScaleOffsetContext);
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    useEffect(()=>{
-        // console.log("updated component")
-    }, [])
 
-
-    // TODO: add final touches, and paramterize
     useEffect(()=>{
         if(!canvasRef.current) return;
         const maxDimSize = Math.max(size[0], size[1])
@@ -45,15 +41,15 @@ export default function Grid({displacement, scale, size, clusterSize=5, baseSize
             }
             ctx?.beginPath();
             
-            const offsetX = displacement[0] % gridSize;
-            const dashOffsetY = displacement[1] % (2*dashSize) - dashSize;
+            const offsetX = offset[0] % gridSize;
+            const dashOffsetY = offset[1] % (2*dashSize) - dashSize;
             for (let pos = offsetX; pos < width; pos+=gridSize) {
                 ctx?.moveTo(pos, dashOffsetY);
                 ctx?.lineTo(pos, height);      
             }
     
-            const offsetY = displacement[1] % gridSize;
-            const dashOffsetX = (displacement[0] % (2*dashSize)) - dashSize;
+            const offsetY = offset[1] % gridSize;
+            const dashOffsetX = (offset[0] % (2*dashSize)) - dashSize;
             for (let pos = offsetY; pos < height; pos+=gridSize) {
                 ctx?.moveTo(dashOffsetX, pos);
                 ctx?.lineTo(width, pos);
@@ -62,7 +58,7 @@ export default function Grid({displacement, scale, size, clusterSize=5, baseSize
             ctx?.stroke();
 
         }
-    }, [scale,displacement])
+    }, [scale, offset, size, clusterSize, levelsVisibility, baseSize])
 
     return <canvas className="graphViewGrid" width={size[0]} height={size[1]} ref={canvasRef}></canvas>
 }

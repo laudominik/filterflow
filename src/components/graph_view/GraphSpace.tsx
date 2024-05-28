@@ -1,19 +1,20 @@
-import React, {CSSProperties, ChangeEvent, ReactNode, Ref, forwardRef, useContext, useEffect, useImperativeHandle, useRef, useState, useSyncExternalStore} from "react";
-import GraphNode from "./GraphNode";
-import ImportGraphNode from "./ImportGraphNode";
-import TransformGraphNode from "./TransformGraphNode";
+import React, {ChangeEvent, ReactNode, Ref, createContext, forwardRef, useCallback, useContext, useEffect, useImperativeHandle, useMemo, useRef, useState, useSyncExternalStore} from "react";
 import {Button, Form} from "react-bootstrap";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {connectionStoreContext, nodeStoreContext, notebookStoreContext, persistenceContext, previewStoreContext} from "../../stores/context";
 import {faAnkh, faComment, faCommentDots, faDoorClosed, faDoorOpen, faImagePortrait, faL, faTrash} from "@fortawesome/free-solid-svg-icons";
 import {GUID} from "../../engine/nodeResponse";
-import GraphEdge, {AnimationEdge, Edge, PreviewEdge} from "./GraphEdge";
-import PreviewContainer from "../preview_container/PreviewContainer";
+import GraphEdge, {NewEdge} from "./GraphEdge";
 import GraphPreview from "./GraphPreview";
-import {useSessionStorage} from "usehooks-ts";
 import {PreviewStore} from "../../stores/previewStore";
-import {useCommand} from "../../util/commands";
 import SourceTransform from "../../engine/transforms/SourceTransform";
+import GraphNode, { GraphNodeEvents, NodePointerEvent } from "./GraphNode";
+import TransformGraphNode from "./TransformGraphNode";
+import Transform from "../../engine/Transform";
+import { useCommand } from "../../util/commands";
+import { ConnectionDefinition, ConnectionInfo, ConnectionSide } from "../../stores/storeInterfaces";
+import { ScaleOffsetContext } from "./GraphView";
+import { IOType } from "../../engine/node";
 
 
 export interface GraphSpaceInterface {
@@ -21,53 +22,216 @@ export interface GraphSpaceInterface {
     getSpaceRect: () => DOMRect | undefined
 }
 
-export default function GraphSpaceComponent({children = undefined, scale, offset}: {children?: ReactNode, scale: number, offset: {x: number, y: number}}, forwardedRef: Ref<GraphSpaceInterface>) {
+export const selectedNodesContext = createContext<GUID[]>([]);
 
+type selectedIOType = {type: IOType, guid: string, no: number}|undefined;
+export const selectedIOContext = createContext<selectedIOType>(undefined);
+
+// the best approach
+// this gives full accessability; with a cost of coupling to node/preview content
+//      pointerdown - moves the component
+//          you set `pointerdown` in content to `stopPropagation` this stops component from dragging, and bugs
+                // set this prop for buttons, inputs, comboboxes
+//      pointerdowncapture - this handles selecting stuff; it ignores `pointerdown` and always allow for selection
+// you fucking don't use `setPointerCapture` this shit made me spend 4+ hours on debugging
+//      like, each browser has it's own bechaviour (+ depending on input type!)
+//      insted; old good `window.addEventListener`, within `useEffect` (to keep reference, and remove the old listener)
+// that's fucking it.. enjoy your UI! 
+
+export default function GraphSpaceComponent({children = undefined}: {children?: ReactNode}, forwardedRef: Ref<GraphSpaceInterface>) {
+
+    const {scale, offset} = useContext(ScaleOffsetContext);
     const viewRef = useRef<HTMLDivElement>(null);
-    const notebooksContext = useContext(notebookStoreContext)
-    const nodeContext = useContext(nodeStoreContext);
-    const nodeCollection = useSyncExternalStore(nodeContext.subscribeNodeCollection.bind(nodeContext), nodeContext.getNodeCollection.bind(nodeContext));
-    const connectionContext = useContext(connectionStoreContext);
-    const connectionCollection = useSyncExternalStore(connectionContext.subscribeConnections.bind(connectionContext) as any, connectionContext.getConnections.bind(connectionContext));
 
     const previewContext = useContext(previewStoreContext);
     const openedPreviews = useSyncExternalStore(previewContext.subscribePreviews.bind(previewContext) as any, previewContext.getPreviews.bind(previewContext))
-    const [_, setOpenedPreviewsState] = useState<string>()
 
     const [debSpaceSize, setDebSpaceSize] = useState({x: 0, y: 0})
+    const nodeContext = useContext(nodeStoreContext)
+    const nodeCollection = useSyncExternalStore(nodeContext.subscribeNodeCollection.bind(nodeContext), nodeContext.getNodeCollection.bind(nodeContext));
+    const nodeTransforms = useMemo(()=>{
+        return nodeCollection.reduce((acc, guid)=>{return (acc[guid] = nodeContext.getNode(guid)().value, acc)}, {} as Record<string, Transform>)
+    }, [nodeCollection, nodeContext])
 
-    const [highlightedEdge, setHightlightedEdge] = useState<{guid0: GUID, guid1: GUID, inputNo: number}>({guid0: "", guid1: "", inputNo: 0})
-    const [highlightedGUID, setHighlightedGUID] = useState("")
+    const connectionContext = useContext(connectionStoreContext)
+    const connectionCollection = useSyncExternalStore(connectionContext.subscribeConnections.bind(connectionContext) as any, connectionContext.getConnections.bind(connectionContext));
 
-    let [addingGUID, setAddingGUID] = useState("");
-    const [addingInputConnection, setAddingInputConnection] = useState(false);
-    const [addingInputNo, setAddingInputNo] = useState(0);
-    const [addingOutputConnection, setAddingOutputConnection] = useState(false);
+    const [selected, setSelected] = useState<GUID[]>([])
+    const [nodePos, setNodePos] = useState<Record<GUID, [number, number]>>({})
+    const [selectedIO, setSelectedIO] = useState<{type: IOType, guid: string, no: number}>()
+    const [distanceMoved, ] = useState({distance: 0});
 
-    const [addMovePos, setAddMovePos] = useState({x: 0, y: 0})
-    const [addingEdgeAnimationComponent, setAddingEdgeAnimationComponent] = useState(<></>)
+    const [pointerStart, setPointerStart] = useState<{cursorStartingPos: [number, number], nodeStartingPos: Record<string,[number, number]>, isDragging: boolean}>({
+        cursorStartingPos: [0,0],
+        nodeStartingPos: {},
+        isDragging: false
+    })
 
-    const [connectionComponent, setConnectionComponent] = useState(handleConnections())
+    useEffect(()=>{
+        setNodePos(
+            nodeCollection.reduce((acc, guid)=>{
+                const pos = nodeTransforms[guid].getPos();
+                return (acc[guid] = [pos.x, pos.y], acc)
+            }, {} as Record<string, [number,number]>)
+        )
+        setSelected(v => v.filter(l => nodeCollection.includes(l)))
 
-    const [previewConnectionComponent, setPreviewConnectionComponent] = useState(handlePreviewConnections())
+    }, [nodeCollection, nodeTransforms])
 
-    useEffect(() => {
-        setHightlightedEdge({guid0: "", guid1: "", inputNo: 0});
-        setHighlightedGUID("");
-        setAddingGUID("");
-        setAddingInputConnection(false);
-        setAddingInputNo(0);
-        setAddingOutputConnection(false);
-        setAddMovePos({x: 0, y: 0});
-        setAddingEdgeAnimationComponent(<></>);
-        setConnectionComponent(handleConnections());
-        setPreviewConnectionComponent(handlePreviewConnections());
-        window.removeEventListener('mousemove', addMove);
-    }, [notebooksContext.getSelected()])
+    function deleteNode(guid: GUID) {
+        previewContext.removePreviewStore(guid);
+        nodeContext.removeTransform(guid);
+    }
 
-    useEffect(() => {
-        setConnectionComponent(handleConnections())
-    }, [connectionCollection])
+    function handleDelete() {
+        if (selected.length === 0) return;
+
+        selected.forEach(guid => {
+            deleteNode(guid);
+        });
+    }
+
+    function handleSpaceClick() {
+        setSelected([]);
+    }
+
+    useCommand({
+        name: "Delete selected",
+        binding: ['Delete'],
+        callback: handleDelete,
+        dependencies: [selected]
+    })
+
+    function handleUnselect(){
+        setSelected([])
+        setSelectedIO(undefined)
+    }
+
+    useCommand({
+        name: "Unselect",
+        binding: ['Escape'],
+        callback: handleUnselect,
+    })
+
+    const nodePointerDown =  useCallback<NodePointerEvent>((e: React.MouseEvent, node : Transform, guid : GUID) => {
+        setPointerStart({
+            cursorStartingPos: [(e.pageX - offset[0])/scale, (e.pageY- offset[1])/scale],
+            isDragging: true,
+            nodeStartingPos: {...nodePos}
+        })
+        distanceMoved.distance = 0;
+
+        // (this logic - selection will be moved into `pointerdowncapture`)
+        const isSelected = selected.includes(guid);
+        if(e.ctrlKey){
+            if(isSelected) setSelected(v => v.filter(l => l !== guid))
+            else setSelected(v => [...v, guid])
+        }
+        else if(!isSelected){
+            setSelected([guid])
+        }
+        e.preventDefault();
+        e.stopPropagation();
+    }, [offset, scale, selected, nodePos, distanceMoved]);
+
+    useEffect(()=> {
+        const nodePointerMove =  (e: MouseEvent) => {
+            if(!pointerStart.isDragging) return;
+            
+            const dx = ((e.pageX - offset[0])/ scale - pointerStart.cursorStartingPos[0])
+            const dy = ((e.pageY - offset[1]) / scale - pointerStart.cursorStartingPos[1])
+            
+            distanceMoved.distance += dx + dy;
+            
+            const nodePositions = {...pointerStart.nodeStartingPos};
+            selected.forEach(guid => {
+                if(nodePositions[guid]){
+                const prevPos = nodePositions[guid];
+                const newPos: [number, number] = [prevPos[0]+dx, prevPos[1]+dy]
+                // intentional, to prevent re-renders, while keeping state between re-renders
+                nodePos[guid] = newPos
+                nodeTransforms[guid].setPos({x: newPos[0], y: newPos[1]})
+                
+                // note, this will be a component specific implementation
+                const el = document.getElementById("node-"+guid);
+                if(el){
+                    el.style.left = newPos[0] + "px";
+                    el.style.top = newPos[1] + "px";
+                }
+            }});
+
+            e.preventDefault();
+            e.stopPropagation();
+        };
+
+        const nodePointerUp = (e : PointerEvent) => {
+            if(!pointerStart.isDragging) return;
+            setPointerStart({
+                cursorStartingPos: [(e.pageX - offset[0])/scale, (e.pageY - offset[1])/scale],
+                isDragging: false,
+                nodeStartingPos: {}
+            })
+    
+            e.preventDefault();
+            e.stopPropagation();
+        } 
+
+        window.addEventListener("pointermove", nodePointerMove);
+        window.addEventListener("pointerup", nodePointerUp)
+
+        return ()=>{
+            window.removeEventListener("pointermove", nodePointerMove);
+            window.removeEventListener("pointerup", nodePointerUp);
+        }
+    }, [distanceMoved, nodePos, nodeTransforms, offset, pointerStart, scale, selected])
+
+    //* bad, naming; converted into MVP preview drag events
+    const draggablePointerDown = (e: React.PointerEvent, guid: GUID) => {
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+        const node = nodeContext.getNode(guid)();
+
+        setPointerStart({
+            cursorStartingPos: [(e.pageX - offset[0])/scale, (e.pageY- offset[1])/scale],
+            isDragging: true,
+            nodeStartingPos: {"":[node.value.prevPos.x, node.value.prevPos.y]}
+        })
+        distanceMoved.distance = 0;
+        e.stopPropagation();
+        e.preventDefault();
+    }
+
+    const draggablePointerMove = (e: React.PointerEvent, guid: GUID) => {
+        if(!pointerStart.isDragging) return;
+        const node = nodeContext.getNode(guid)();
+
+        const dx = ((e.pageX - offset[0])/ scale - pointerStart.cursorStartingPos[0])
+        const dy = ((e.pageY - offset[1]) / scale - pointerStart.cursorStartingPos[1])
+
+        distanceMoved.distance += dx + dy;
+
+        const x = pointerStart.nodeStartingPos[""][0] + dx
+        const y = pointerStart.nodeStartingPos[""][1] + dy;
+        
+        node.value.setPreviewPos({x, y});
+
+        // set raw HTML, so we don't have to force re-render
+        (e.currentTarget as HTMLElement).style.top = `${y}px`;
+        (e.currentTarget as HTMLElement).style.left = `${x}px`;
+        e.stopPropagation();
+        e.preventDefault();
+    }
+
+    const draggablePointerUp = (e: React.PointerEvent) => {
+
+        setPointerStart({
+            cursorStartingPos: [(e.pageX - offset[0])/scale, (e.pageY - offset[1])/scale],
+            isDragging: false,
+            nodeStartingPos: {}
+        })
+
+        e.stopPropagation();
+        e.preventDefault();
+    }
 
     useImperativeHandle(forwardedRef, () => {
         return {
@@ -80,268 +244,28 @@ export default function GraphSpaceComponent({children = undefined, scale, offset
         }
     }, [debSpaceSize]);
 
-    useCommand({
-        name: "Delete Node",
-        hidden: true,
-        binding: ["Delete"],
-        callback: handleNodeTrashIcon,
-        dependencies: [highlightedGUID],
-
-    });
-
-    useCommand({
-        name: "Delete Edge",
-        hidden: true,
-        binding: ["Delete"],
-        callback: handleEdgeTrashIcon,
-        dependencies: [highlightedEdge]
-    });
-
-    let dragTarget: HTMLElement | undefined = undefined;
-    let dragMouseStartX = 0;
-    let dragMouseStartY = 0;
-    let dragTargetStartX = 0, dragTargetStartY = 0;
-    let dragDistance = 0;
-
-    function dragStart(e: React.PointerEvent) {
-        if (!(e.nativeEvent.target instanceof HTMLElement)) return;
-        let closest = e.nativeEvent.target.closest('.draggable');
-        if (!(closest instanceof HTMLElement)) return;
-
-        e.stopPropagation();
-
-        dragMouseStartX = e.nativeEvent.pageX;
-        dragMouseStartY = e.nativeEvent.pageY;
-
-        dragMouseStartX = dragMouseStartX / scale - offset.x
-        dragMouseStartY = dragMouseStartY / scale - offset.y
-
-        dragDistance = 0;
-
-        dragTarget = closest;
-
-        const rect = dragTarget?.getBoundingClientRect();
-        const viewRect = viewRef.current?.getBoundingClientRect();
-
-        // this results in real position
-        dragTargetStartX = rect ? (window.scrollX + (rect.left - viewRect!.x) / scale) : 0;
-        dragTargetStartY = rect ? (window.scrollY + (rect.top - viewRect!.y) / scale) : 0;
-        // move to front
-        window.addEventListener('pointermove', dragMove, {passive: false});
-        window.addEventListener('pointerup', dragStop, {passive: false});
-        if (!dragTarget) return;
-
-
-        if (dragTarget.classList.contains("transformNode")) {
-            setHighlightedGUID(dragTarget.id)
-            setHightlightedEdge({guid0: "", guid1: "", inputNo: 0})
-            return;
-        }
-        if (dragTarget.classList.contains("previewNode")) {
-            setHighlightedGUID(dragTarget.id.slice(2))
-            setHightlightedEdge({guid0: "", guid1: "", inputNo: 0})
-            return;
-        }
-    }
-
-
-    function dragStop(e: PointerEvent) {
-        if (dragTarget) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            dragTarget.classList.remove('dragging');
-            if (dragTarget.classList.contains("transformNode")) {
-                nodeContext.updateParam(dragTarget.id, {})
-            }
-            if (dragTarget.classList.contains("previewNode")) {
-                nodeContext.updateParam(dragTarget.id.slice(2), {})
-            }
-            dragTarget = undefined
-
-            // dragging is a rare event, so it won't be too much overhead
-            window.removeEventListener('pointermove', dragMove)
-            window.removeEventListener('pointerup', dragStop)
-
-            // we are forcing to drag by default, handle tap
-            if (dragDistance === 0) {
-                const clickElem = document.elementFromPoint(dragMouseStartX, dragMouseStartY);
-                clickElem?.dispatchEvent(new MouseEvent('click', {
-                    bubbles: true,
-                    cancelable: true,
-                    view: window,
-                    clientX: dragMouseStartX,
-                    clientY: dragMouseStartY
-                }))
-            }
-        }
-    }
-
-    function handleConnections() {
-        return connectionCollection.map(connInf => {
-            const connDef = connInf.connectionDefinition;
-            const guid0 = connDef[0][0];
-            const guid1 = connDef[1][0];
-            const inputNumber = connDef[1][1];
-
-            const onEdgeClick = (guid0: GUID, guid1: GUID, inputNo: number) => {
-                setHighlightedGUID("")
-                setHightlightedEdge({guid0: guid0, guid1: guid1, inputNo: inputNo})
-            }
-            const highlighted = highlightedEdge.guid0 === guid0 && highlightedEdge.guid1 === guid1 && highlightedEdge.inputNo === inputNumber;
-            return <GraphEdge key={`con-${guid0}-to-${guid1}-at-${inputNumber}`} guid0={guid0} guid1={guid1} inputNumber={inputNumber} highlighted={highlighted} onClick={onEdgeClick} />
-        })
-    }
-
-    function handleNodePreviewIcon() {
-        if (Array.from(openedPreviews.keys()).find(el => el == highlightedGUID)) {
-            previewContext.removePreviewStore(highlightedGUID)
-            setOpenedPreviewsState(crypto.randomUUID())
-            return;
-        }
-
-        previewContext.addPreviewStore(highlightedGUID, [], highlightedGUID)
-        previewContext.getPreviewStore(highlightedGUID)!.updateContext([], "", false);
-        setOpenedPreviewsState(crypto.randomUUID())
-    }
-
-    function handleNodeVisualizationIcon() {
-        if (Array.from(openedPreviews.keys()).find(el => el == highlightedGUID)) {
-            const preview = previewContext.getPreviewStore(highlightedGUID)!
-            preview.updateContext([], "", !preview.getContext().visualizationEnabled)
-            return;
-        }
-        previewContext.addPreviewStore(highlightedGUID, [], highlightedGUID)
-        previewContext.getPreviewStore(highlightedGUID)!.updateContext([], "", true);
-        setOpenedPreviewsState(crypto.randomUUID())
-    }
-
     function handlePreviewConnections() {
-        return Array.from(openedPreviews.keys()).map(guid => <PreviewEdge guid={guid} />)
+        return Array.from(openedPreviews.keys()).map(guid => <NewEdge 
+            handlesId={{src: `node-${guid}`, dst: `pr-${guid}`}} 
+            observables={{deep: [`node-${guid}`, `pr-${guid}`], shallow: ["graphSpace"]}}
+            style={{stroke: "orange", strokeWidth: 1, strokeDasharray: "10,5"}}
+        />)
     }
 
+    function handleIOClick(e : React.PointerEvent, type: IOType, guid: GUID, IOno: number) {
+        if(selectedIO){
 
-    function dragMove(e: PointerEvent) {
-        if (dragTarget) {
-            e.preventDefault();
-            e.stopPropagation();
-
-            const vx = (e.pageX);
-            const vy = (e.pageY)
-            const dx = (vx / scale - offset.x - dragMouseStartX)
-            const dy = (vy / scale - offset.y - dragMouseStartY)
-            dragDistance += dx + dy;
-            const x = dragTargetStartX + dx;
-            const y = dragTargetStartY + dy;
-
-            dragTarget.style.left = `${x}px`;
-            dragTarget.style.top = `${y}px`;
-
-            if (dragTarget.classList.contains("transformNode")) {
-                nodeContext.getNode(dragTarget.id)().value.setPos({x, y})
-                setConnectionComponent(handleConnections())
-                setPreviewConnectionComponent(handlePreviewConnections())
-            }
-
-            if (dragTarget.classList.contains("previewNode")) {
-                nodeContext.getNode(dragTarget.id.slice(2))().value.setPreviewPos({x, y})
-                setConnectionComponent(handleConnections())
-                setPreviewConnectionComponent(handlePreviewConnections())
-            }
+            const connection : ConnectionDefinition = selectedIO.type === "output" ? [[selectedIO.guid, selectedIO.no], [guid, IOno]] : [[guid,IOno], [selectedIO.guid, selectedIO.no]]
+            connectionContext.connectNodes(connection);
+            setSelectedIO(undefined);
+        } else {
+            setSelectedIO({type: type, guid: guid, no: IOno})
         }
     }
-    //#endregion
-    //#region input/output MouseEvents
 
-    function connectionToggle(e: React.SyntheticEvent, myGUID: GUID, inputNo: number) {
-        if (!(e.nativeEvent.target instanceof HTMLElement)) return;
-
-        let closest = e.nativeEvent.target;
-        if (!(closest instanceof HTMLElement)) return;
-
-        const input = closest.classList.contains("circle-top");
-
-        if (addingInputConnection && !input && addingGUID != myGUID) {
-            setAddingInputConnection(false);
-            connectionContext.connectNodes([
-                [myGUID, 0],
-                [addingGUID, addingInputNo]
-            ])
-            window.removeEventListener('mousemove', addMove);
-            return;
-        }
-
-        if (addingOutputConnection && input && addingGUID != myGUID) {
-            setAddingOutputConnection(false);
-            connectionContext.connectNodes([
-                [addingGUID, 0],
-                [myGUID, inputNo]
-            ])
-            window.removeEventListener('mousemove', addMove);
-            return;
-        }
-
-        setAddingInputConnection(input);
-        setAddingOutputConnection(!input);
-        setAddingInputNo(inputNo);
-        setAddingGUID(myGUID);
-        window.addEventListener('mousemove', addMove, {passive: false});
-        const rectum = closest.getBoundingClientRect();
-        setAddMovePos({x: rectum.x, y: rectum.y});
-    }
-
-
-    function addMove(e: MouseEvent) {
-        const rectum = document.getElementById("brandNav")!.getClientRects()[0];
-        setAddMovePos({x: (e as MouseEvent).pageX, y: (e as MouseEvent).pageY - rectum.height})
-        setAddingEdgeAnimationComponent(handleAddingEdgeAnimation())
-    }
 
     //#endregion
 
-    function handleNodeTrashIcon() {
-        if (highlightedGUID == "") return;
-        if ((addingInputConnection || addingOutputConnection) && addingGUID == highlightedGUID) {
-            setAddingInputConnection(false);
-            setAddingOutputConnection(false);
-            window.removeEventListener('mousemove', addMove);
-        }
-        //openedPreviews
-        previewContext.removePreviewStore(highlightedGUID)
-        setOpenedPreviewsState(crypto.randomUUID())
-
-        nodeContext.removeTransform(highlightedGUID)
-        setHighlightedGUID("")
-        setConnectionComponent(handleConnections())
-        setPreviewConnectionComponent(handleConnections())
-    }
-
-    function handleEdgeTrashIcon() {
-        if (highlightedEdge.guid0 === "" || highlightedEdge.guid1 === "") return;
-        // console.log(highlightedEdge)
-        connectionContext.disconnectNodes([
-            [highlightedEdge.guid0, 0],
-            [highlightedEdge.guid1, highlightedEdge.inputNo]
-        ])
-        setHightlightedEdge({guid0: "", guid1: "", inputNo: 0})
-        setConnectionComponent(handleConnections())
-    }
-
-    function handleAddingEdgeAnimation() {
-        const mouseInGraphSpace = {x: (-offset.x + addMovePos.x) / scale, y: (-offset.y + addMovePos.y) / scale}
-        return <AnimationEdge guid={addingGUID} isInput={addingInputConnection} mousePos={mouseInGraphSpace} inputNo={addingInputNo} />
-    }
-
-    function handleUnhighlightAll() {
-        setHighlightedGUID("")
-        setHightlightedEdge({guid0: "", guid1: "", inputNo: 0})
-
-        if (addingInputConnection || addingOutputConnection) {
-            setAddingInputConnection(false)
-            setAddingOutputConnection(false)
-            window.removeEventListener('mousemove', addMove);
-        }
-    }
 
     useEffect(() => {
         if (viewRef.current) {
@@ -350,78 +274,147 @@ export default function GraphSpaceComponent({children = undefined, scale, offset
         }
     }, [scale])
 
+    //* this is the future implementation
+    // const graphConnection = useMemo(()=>
+    //     <GraphEdgeCollection edgeCollection={connectionCollection} selected={[]} edgeEvents={{}}/>
+    // ,[connectionCollection])
+
+    const graphConnection = <GraphEdgeCollection edgeCollection={connectionCollection} selected={[]} edgeEvents={{}}/>;
+
     return <>
-        <div id="graphSpace" className="graphSpace" ref={viewRef} style={{transform: `translate(${offset.x}px, ${offset.y}px) scale(${scale})`, outline: "1px solid green"}}>
-            {/* a gnome here represent a plank size */}
-            <div onPointerDown={dragStart} className='draggable' style={{backgroundImage: 'url(filterflow/gnome.webp)', backgroundSize: "0.0085px 0.0085px", width: "0.0085px", height: "0.0085px", top: "-0.0085px"}} />
+        <selectedIOContext.Provider value={selectedIO}>
+        <selectedNodesContext.Provider value={selected}>
 
-            {/* DEBUG: coordinates markers */}
-            <div style={{position: 'absolute', top: "-2.5rem", left: "-1.5rem"}} className='debugSpaceOverlay'>0, 0</div>
-            <div style={{position: 'absolute', top: "100%", left: "100%"}} className='debugSpaceOverlay'>{viewRef.current ? `${debSpaceSize.x}, ${debSpaceSize.y}` : ''}</div>
-            <div style={{position: 'absolute', top: "-2.5rem", left: "100%"}} className='debugSpaceOverlay'>{viewRef.current ? `${debSpaceSize.x}, 0` : ''}</div>
-            <div style={{position: 'absolute', top: "100%", left: "-1.5rem"}} className='debugSpaceOverlay'>{viewRef.current ? `0, ${debSpaceSize.y}` : ''}</div>
-            {/* END DEBUG */}
+            <div id="graphSpace" className="graphSpace" ref={viewRef} style={{transform: `translate(${offset[0]}px, ${offset[1]}px) scale(${scale})`, outline: "1px solid green"}} onPointerDown={handleSpaceClick}>
+                {/* a gnome here represent a plank size */}
+                {graphConnection}
+                {/* DEBUG: coordinates markers */}
+                <div style={{position: 'absolute', top: "-2.5rem", left: "-1.5rem"}} className='debugSpaceOverlay'>0, 0</div>
+                <div style={{position: 'absolute', top: "100%", left: "100%"}} className='debugSpaceOverlay'>{viewRef.current ? `${debSpaceSize.x}, ${debSpaceSize.y}` : ''}</div>
+                <div style={{position: 'absolute', top: "-2.5rem", left: "100%"}} className='debugSpaceOverlay'>{viewRef.current ? `${debSpaceSize.x}, 0` : ''}</div>
+                <div style={{position: 'absolute', top: "100%", left: "-1.5rem"}} className='debugSpaceOverlay'>{viewRef.current ? `0, ${debSpaceSize.y}` : ''}</div>
+                {/* END DEBUG */}
 
-            {
-                handleConnections()
-            }
-            {addingInputConnection || addingOutputConnection ? handleAddingEdgeAnimation() : <></>}
-
-            {
-                Array.from(openedPreviews.keys()).map(guid => {
-                    return <GraphPreview guid={guid} onBodyClick={dragStart} />
-                })
-            }
-            {
-                handlePreviewConnections()
-            }
-
-            {
-                nodeCollection.map(guid => {
-
-                    const trf = nodeContext.getNode(guid)().value;
-                    const style: CSSProperties = guid == highlightedGUID ? {
-                        borderStyle: "solid",
-                        borderWidth: "3px",
-                        borderColor: "blue",
-                        backgroundColor: trf.getColor(),
-                        color: "black",
-                    } : {
-                        borderWidth: "0px",
-                        backgroundColor: trf.getColor(),
-                        color: "black",
-                    }
-
-                    if (!trf.isSource) {
-                        style.width = "400px"
-                    }
-
-                    return (trf.isSource ?
-                        () => <ImportGraphNode key={guid} guid={guid} style={style} onBodyClick={dragStart} ioFunction={connectionToggle} /> :
-                        () => <TransformGraphNode key={guid} guid={guid} style={style} onBodyClick={dragStart} ioFunction={connectionToggle} />
-                    )()
+                {/* the NodeCollection will update _all nodes_ on: node select, node move, and node collection update //* this approach seems to be optimal for less than 100 node collections*/}
+                {
+                    handlePreviewConnections()
                 }
-                )
-            }
-
-            {children}
-        </div>
-        {nodeCollection.includes(highlightedGUID) ?
-            <NodeContextMenu
-                highlightedGUID={highlightedGUID}
-                handleNodeTrashIcon={handleNodeTrashIcon}
-                handleNodePreviewIcon={handleNodePreviewIcon}
-                handleNodeVisualizationIcon={handleNodeVisualizationIcon}
-                previewOpen={Array.from(openedPreviews.keys()).find(el => el == highlightedGUID) != undefined} />
-            : <></>}
-
-        {highlightedEdge.guid0 && highlightedEdge.guid1 ?
-            <div className='nodeContextMenu'>
-                <Button onClick={handleEdgeTrashIcon}><FontAwesomeIcon icon={faTrash} /></Button>
+                <NodeCollection 
+                    nodeCollection={nodeCollection} 
+                    selected={selected} 
+                    dragging={pointerStart.isDragging}
+                    nodeEvents={{onPointerDown: nodePointerDown}}
+                    ioEvents={{onPointerDown: handleIOClick, onPointerUp: handleIOClick}}
+                    />
+                {
+                    Array.from(openedPreviews.keys()).map(guid => 
+                        <GraphPreview guid={guid} key={guid} pointerEvents={{onPointerDown: draggablePointerDown, onPointerMove: draggablePointerMove, onPointerUp: draggablePointerUp}}/>
+                    )
+                }
+                {
+                    selectedIO ? 
+                    <NewEdge handlesId={{
+                        src: `${selectedIO.type}-${selectedIO.guid}-${selectedIO.no}`, 
+                        dst: "pointer-follower"}}
+                        observables={{
+                            deep: [`node-${selectedIO.guid}`],
+                            shallow: ["pointer-follower", "graphSpace"]
+                        }}
+                        />
+                        :
+                        <></>
+                    }
+                <PointerFollower id="pointer-follower"/>
+                {children}
             </div>
-            : <></>}
+            <ContextToolbar/>
+        </selectedNodesContext.Provider>
+        </selectedIOContext.Provider>
     </>
 }
+
+const ContextToolbar = () => {
+    const selectedNodes = useContext(selectedNodesContext);
+    const nodeStore = useContext(nodeStoreContext);
+
+    const previewStore = useContext(previewStoreContext);
+    const openedPreviews = previewStore.getPreviews();
+    const nodesWithPreview = Array.from(openedPreviews.keys());
+
+    // const selectedWithoutPreview = selectedNodes.filter(guid => nodesWithPreview.includes(guid) === false)
+    // const selectedWithPreview = selectedNodes.filter(guid => nodesWithPreview.includes(guid) === true)
+
+    const handleDelete = () => {
+        selectedNodes.forEach((guid)=> {
+            previewStore.removePreviewStore(guid);
+            nodeStore.removeTransform(guid)
+        })
+    }
+
+    const handleOpenPreview = () => {
+            selectedNodes.forEach(guid => {
+                if(!previewStore.getPreviewStore(guid)){
+                    previewStore.addPreviewStore(guid, [], guid);
+                }
+                previewStore.getPreviewStore(guid)?.updateContext([], "", false);
+            })
+    }
+
+    const handleOpenVisualization = () => {
+        selectedNodes.forEach(guid => {
+            if(!previewStore.getPreviewStore(guid)){
+                previewStore.addPreviewStore(guid, [], guid);
+            }
+            previewStore.getPreviewStore(guid)?.updateContext([], "", true);
+        })
+    }
+
+    return <div className="nodeContextMenu">
+        {selectedNodes.length > 0 && <Button title="delete selected" key={"delete"} onClick={handleDelete}><FontAwesomeIcon icon={faTrash} /></Button>}
+        {selectedNodes.length > 0 && <Button title="open previews for selected" key={"open-preview"} onClick={handleOpenPreview}><FontAwesomeIcon icon={faDoorClosed} /></Button>}
+        {selectedNodes.length > 0 && <Button title="open visualizations for selected" key={"open-visualization"} onClick={handleOpenVisualization}><FontAwesomeIcon icon={faComment} /></Button>}
+    </div>
+}
+
+const PointerFollower = ({id}:{id : string})=> {
+    const {scale, offset} = useContext(ScaleOffsetContext);
+    const [pointerPos, setPointerPos] = useState([0,0]);
+    useEffect(()=>{
+        const mouseHandler = (e : PointerEvent)=>{setPointerPos([(e.pageX - offset[0])/scale, (e.pageY - offset[1])/scale])};
+        window.addEventListener("pointermove", mouseHandler)
+        return () => {window.removeEventListener("pointermove", mouseHandler)}
+    }, [scale, offset])
+
+    return <div id={id} style={{position: "absolute", pointerEvents: "none", top: pointerPos[1], left: pointerPos[0]}}>
+    </div>
+}
+
+// @tad1: (the color will be dynamicly choosed, based on category, but later)
+const NodeCollection = ({selected, dragging, ioEvents, nodeCollection, nodeEvents} : {selected: GUID[], dragging?: boolean, nodeCollection: GUID[]} & GraphNodeEvents) => {
+    return <>
+    {nodeCollection.map(guid => {
+        return <TransformGraphNode className={(selected.includes(guid) ? "selectedNode " : "") + (dragging ? "dragging " : "")} key={guid} guid={guid}
+        nodeEvents={nodeEvents} ioEvents={ioEvents}/>
+    })}
+    </>
+}
+
+
+const GraphEdgeCollection = ({selected, edgeCollection, edgeEvents} : {selected: GUID[], edgeCollection: ConnectionInfo[], edgeEvents : {}}) => {
+    return <>
+    {edgeCollection.map((connection, i) => {
+        return <NewEdge handlesId={{
+            src: `output-${connection.connectionDefinition[0][0]}-${connection.connectionDefinition[0][1]}`,
+            dst: `input-${connection.connectionDefinition[1][0]}-${connection.connectionDefinition[1][1]}`
+        }} observables={{
+            deep: [`node-${connection.connectionDefinition[0][0]}`, `node-${connection.connectionDefinition[1][0]}`],
+            shallow: ['graphSpace']
+        }} key={i}/>
+    })}
+    </>
+}
+
+
 
 
 function NodeContextMenu({highlightedGUID,
