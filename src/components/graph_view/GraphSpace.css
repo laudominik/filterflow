@@ -115,7 +115,25 @@
 #arrows{
     width: 100%;
     height: 100%;
+
 }
+
+line.hiddenEdge, line.visibleEdge{
+    cursor: pointer;
+}
+
+line.hiddenEdge:hover + line.visibleEdge, line.visibleEdge:hover{
+    filter: contrast(60%) drop-shadow(0 0 1px black);
+}
+
+svg.arrows.selectedEdge marker, .arrows.selectedEdge > line.visibleEdge{
+    
+    stroke: rgb(86, 23, 164) !important;
+    fill: rgb(86, 23, 164) !important;
+}
+
+
+
 /* #endregion */
 
 .transformCard{
