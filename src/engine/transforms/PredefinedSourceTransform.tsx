@@ -1,5 +1,7 @@
 import {jsonObject, jsonMember} from 'typedjson';
 import SourceTransform from './SourceTransform';
+import SourceComponent from '../../components/transforms/SourceComponent';
+import { GUID } from '../iengine';
 
 
 const customWidth = 256
@@ -108,8 +110,8 @@ export default abstract class PredefinedSourceTransform extends SourceTransform 
         gl.deleteBuffer(positionBuffer);
     }
 
-    paramView() {
-        return <></>
+    paramView(guid: GUID) {
+        return <SourceComponent guid={guid}></SourceComponent>
     }
 
     visualizationView(guid: string) {
