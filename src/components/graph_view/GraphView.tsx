@@ -9,6 +9,7 @@ import SearchPopup from './SearchPopup';
 import {GraphSpace, GraphSpaceInterface} from './GraphSpace';
 import {useCommand} from '../../util/commands';
 import ShortcutSheet from '../commands/ShotcutSheet';
+import { KeyboardEventKey } from '../../util/keys';
 
 // for some f*ckin reason, there's no constanst for button number.. 
 // despite values being specified in standard
@@ -73,12 +74,13 @@ export default function GraphView() {
     function handleZoom(value: number, pivot: [number, number]) {
 
         let newScale = scale * value;
-        newScale = Math.min(Math.max(newScale, 0.2), 5);
+        newScale = Math.min(Math.max(newScale, 0.2), 10);
 
         setScale(newScale)
 
         let displacementX = pivot[0] - pivot[0] * (newScale / scale)
         let displacementY = pivot[1] - pivot[1] * (newScale / scale)
+        console.log(displacementX, displacementY)
         handlePan(displacementX, displacementY)
     }
 
@@ -86,6 +88,36 @@ export default function GraphView() {
         setOffset({x: offset.x + x, y: offset.y + y})
         handleSearchPos();
     }
+
+    useEffect(()=> {
+        const arrowMove = (e: KeyboardEvent) => {
+            const offsetPx = 50
+            let dx = 0, dy = 0;
+            switch(e.key as KeyboardEventKey){
+                case "ArrowLeft":
+                    dx = offsetPx;
+                    break;
+                case "ArrowRight":
+                    dx = -offsetPx;
+                    break;
+                case "ArrowUp":
+                    dy = offsetPx;
+                    break;
+                case "ArrowDown":
+                    dy = -offsetPx;
+                    break;
+                default:
+                    return;
+
+            }
+            handlePan(dx, dy);
+        }
+
+        window.addEventListener("keydown", arrowMove);
+        return ()=>{
+            window.removeEventListener("keydown", arrowMove)
+        }
+    })
 
     function handleSearchPos(position?: [number, number]) {
         if (position) {
@@ -100,6 +132,20 @@ export default function GraphView() {
         const viewRect = graphSpaceRef.current?.getSpaceRect();
         handleZoom(value, [viewRect!.width / 2, viewRect!.height / 2])
     }
+
+    useCommand({
+        name: "Zoom in",
+        callback: ()=>{handleButtomZoom(3 / 2)},
+        binding: ["Control", "="],
+        dependencies: [graphSpaceRef]
+    })
+
+    useCommand({
+        name: "Zoom out",
+        callback: ()=>{handleButtomZoom(2 / 3)},
+        binding: ["Control", "-"],
+        dependencies: [graphSpaceRef]
+    })
 
     // offset is in real coordinates
 

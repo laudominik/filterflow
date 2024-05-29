@@ -3,6 +3,7 @@ import {GUID} from "../../engine/engine";
 import {nodeStoreContext} from "../../stores/context";
 import {node} from "../../engine/node";
 import { ScaleOffsetContext } from "./GraphView";
+import { ConnectionInfo } from "../../stores/storeInterfaces";
 
 
 /*
@@ -12,7 +13,7 @@ import { ScaleOffsetContext } from "./GraphView";
 
 export interface EdgeEvents {}
 
-export function Edge({pos0, pos1, onClick, style, marker = true}: {pos0: [number, number], pos1: [number, number], onClick?: () => void, style?: CSSProperties, marker?: boolean}) {
+export function Edge({pos0, pos1, onPointerDownCapture, style, marker = true, className}: {pos0: [number, number], pos1: [number, number], onPointerDownCapture?: (e : React.PointerEvent) => void, style?: CSSProperties, marker?: boolean, className?: string}) {
 
     const margin = 25;
     const arrowHead = [10, 10]
@@ -34,14 +35,15 @@ export function Edge({pos0, pos1, onClick, style, marker = true}: {pos0: [number
     const invisibleStyle = {stroke: "rgba(0,0,0,0)", strokeWidth: 40}
 
 
-    return <svg className="arrows" style={{pointerEvents: 'none', position: 'absolute', top: top - margin, left: left - margin, width: Math.abs(dx) + 2 * margin, height: Math.abs(dy) + 2 * margin}}>
+    return <svg className={"arrows "+className} style={{pointerEvents: 'none', position: 'absolute', top: top - margin, left: left - margin, width: Math.abs(dx) + 2 * margin, height: Math.abs(dy) + 2 * margin}}>
         <defs>
             {/* from https://webgl2fundamentals.org/webgl/lessons/resources/webgl-state-diagram.html#no-help */}
             <marker id={arrowMarkUUID} viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill={style ? style.stroke : "hsl(260, 100%, 80%)"}><path d={`M 0 0 L ${arrowHead[0]} ${arrowHead[1] / 2} L 0 ${arrowHead[1]} z`}></path></marker>
 
         </defs>
-        {onClick && <line x1={x1 + margin} y1={y1 + margin} x2={x2 + margin} y2={y2 + margin} style={invisibleStyle} onClick={onClick} pointerEvents='auto' />}
-        <line x1={x1 + margin} y1={y1 + margin} x2={x2 + margin} y2={y2 + margin} style={style ?? defaultStyle} markerEnd={marker ? markerEnd : ""} onClick={onClick} pointerEvents={'auto'} />
+        {onPointerDownCapture && <line className="hiddenEdge" x1={x1 + margin} y1={y1 + margin} x2={x2 + margin} y2={y2 + margin} style={invisibleStyle} onPointerDownCapture={onPointerDownCapture} pointerEvents='auto' />}
+        <line className="visibleEdge" x1={x1 + margin} y1={y1 + margin} x2={x2 + margin} y2={y2 + margin} style={style ?? defaultStyle} markerEnd={marker ? markerEnd : ""} onPointerDownCapture={onPointerDownCapture} pointerEvents={'auto'} />
+        {onPointerDownCapture && <rect x={(x1+x2)/2} y={(y1+y2)/2} height={40} width={40} style={{pointerEvents: "none"}} fill="transparent" onPointerDownCapture={onPointerDownCapture} role="button"></rect>}
     </svg>
 }
 
@@ -76,7 +78,7 @@ export function AnimationEdge({guid, isInput, mousePos, inputNo}: {guid: GUID, i
 }
 
 //TODO(@tad1): rename this 
-export function NewEdge({handlesId:{src, dst}, observables: {deep, shallow}, style}: {handlesId: {src: string, dst: string}, observables: {deep: string[], shallow: string[]}, style?: React.CSSProperties}){
+export function NewEdge({handlesId:{src, dst}, observables: {deep, shallow}, style, onPointerDownCapture, className}: {handlesId: {src: string, dst: string}, observables: {deep: string[], shallow: string[]}, style?: React.CSSProperties, onPointerDownCapture?: (e: React.PointerEvent)=>void, className?: string}){
     const [, forceUpdate] = useReducer(x => x + 1, 0);
     const {scale, offset} = useContext(ScaleOffsetContext);
 
@@ -87,6 +89,7 @@ export function NewEdge({handlesId:{src, dst}, observables: {deep, shallow}, sty
     const deps = deepEls.concat(shallowEls);
     const depsId = deep.concat(shallow)
 
+    useEffect(()=>{forceUpdate()}, [offset, scale]); //force double reload (correct implementation should not have this)
     // we increase complexity here (basicaly we create our little react here), to get a perfect position update; and element deptendent component mounting
     useEffect(() => {
         if(!deps.reduce((p,e) => p && e)) {
@@ -109,15 +112,15 @@ export function NewEdge({handlesId:{src, dst}, observables: {deep, shallow}, sty
         })
 
         return () => {observer.disconnect()}
-    }, [deps])
+    }, [])
 
     if(!srcHandle || !dstHandle) return <></>;
     const srcRect = srcHandle.getBoundingClientRect();
     const dstRect = dstHandle.getBoundingClientRect();
     const pos0 : [number, number] = [srcRect.left + srcRect.width/2, srcRect.top + srcRect.height/2]
     const pos1 : [number, number] = [dstRect.left + dstRect.width/2, dstRect.top + dstRect.height/2]
-
-    return <Edge pos0={[(pos0[0]-offset[0])/scale, (pos0[1]-offset[1])/scale]} pos1={[(pos1[0]-offset[0])/scale, (pos1[1]-offset[1])/scale]} style={style}></Edge>
+    
+    return <Edge pos0={[(pos0[0]-offset[0])/scale, (pos0[1]-offset[1])/scale]} pos1={[(pos1[0]-offset[0])/scale, (pos1[1]-offset[1])/scale]} style={style} onPointerDownCapture={onPointerDownCapture} className={className}></Edge>
 }
 
 export function PreviewEdge({guid}: {guid: GUID}) {
@@ -183,5 +186,5 @@ export default function GraphEdge({guid0, guid1, inputNumber, highlighted, onCli
 
 
     // for now top left corner connects to top left corner
-    return <Edge pos0={[pos0.x, pos0.y]} pos1={[pos1.x, pos1.y]} onClick={onClickWrapper} style={style} />
+    return <Edge pos0={[pos0.x, pos0.y]} pos1={[pos1.x, pos1.y]} onPointerDownCapture={onClickWrapper} style={style} />
 }

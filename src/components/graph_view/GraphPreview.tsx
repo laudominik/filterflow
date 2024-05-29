@@ -16,11 +16,12 @@ type PreviewPointerEvent = (e: React.PointerEvent, guid : GUID) => void;
 
 type graphPreviewEvents = {
     onPointerDown?: PreviewPointerEvent;
+    onPointerDownCapture?: PreviewPointerEvent;
     onPointerMove?: PreviewPointerEvent;
     onPointerUp?: PreviewPointerEvent;
 };
 
-export default function GraphPreview({guid, pointerEvents}: {guid: GUID, pointerEvents?: graphPreviewEvents}) {
+export default function GraphPreview({guid, pointerEvents, className}: {guid: GUID, pointerEvents?: graphPreviewEvents, className?: string}) {
 
     const nodeContext = useContext(nodeStoreContext)
     const node = nodeContext.getNode(guid)();
@@ -41,8 +42,7 @@ export default function GraphPreview({guid, pointerEvents}: {guid: GUID, pointer
         previewStore.updateSelection(selection.pointer, selection.preview, channel)
     }
 
-    return <div id={"pr-" + guid} style={{left: pos.x, top: pos.y}} onPointerDown={(e) => {pointerEvents?.onPointerDown?.(e, guid)}} onPointerMove={(e) => {pointerEvents?.onPointerMove?.(e, guid)}} onPointerUp={(e) => {pointerEvents?.onPointerUp?.(e, guid)}} className="draggable previewNode">
-        <div className="previewNode">
+    return <div role="button" id={"pr-" + guid} style={{left: pos.x, top: pos.y}} onPointerDown={(e) => {pointerEvents?.onPointerDown?.(e, guid)}} onPointerMove={(e) => {pointerEvents?.onPointerMove?.(e, guid)}} onPointerUp={(e) => {pointerEvents?.onPointerUp?.(e, guid)}} onPointerDownCapture={e => pointerEvents?.onPointerDownCapture?.(e, guid)} className={"draggable previewNode "+className}>
             <div className="pipelineBar">
                 <div>{node.value.name} Preview</div>
                 {noInputs == 1 || !previewStore.getContext().visualizationEnabled ? <></> : <InputSelection selectedInput={selectedInput} setSelectedInput={setSelectedInput} noInputs={noInputs} />}
@@ -69,7 +69,6 @@ export default function GraphPreview({guid, pointerEvents}: {guid: GUID, pointer
             }
 
 
-        </div>
     </div>
 }
 

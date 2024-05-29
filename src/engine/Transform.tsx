@@ -54,7 +54,7 @@ abstract class Transform extends node<Transform> {
         this.name = name;
         this.params = {};
         this.enabled = true;
-        this.expanded = false;
+        this.expanded = true;
         this.edited = true;
         this.canvas = new OffscreenCanvas(1, 1);
         this.gl = this.canvas.getContext("webgl", {preserveDrawingBuffer: true})!;

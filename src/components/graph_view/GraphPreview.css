@@ -2,3 +2,7 @@
     background-color: var(--secondary-background-color);
     min-width: 10em;
 }
+
+.previewNode.selected{
+    outline: solid 3px blue;
+}

@@ -110,8 +110,9 @@ export default function ImportComponent({guid} : {guid: GUID}){
     
     const form = <Form>
         <Form.Group controlId="formFile" className="mb-3">
-            <Form.Label>Choose an image</Form.Label>
-            <Form.Control type="file" accept=".png,.jpg,.bmp,.jpeg" onChange={handleImageChange} />
+            <Form.Label onClick={e => e.preventDefault()}>Choose an image</Form.Label>
+            <Form.Control onPointerDown={e => e.stopPropagation()}
+onKeyDown={e => e.stopPropagation()} type="file" accept=".png,.jpg,.bmp,.jpeg" onChange={handleImageChange} />
         </Form.Group>
     </Form>
 

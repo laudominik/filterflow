@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useEffect } from "react"
 import {ReactNode, useContext, useState, useSyncExternalStore} from "react";
 import {GUID} from "../../engine/engine";
 import {Button, Card, Collapse} from "react-bootstrap";
@@ -22,6 +22,7 @@ export type IOFunctionType = (e: React.PointerEvent, type: IOType, myGUID: GUID,
 export interface GraphNodeEvents {
     nodeEvents?: {
         onPointerDown?: NodePointerEvent;
+        onPointerDownCapture?: NodePointerEvent;
         onPointerMove?: NodePointerEvent;
         onPointerUp?: NodePointerEvent;
     }
@@ -56,6 +57,10 @@ const GraphNode: React.FC<NodeProps> = ({children,
     //const inputSize = useSyncExternalStore(nodeContext.subscribeNode(guid), node.value.getInputSize.bind(node.val))
     const [open, setOpen] = useState(node.value.getExpanded());
 
+    useEffect(()=>{
+        setOpen(node.value.expanded);
+    },[node])
+
     const handleOpenClick = (e: React.MouseEvent) => {
         e.preventDefault()
         node.value.setExpanded(!open)
@@ -66,14 +71,17 @@ const GraphNode: React.FC<NodeProps> = ({children,
     const inputs = <div className="circle-container">
         {
             [...Array(node.value.meta.input_size)].map(
-                (_, i) => <button key={`input-${guid}-${i}`} id={`input-${guid}-${i}`} className={"circle circle-top input-circle " + (selectedIO?.type === "input" ? "non-selectable-circle" : "") } onPointerDown={(e) => ioEvents?.onPointerDown?.(e, "input", guid, i)}></button>
+                (_, i) => {
+                    const nonSelectable = selectedIO?.type === "input" ? "non-selectable-circle" : ""
+                    return <button key={`input-${guid}-${i}`} id={`input-${guid}-${i}`} className={"circle circle-top input-circle " + nonSelectable } onPointerDown={(e) => ioEvents?.onPointerDown?.(e, "input", guid, i)}></button>
+                }
             )
         }
     </div>
     const outputs = <div className="circle-container"><button id={`output-${guid}-0`} className={"circle circle-bottom output-circle " + (selectedIO?.type === "output" ? "non-selectable-circle" : "")} onPointerDown={(e) => ioEvents?.onPointerDown?.(e, "output", guid, 0)}></button></div>
     return <div className={"draggable transformNode " + className} id={`node-${guid}`} key={guid} style={{left: node.value.getPos().x, top: node.value.getPos().y, transform: "translate(-50%, -50%)"}}>
         {inputs}
-        <div className="graphNode" onPointerDown={(e)=>{nodeEvents?.onPointerDown?.(e, node.value, guid)}} onPointerMove={(e)=>{nodeEvents?.onPointerMove?.(e, node.value, guid)}} onPointerUp={(e)=>{nodeEvents?.onPointerUp?.(e, node.value, guid)}}>
+        <div role="button" className="graphNode" onPointerDown={(e)=>{nodeEvents?.onPointerDown?.(e, node.value, guid)}} onPointerMove={(e)=>{nodeEvents?.onPointerMove?.(e, node.value, guid)}} onPointerUp={(e)=>{nodeEvents?.onPointerUp?.(e, node.value, guid)}} onPointerDownCapture={e => nodeEvents?.onPointerDownCapture?.(e, node.value, guid)}>
             <Card className="transformCard" style={style}>
                 <Card.Header className="cardHeader">
                     {/* {`${node.value.getName()} : ${node.value.meta.id}`} */}

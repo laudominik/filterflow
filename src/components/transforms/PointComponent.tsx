@@ -29,6 +29,7 @@ export default function PointComponent({guid, parametrized}: {guid: GUID, parame
                                         value={argument}
                                         onChange={(e) => handleInputChange(e.target.value)}
                                         onPointerDown={e => e.stopPropagation()}
+                                        onKeyDown={e => e.stopPropagation()}
                                     />
             </label>
         </div>
