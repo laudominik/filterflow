@@ -118,18 +118,19 @@
 
 }
 
-line.hiddenEdge, line.visibleEdge{
+.nodeConnection > line.hiddenEdge,.nodeConnection > line.visibleEdge{
     cursor: pointer;
+    pointer-events: visible;
 }
 
-line.hiddenEdge:hover + line.visibleEdge, line.visibleEdge:hover{
+.nodeConnection > line.hiddenEdge:hover + line.visibleEdge, .nodeConnection > line.visibleEdge:hover{
     filter: contrast(60%) drop-shadow(0 0 1px black);
 }
 
 svg.arrows.selectedEdge marker, .arrows.selectedEdge > line.visibleEdge{
     
-    stroke: rgb(86, 23, 164) !important;
-    fill: rgb(86, 23, 164) !important;
+    stroke: hsl(270, 100%, 50%) !important;
+    fill: hsl(270, 100%, 50%) !important;
 }
 
 

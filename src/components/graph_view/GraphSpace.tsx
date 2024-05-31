@@ -88,6 +88,9 @@ export default function GraphSpaceComponent({children = undefined}: {children?: 
         )
         setSelectedNodes(v => v.filter(l => nodeCollection.includes(l)))
 
+        if(selectedIO && !nodeCollection.includes(selectedIO.guid)){
+            setSelectedIO(undefined);
+        }
     }, [nodeCollection, nodeTransforms])
 
 	useEffect(()=>{
@@ -100,6 +103,7 @@ export default function GraphSpaceComponent({children = undefined}: {children?: 
     }, [connectionCollection])
 
     function handleDelete() {
+
         selectedPreviews.forEach(guid => {
             previewContext.removePreviewStore(guid)
         })
@@ -530,7 +534,7 @@ const GraphEdgeCollection = ({selected, edgeCollection, edgeEvents} : {selected:
             shallow: ['graphSpace']
         }} key={i}
         onPointerDownCapture={e => {edgeEvents?.onPointerDownCapture?.(e, connection)}}
-        className={selected.includes(connection) ? "selectedEdge" : ""}
+        className={(selected.includes(connection) ? "selectedEdge " : "") + "nodeConnection"}
         />
     })}
     </>

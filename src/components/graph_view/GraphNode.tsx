@@ -72,13 +72,19 @@ const GraphNode: React.FC<NodeProps> = ({children,
         {
             [...Array(node.value.meta.input_size)].map(
                 (_, i) => {
-                    const nonSelectable = selectedIO?.type === "input" ? "non-selectable-circle" : ""
-                    return <button key={`input-${guid}-${i}`} id={`input-${guid}-${i}`} className={"circle circle-top input-circle " + nonSelectable } onPointerDown={(e) => ioEvents?.onPointerDown?.(e, "input", guid, i)}></button>
+                    const nonSelectable = (selectedIO?.type === "input" || node.value.inputs.get(i) !== undefined);
+                    const nonSelectableClass = nonSelectable ? "non-selectable-circle " : ""
+                    const connected = node.value.inputs.get(i) ? "connected-circle " : "";
+                    return <button disabled={nonSelectable} key={`input-${guid}-${i}`} id={`input-${guid}-${i}`} className={"circle circle-top input-circle " + nonSelectableClass + connected} onPointerDown={(e) => ioEvents?.onPointerDown?.(e, "input", guid, i)}></button>
                 }
             )
         }
     </div>
-    const outputs = <div className="circle-container"><button id={`output-${guid}-0`} className={"circle circle-bottom output-circle " + (selectedIO?.type === "output" ? "non-selectable-circle" : "")} onPointerDown={(e) => ioEvents?.onPointerDown?.(e, "output", guid, 0)}></button></div>
+    const outputs = ()=>{
+        const nonSelectable = selectedIO?.type === "output";
+        const nonSelectableClass = nonSelectable ? "non-selectable-circle " : ""
+        return <div className="circle-container"><button disabled={nonSelectable} id={`output-${guid}-0`} className={"circle circle-bottom output-circle " + nonSelectableClass} onPointerDown={(e) => ioEvents?.onPointerDown?.(e, "output", guid, 0)}></button></div>
+    }
     return <div className={"draggable transformNode " + className} id={`node-${guid}`} key={guid} style={{left: node.value.getPos().x, top: node.value.getPos().y, transform: "translate(-50%, -50%)"}}>
         {inputs}
         <div role="button" className="graphNode" onPointerDown={(e)=>{nodeEvents?.onPointerDown?.(e, node.value, guid)}} onPointerMove={(e)=>{nodeEvents?.onPointerMove?.(e, node.value, guid)}} onPointerUp={(e)=>{nodeEvents?.onPointerUp?.(e, node.value, guid)}} onPointerDownCapture={e => nodeEvents?.onPointerDownCapture?.(e, node.value, guid)}>
@@ -103,7 +109,7 @@ const GraphNode: React.FC<NodeProps> = ({children,
                 </Collapse>
             </Card>
         </div>
-        {outputs}
+        {outputs()}
     </div>
 };
 

@@ -25,6 +25,12 @@
 .circle-top {
     top: -5px;
     border-color: #f00;
+
+}
+
+.connected-circle.circle-top{
+    background-color: whitesmoke;
+
 }
 
 .circle-bottom {
@@ -33,9 +39,17 @@
 }
 
 .non-selectable-circle{
-    cursor: pointer;
+    cursor: none;
     border-width: 2%;
     border-color: gray;
+    pointer-events: none;
+}
+
+.connected-circle{
+    pointer-events: none;
+    cursor: none;
+    width: 2.0em;
+    height: 2.0em;
 }
 
 .image-boundaries {
