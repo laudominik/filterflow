@@ -26,7 +26,10 @@ class CommandRegistry {
     private buffer : KeyboardEventKey[] = [];
 
     keydownListener(e : KeyboardEvent) {
-        if(e.repeat) return;
+        if(e.repeat) {
+            e.preventDefault();
+            return;
+        };
         if(e.target instanceof HTMLInputElement) return;
         
         this.buffer = [...this.buffer, e.key]
