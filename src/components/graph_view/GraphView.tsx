@@ -56,6 +56,10 @@ export default function GraphView() {
         return {width: rect.width, height: rect.height}
     }
 
+    const screenToSpacePos = ([x, y]: [number, number]) : [number, number] => {
+        return [x/scale - offset.x, y/scale - offset.y]
+    }
+
     const toggleShortcuts = () => {
         setShortcutSheetVisible(!shortcutSheetVisible)
     }
@@ -131,21 +135,21 @@ export default function GraphView() {
 
     function handleButtomZoom(value: number) {
         const viewRect = graphSpaceRef.current?.getSpaceRect();
-        handleZoom(value, [viewRect!.width / 2, viewRect!.height / 2])
+        handleZoom(value, screenToSpacePos([viewRect!.width / 2, viewRect!.height / 2]))
     }
 
     useCommand({
         name: "Zoom in",
         callback: ()=>{handleButtomZoom(3 / 2)},
         binding: ["Control", "="],
-        dependencies: [graphSpaceRef]
+        dependencies: [graphSpaceRef, offset, scale]
     })
 
     useCommand({
         name: "Zoom out",
         callback: ()=>{handleButtomZoom(2 / 3)},
         binding: ["Control", "-"],
-        dependencies: [graphSpaceRef]
+        dependencies: [graphSpaceRef, offset, scale]
     })
 
     // offset is in real coordinates

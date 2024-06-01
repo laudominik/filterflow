@@ -31,7 +31,7 @@ export function Edge({pos0, pos1, onPointerDownCapture, style, marker = true, cl
     const arrowMarkUUID = crypto.randomUUID();
     const markerEnd = `url(#${arrowMarkUUID})`
 
-    const defaultStyle = {stroke: "hsl(260, 100%, 80%)", strokeWidth: 4}
+    const defaultStyle = {stroke: "url(#myGradient)", strokeWidth: 4}
     const invisibleStyle = {stroke: "rgba(0,0,0,0)", strokeWidth: 40}
 
 
@@ -39,10 +39,14 @@ export function Edge({pos0, pos1, onPointerDownCapture, style, marker = true, cl
         <defs>
             {/* from https://webgl2fundamentals.org/webgl/lessons/resources/webgl-state-diagram.html#no-help */}
             <marker id={arrowMarkUUID} viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill={style ? style.stroke : "hsl(260, 100%, 80%)"}><path d={`M 0 0 L ${arrowHead[0]} ${arrowHead[1] / 2} L 0 ${arrowHead[1]} z`}></path></marker>
-
+            <linearGradient id="myGradient" gradientTransform="rotate(90)">
+                <stop offset="5%" stop-color="hsl(260, 100%, 80%)" />
+                <stop offset="95%" stop-color="hsl(270, 100%, 70%)" />
+            </linearGradient>
+        
         </defs>
-        {onPointerDownCapture && <line className="hiddenEdge" x1={x1 + margin} y1={y1 + margin} x2={x2 + margin} y2={y2 + margin} style={invisibleStyle} onPointerDownCapture={onPointerDownCapture} pointerEvents='auto' />}
-        <line className="visibleEdge" x1={x1 + margin} y1={y1 + margin} x2={x2 + margin} y2={y2 + margin} style={style ?? defaultStyle} markerEnd={marker ? markerEnd : ""} onPointerDownCapture={onPointerDownCapture} pointerEvents={'auto'} />
+        {onPointerDownCapture && <line className="hiddenEdge" x1={x1 + margin} y1={y1 + margin} x2={x2 + margin} y2={y2 + margin} style={invisibleStyle} onPointerDownCapture={onPointerDownCapture} />}
+        <line className="visibleEdge" x1={x1 + margin} y1={y1 + margin} x2={x2 + margin} y2={y2 + margin} style={style ?? defaultStyle} markerEnd={marker ? markerEnd : ""} onPointerDownCapture={onPointerDownCapture} />
         {onPointerDownCapture && <rect x={(x1+x2)/2} y={(y1+y2)/2} height={40} width={40} style={{pointerEvents: "none"}} fill="transparent" onPointerDownCapture={onPointerDownCapture} role="button"></rect>}
     </svg>
 }
