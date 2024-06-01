@@ -33,7 +33,8 @@ export class Engine extends EventTarget implements IEngine<Transform>{
     batchState: {
         response: ExternalEngineResponse,
         updates:{
-            needed: Set<GUID> // elements that need to update (updates that are dependent on this are included after update)
+            requested: Set<GUID>
+            dispatched: Set<GUID> // elements that need to update (updates that are dependent on this are included after update)
             started: Set<GUID> // element that started update
             done: Set<GUID> // elements that finished update
         }
@@ -43,8 +44,9 @@ export class Engine extends EventTarget implements IEngine<Transform>{
 
     protected isBatchUpdateDone(): boolean {
         let updates = this.batchState.updates;
-        return updates.started.size == updates.done.size && // all fulfiled updates was started
-        updates.needed.size == updates.done.size //all updates that were pending are done
+        return updates.started.size == updates.done.size && // all started has ended updates
+        updates.dispatched.size == 0  &&//all updates that were pending are done
+        updates.requested.size == 0 // are required updates are done
     }
 
     @jsonMapMember(String, Transform)
@@ -60,7 +62,8 @@ export class Engine extends EventTarget implements IEngine<Transform>{
             tick: 1,
             response: new ExternalEngineResponse(),
             updates:{
-                needed: new Set(),
+                dispatched: new Set(),
+                requested: new Set(),
                 started: new Set(),
                 done: new Set(),
             },
@@ -73,31 +76,58 @@ export class Engine extends EventTarget implements IEngine<Transform>{
     }
 
     public requestUpdate(node: GUID): void {
-        this.batchState.updates.needed.add(node);
+        this.batchState.updates.requested.add(node);
     }
-    protected transactionStart(): void {
+    public markForUpdate(node: GUID): void {
+        this.batchState.updates.dispatched.add(node);
+    }
+
+    public markAsStarted(node: GUID): void {
+        this.batchState.updates.started.add(node);
+    }
+
+    public markAsUpdated(node: GUID): void {
+        this.batchState.updates.done.add(node);
+        this.batchState.updates.requested.delete(node);
+        this.batchState.updates.dispatched.delete(node);
+    }
+
+    public unmark(node: GUID): void {
+        this.batchState.updates.dispatched.delete(node);
+        this.batchState.updates.done.delete(node);
+        this.batchState.updates.started.delete(node);
+        this.batchState.updates.requested.delete(node);
+    }
+
+    public transactionStart(): void {
         this.inTransaction = true;
     }
 
-    protected transactionCommit(): void {
+    public transactionCommit(historic: boolean = false): void {
         this.inTransaction = false;
+        this.batchState.response.isHistoryUpdate = historic;
         this.startUpdate();
     }
 
     public _dispatch_update(id: GUID) {
         let updates = this.batchState.updates
         if (!updates.started.has(id)) { // update can only be dispatched once
-            updates.needed.add(id); // my parent updated this one need too
+            // updates.dispatched.add(id); // my parent updated this one need too
+            this.markForUpdate(id)
             const node = this.getNode(id)
-            if (node && !this.batchState.updates.started.has(id)) {
+            if (node && (!this.batchState.updates.started.has(id) || this.batchState.update_lvl > 1)) {
                 if (node.dispatch_update(this.batchState.tick)) {
                     // dispatch triggered normal update
-                    updates.started.add(id);
+                    this.markAsStarted(id)
                 }
             } else {
                 debugger // this should not exist
-                this.batchState.updates.needed.delete(id);
-                console.error(`Node: ${id} not exist`)
+                if (!node) {
+                    this.unmark(id)
+                    console.error(`Node: ${id} not exist`)
+                }else{
+                    console.error(`Node: ${id} already updated`)
+                }
             }
 
         }
@@ -105,16 +135,13 @@ export class Engine extends EventTarget implements IEngine<Transform>{
     public _direct_update(id: GUID) {
         let updates = this.batchState.updates
         if (!updates.started.has(id)) {
-            updates.needed.add(id);
-            updates.started.add(id);
+            this.markAsStarted(id)            
             let node = this.getNode(id)
             if(node){
                 node.update_node();
             }else{
                 debugger
-                updates.needed.delete(id)
-                updates.done.delete(id)
-                updates.started.delete(id)
+                this.unmark(id)
             }
         }else{
             debugger
@@ -126,8 +153,10 @@ export class Engine extends EventTarget implements IEngine<Transform>{
         if (this.inTransaction) return;
         if(this.batchState.update_lvl == 0){ // no update before
             this.batchState.update_lvl = 1
-            this.source_nodes.forEach((id) => {
-                this._direct_update(id);
+            this.nodes.forEach(node => {
+                if (node.inputs.size == 0){
+                    this._direct_update(node.meta.id);
+                }
             })
         }
         // we got deadlock in update but all updates ended
@@ -150,7 +179,7 @@ export class Engine extends EventTarget implements IEngine<Transform>{
     }
 
     public async startUpdateAll(): Promise<void> {
-        this.nodes.forEach(v => this.batchState.updates.needed.add(v.meta.id))
+        this.nodes.forEach(v => this.markForUpdate(v.meta.id))
         this.startUpdate()
     }
 
@@ -172,7 +201,8 @@ export class Engine extends EventTarget implements IEngine<Transform>{
             updates:{
                 done: new Set(),
                 started: new Set(),
-                needed: new Set(),
+                dispatched: new Set(),
+                requested: new Set(),
             },
             response: new ExternalEngineResponse(),
             tick: tick,
@@ -181,7 +211,7 @@ export class Engine extends EventTarget implements IEngine<Transform>{
     }
 
     private deadLockForceUpdate(): void {
-        this.batchState.updates.needed.forEach(v => {
+        this.batchState.updates.dispatched.forEach(v => {
             if (this.batchState.updates.started.has(v)) return;
             this._direct_update(v);
         })
@@ -289,7 +319,7 @@ export class Engine extends EventTarget implements IEngine<Transform>{
             console.log("undefined msg type");
         }
         // if (!this.batchState.updates.done.has(event.detail.nodeId)) {
-        this.batchState.updates.done.add(event.detail.nodeId);
+        this.markAsUpdated(event.detail.nodeId)
         // }
         // TODO: temporary
         this.getNode(event.detail.nodeId)!.hash = crypto.randomUUID();
@@ -322,7 +352,7 @@ export class Engine extends EventTarget implements IEngine<Transform>{
     private handleInternalConnectionsAdd(event: CustomEvent<[[GUID, number], [GUID, number]]>) {
         this.batchState.response.connection.added.push(event.detail);
         // kick node to recalculate state update in child node
-        this.batchState.updates.needed.add(event.detail[1][0]);
+        this.requestUpdate(event.detail[1][0]);
         this.getNode(event.detail[1][0])?.dispatch_update(this.batchState.tick);
         // dispatch will trigger when all child nodes will update ~1s
         // this.dispatchEvent(new CustomEvent<ExternalEngineResponse>("update",{detail:this.batchState.response}))

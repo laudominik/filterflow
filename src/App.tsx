@@ -11,7 +11,7 @@ import SplitPane from "./components/SplitPane";
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import GraphView from './components/graph_view/GraphView';
-import {connectionStoreContext as ConnectionStoreContext, nodeStoreContext as NodeStoreContext, notebookStoreContext as NotebookStoreContext, previewStoreContext as PreviewStoreContext} from './stores/context';
+import {connectionStoreContext as ConnectionStoreContext, nodeStoreContext as NodeStoreContext, notebookStoreContext as NotebookStoreContext, previewStoreContext as PreviewStoreContext,persistenceContext as PersistenceContext} from './stores/context';
 import {useCommand, useKeybinds} from './util/commands';
 import ShortcutSheet from './components/commands/ShotcutSheet';
 import { CommandPalette } from './components/search/CommandPalette';
@@ -83,11 +83,13 @@ export default function App() {
       <NodeStoreContext.Provider value={graphStore}>
         <ConnectionStoreContext.Provider value={graphStore}>
           <PreviewStoreContext.Provider value={graphStore}>
-            <div className="App">
-              <BrandNavBar />
-              <CommandPalette show={cpVis} setShow={setCpVis}/>
-              {view}
-            </div>
+            <PersistenceContext.Provider value={graphStore}>
+              <div className="App">
+                <BrandNavBar />
+                <CommandPalette show={cpVis} setShow={setCpVis}/>
+                {view}
+              </div>
+            </PersistenceContext.Provider>
           </PreviewStoreContext.Provider>
         </ConnectionStoreContext.Provider>
       </NodeStoreContext.Provider>

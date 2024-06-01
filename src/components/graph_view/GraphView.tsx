@@ -3,13 +3,14 @@ import './GraphSpace.css'
 import {FilterStoreContext} from '../../stores/simpleFilterStore';
 import Grid from './Grid';
 import {Button, ButtonGroup} from 'react-bootstrap';
-import {faMagnifyingGlassMinus, faMagnifyingGlassPlus, faPlus, faQuestion, faRotateLeft} from '@fortawesome/free-solid-svg-icons';
+import {faLocationCrosshairs, faMagnifyingGlassMinus, faMagnifyingGlassPlus, faPlus, faQuestion, faRotateLeft} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import SearchPopup from './SearchPopup';
 import {GraphSpace, GraphSpaceInterface} from './GraphSpace';
 import {useCommand} from '../../util/commands';
 import ShortcutSheet from '../commands/ShotcutSheet';
 import { KeyboardEventKey } from '../../util/keys';
+import { persistenceContext } from '../../stores/context';
 
 // for some f*ckin reason, there's no constanst for button number.. 
 // despite values being specified in standard
@@ -22,10 +23,10 @@ export const ScaleOffsetContext = createContext<ScaleOffset>({scale: 0, offset: 
 
 // exposing stuff based https://github.com/PaulLeCam/react-leaflet/blob/master/packages/react-leaflet/src/MapContainer.tsx
 export default function GraphView() {
-    const filterStore = useContext(FilterStoreContext);
     const gridRef = useRef<HTMLCanvasElement>(null);
     const rootRef = useRef<HTMLDivElement>(null);
     const graphSpaceRef = useRef<GraphSpaceInterface>(null);
+    const persistentStore = useContext(persistenceContext)
 
     // TODO: make this use element size instead of screen size??
     // TODO: remove couping
@@ -212,6 +213,15 @@ export default function GraphView() {
         document.getElementById('root')?.addEventListener('wheel', preventZoom)
     })
 
+    useCommand({
+        callback: ()=> {persistentStore.history_rollback()},
+        name: "Undo",
+        dependencies: [persistentStore],
+        description: "Undo action",
+        binding: ["Control","z"]
+
+    })
+
 
     return <ScaleOffsetContext.Provider value={scaleOffset}>
         <div className='graphView' onWheel={handleWheel} onMouseDown={handleMouseDown} onMouseMove={handleMousePan} onMouseUp={handleMouseUp} ref={rootRef}>
@@ -226,7 +236,8 @@ export default function GraphView() {
                 <Button title='view shortcuts' onClick={toggleShortcuts}><FontAwesomeIcon icon={faQuestion} /></Button>
                 <ButtonGroup vertical={true} >
                     {/* <Button title='auto zoom to content'><FontAwesomeIcon icon={faExpand}/></Button> */}
-                    <Button onClick={() => {setScale(1); setOffset({x: 0, y: 0})}} title='reset to origin'><FontAwesomeIcon icon={faRotateLeft} /></Button>
+                    <Button onClick={() => {setScale(1); setOffset({x: 0, y: 0})}} title='reset to origin'><FontAwesomeIcon icon={faLocationCrosshairs} /></Button>
+                    <Button onClick={() => {persistentStore.history_rollback()}} title='Undo'><FontAwesomeIcon icon={faRotateLeft} /></Button>
                 </ ButtonGroup>
                 <ButtonGroup vertical={true} >
                     <Button onClick={() => {handleButtomZoom(3 / 2)}} title='zoom in'><FontAwesomeIcon icon={faMagnifyingGlassPlus} /></Button>
