@@ -53,13 +53,13 @@ export default function FileComponent() {
         URL.revokeObjectURL(url);
     }
 
-    function handleLoadNotebook(e: ChangeEvent<HTMLInputElement>) {
+    async function handleLoadNotebook(e: ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
         if (!file) {
             return;
         }
         const reader = new FileReader();
-        reader.onload = (event) => {
+        reader.onload = async (event) => {
             const serialized = event.target?.result as string
             if (!serialized) return;
             const fileName = file.name.split('.').slice(0, -1).join('.');
@@ -69,7 +69,7 @@ export default function FileComponent() {
             for (let i = 0; i < obj['imageList'].length; i++) {
                 const hash = obj['imageList'][i]
                 const data = obj['imageDataList'][i]
-                ImageStore.add(data, name, hash)
+                await ImageStore.add(data, name, hash)
             }
 
             notebookStore.loadNotebook(fileName, obj['notebook']);

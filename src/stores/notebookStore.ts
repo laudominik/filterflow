@@ -139,10 +139,11 @@ export class NotebookStore {
         let json = new TypedJSON(TopStore, {knownTypes: Array.from(knownTypes())});
         this.selected = json.parse(body)!;
         this.bindSave(this.selected);
-        this.selected.fixSerialization();
         this.stores.push([name, this.selected])
         this.setSelectedIx(this.stores.length - 1)
         this._dispatchStoreListUpdated();
+        this.selected.fixSerialization(); // must be last for store to see update
+        // this.selected.engine.update_all()
     }
 
     private setSelectedIx(ix: number) {

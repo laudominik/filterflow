@@ -28,15 +28,15 @@ export default class SourceTransform extends Transform {
 
     async apply(input: Array<OffscreenCanvas | undefined>): Promise<OffscreenCanvas | undefined> {
 
-        if (this.imageId != "" && !this.image) {
-            this.image = await ImageStore.get(this.imageId)
-        }
+        if (!this.valid){
+            if (this.imageId != "" && !this.image) {
+                this.image = await ImageStore.get(this.imageId)
+            }
 
-        if (!this.image) return undefined;
+            if (!this.image) return undefined;
 
-        // if (!this.valid){
-        // }
-        await this.loadImage();
+                await this.loadImage();
+            }
 
         return this.canvas;
     }

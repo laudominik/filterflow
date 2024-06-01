@@ -12,7 +12,7 @@ export namespace ImageStore {
             hash = precalculatedHash;
         }
         if(await opfsAvailable()){
-            saveOpfs(hash, imageString)
+            await saveOpfs(hash, imageString)
         } else {
             warningNoOPFSSupport()
         }
@@ -103,6 +103,7 @@ export namespace ImageStore {
         } else {
             warningNoOPFSSupport()
         }
+        // console.log(result)
         return result ?? undefined
     }
 

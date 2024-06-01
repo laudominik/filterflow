@@ -179,7 +179,7 @@ export class Engine extends EventTarget implements IEngine<Transform>{
     }
 
     public async startUpdateAll(): Promise<void> {
-        this.nodes.forEach(v => this.markForUpdate(v.meta.id))
+        this.nodes.forEach(v => this.requestUpdate(v.meta.id))
         this.startUpdate()
     }
 
