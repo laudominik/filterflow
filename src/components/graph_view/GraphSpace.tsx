@@ -386,12 +386,9 @@ export default function GraphSpaceComponent({children = undefined}: {children?: 
         }
     }, [scale])
 
-    //* this is the future implementation
     const graphConnection = useMemo(()=>
         <GraphEdgeCollection edgeCollection={connectionCollection} selected={[]} edgeEvents={{onPointerDownCapture: edgePointerDownCapture}}/>
     ,[connectionCollection])
-
-    // const graphConnection = <GraphEdgeCollection edgeCollection={connectionCollection} selected={selectedEdges} edgeEvents={{onPointerDownCapture: edgePointerDownCapture}}/>;
 
     return <>
         <div id="deselect-zone" style={{position: "absolute",width: "100vw", height: "100vh"}} onPointerDown={handleSpaceClick}></div>

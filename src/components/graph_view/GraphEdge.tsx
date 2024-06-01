@@ -93,7 +93,6 @@ export function NewEdge({handlesId:{src, dst}, observables: {deep, shallow}, sty
     const deps = deepEls.concat(shallowEls);
     const depsId = deep.concat(shallow)
 
-    useEffect(()=>{forceUpdate()}, [offset, scale]); //force double reload (correct implementation should not have this)
     // we increase complexity here (basicaly we create our little react here), to get a perfect position update; and element deptendent component mounting
     useEffect(() => {
         const observer = new MutationObserver(() => {forceUpdate()});
