@@ -96,26 +96,35 @@ export function NewEdge({handlesId:{src, dst}, observables: {deep, shallow}, sty
     useEffect(()=>{forceUpdate()}, [offset, scale]); //force double reload (correct implementation should not have this)
     // we increase complexity here (basicaly we create our little react here), to get a perfect position update; and element deptendent component mounting
     useEffect(() => {
-        if(!deps.reduce((p,e) => p && e)) {
-            const observer = new MutationObserver(mutations => {
-                if(depsId.reduce((p,e) => !!document.getElementById(`#${e}`) && p, true as boolean)){
-                    forceUpdate()
-                }  
-            });
-            observer.observe(document.body, {childList: true, subtree: true})
-
-            return ()=>{observer.disconnect()};
+        const observer = new MutationObserver(() => {forceUpdate()});
+        const observeObjects = () => {
+            deep.forEach(el => {
+                observer.observe(document.getElementById(el)!, {attributes: true, subtree: true, attributeFilter: ['style']})
+            })
+            shallow.forEach(el => {
+                observer.observe(document.getElementById(el)!, {attributes: true, subtree: false, attributeFilter: ['style']})
+            })
         }
 
-        const observer = new MutationObserver(() => {forceUpdate()});
-        deepEls.forEach(el => {
-            observer.observe(el!, {attributes: true, subtree: true, attributeFilter: ['style']})
-        })
-        shallowEls.forEach(el => {
-            observer.observe(el!, {attributes: true, subtree: false, attributeFilter: ['style']})
-        })
+        const mountObserver = new MutationObserver(mutations => {
+            if(depsId.reduce((p,e) => !!document.getElementById(`${e}`) && p, true as boolean)){
+                mountObserver.disconnect();
+                observeObjects();
+            }  
+        });
 
-        return () => {observer.disconnect()}
+        
+        if(!deps.reduce((p,e) => p && e)) {
+            mountObserver.observe(document.body, {childList: true, subtree: true})
+        } else {
+            observeObjects();
+        }
+
+        return () => {
+            mountObserver.disconnect();
+            observer.disconnect();
+        }
+
     }, [])
 
     if(!srcHandle || !dstHandle) return <></>;
