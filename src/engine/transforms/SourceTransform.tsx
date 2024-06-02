@@ -34,16 +34,15 @@ export default class SourceTransform extends Transform {
             }
 
             if (!this.image) return undefined;
-
-                await this.loadImage();
-            }
+            await this.loadImage();
+        }
 
         return this.canvas;
     }
 
     async setImageString(imageString: string) {
         if (this.image) {
-            ImageStore.remove(this.imageId)
+            await ImageStore.remove(this.imageId)
         }
         this.image = imageString
         this.imageId = await ImageStore.add(imageString)
@@ -53,6 +52,7 @@ export default class SourceTransform extends Transform {
 
     async loadImage() {
         if (!this.image) return
+        console.log("loadImage")
 
         const image = new Image()
         const loadImage = async (img: HTMLImageElement) => {
@@ -68,7 +68,7 @@ export default class SourceTransform extends Transform {
         this.canvas.width = image.width;
         this.canvas.height = image.height;
         this.drawImage(image)
-
+        this.valid = true;
         this.hash = crypto.randomUUID();
         this.engine.requestUpdate(this.meta.id);
     }
@@ -147,9 +147,9 @@ export default class SourceTransform extends Transform {
         gl.deleteTexture(texture);
     }
 
-    updateParams(params: {[key: string]: any;}): void {
+    async updateParams(params: {[key: string]: any;}): Promise<void> {
         if (params["image"]) {
-            this.setImageString(params["image"])
+            await this.setImageString(params["image"])
             // todo: save image blob to store
         }
     }

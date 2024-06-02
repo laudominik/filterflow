@@ -85,6 +85,7 @@ abstract class Transform extends node<Transform> {
         try {
             return await this.apply(inputs) != undefined;
         } catch (error) {
+            console.error(error)
             console.error("apply function failed for Transform");
             return false;
         }
@@ -200,7 +201,7 @@ abstract class Transform extends node<Transform> {
         return this.expanded
     }
 
-    updateParams(params: KVParams): void {
+    async updateParams(params: KVParams): Promise<void> {
         this.params = {...this.params, ...params};
 
         if (this.edited == false && Object.keys(params).length != 0) {

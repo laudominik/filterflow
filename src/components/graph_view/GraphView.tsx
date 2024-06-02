@@ -10,7 +10,7 @@ import {GraphSpace, GraphSpaceInterface} from './GraphSpace';
 import {useCommand} from '../../util/commands';
 import ShortcutSheet from '../commands/ShotcutSheet';
 import { KeyboardEventKey } from '../../util/keys';
-import { persistenceContext } from '../../stores/context';
+import { notebookStoreContext, persistenceContext } from '../../stores/context';
 
 // for some f*ckin reason, there's no constanst for button number.. 
 // despite values being specified in standard
@@ -27,6 +27,7 @@ export default function GraphView() {
     const rootRef = useRef<HTMLDivElement>(null);
     const graphSpaceRef = useRef<GraphSpaceInterface>(null);
     const persistentStore = useContext(persistenceContext)
+    const notebookStore = useContext(notebookStoreContext)
 
     // TODO: make this use element size instead of screen size??
     // TODO: remove couping
@@ -231,7 +232,7 @@ export default function GraphView() {
         <div className='graphView' onWheel={handleWheel} onMouseDown={handleMouseDown} onMouseMove={handleMousePan} onMouseUp={handleMouseUp} ref={rootRef}>
             <Grid size={[viewWidth, viewHeight]} />
 
-            <GraphSpace ref={graphSpaceRef}>
+            <GraphSpace ref={graphSpaceRef} key={notebookStore.selected.hash}>
             </GraphSpace>
             <SearchPopup visible={searchVisible} setVisible={setSearchVisibiilty} position={searchPos}></SearchPopup>
 

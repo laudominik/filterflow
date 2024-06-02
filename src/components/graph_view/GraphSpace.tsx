@@ -56,6 +56,7 @@ export default function GraphSpaceComponent({children = undefined}: {children?: 
 
     const connectionContext = useContext(connectionStoreContext)
     const connectionCollection = useSyncExternalStore(connectionContext.subscribeConnections.bind(connectionContext) as any, connectionContext.getConnections.bind(connectionContext));
+    const persistentStore = useContext(persistenceContext);
 
     const [selectedNodes, setSelectedNodes] = useState<GUID[]>([])
     const [selectedPreviews, setSelectedPreviews] = useState<GUID[]>([])
@@ -72,6 +73,12 @@ export default function GraphSpaceComponent({children = undefined}: {children?: 
         previewStartingPos: {},
         isDragging: false
     })
+
+    useEffect(()=>{
+        setSelectedEdges([])
+        setSelectedNodes([])
+        setSelectedPreviews([])
+    }, [])
 
     useEffect(()=>{
         setNodePos(
@@ -103,7 +110,7 @@ export default function GraphSpaceComponent({children = undefined}: {children?: 
     }, [connectionCollection])
 
     function handleDelete() {
-
+        persistentStore.transaction_start()
         selectedPreviews.forEach(guid => {
             previewContext.removePreviewStore(guid)
         })
@@ -116,9 +123,12 @@ export default function GraphSpaceComponent({children = undefined}: {children?: 
             previewContext.removePreviewStore(guid);
             nodeContext.removeTransform(guid);
         });
+        persistentStore.transaction_commit()
+
     }
 
     function handleSpaceClick(e : React.PointerEvent) {
+        if(e.button !== 0) return;
         if(e.ctrlKey) return;
 
         setSelectedNodes([]);
@@ -199,15 +209,17 @@ export default function GraphSpaceComponent({children = undefined}: {children?: 
 			setSelectedEdges([info])
 			setSelectedPreviews([])
         }
-
         e.stopPropagation();
     }, [selectedEdges])
 
     const dragPointerDown =  useCallback((e: React.PointerEvent) => {
+        if(e.button !== 0) return;
+        
         e.preventDefault();
         e.stopPropagation();
 
         if(!e.isTrusted) return; //ignore synthetic events (i.e. accessability tools)
+        // if(e.pointerType === "mouse" && (e as React.MouseEvent).b)
         setPointerStart({
             cursorStartingPos: [(e.pageX - offset[0])/scale, (e.pageY- offset[1])/scale],
             isDragging: true,
@@ -236,8 +248,7 @@ export default function GraphSpaceComponent({children = undefined}: {children?: 
                 const newPos: [number, number] = [prevPos[0]+dx, prevPos[1]+dy]
                 // intentional, to prevent re-renders, while keeping state between re-renders
                 nodePos[guid] = newPos
-                nodeTransforms[guid].setPos({x: newPos[0], y: newPos[1]})
-                
+                nodeTransforms[guid].setPos({x: newPos[0], y: newPos[1]})                
                 const el = document.getElementById("node-"+guid);
                 if(el){
                     el.style.left = newPos[0] + "px";
@@ -270,6 +281,11 @@ export default function GraphSpaceComponent({children = undefined}: {children?: 
                 nodeStartingPos: {},
                 previewStartingPos: {}
             })
+
+            selectedNodes.forEach(guid => {
+                nodeContext.updateParam(guid, {})
+            })
+
     
             e.preventDefault();
             e.stopPropagation();
@@ -386,9 +402,11 @@ export default function GraphSpaceComponent({children = undefined}: {children?: 
         }
     }, [scale])
 
-    const graphConnection = useMemo(()=>
-        <GraphEdgeCollection edgeCollection={connectionCollection} selected={[]} edgeEvents={{onPointerDownCapture: edgePointerDownCapture}}/>
-    ,[connectionCollection])
+    // const graphConnection = useMemo(()=>
+    //     <GraphEdgeCollection edgeCollection={connectionCollection} selected={selectedEdges} edgeEvents={{onPointerDownCapture: edgePointerDownCapture}}/>
+    // ,[connectionCollection])
+
+    const graphConnection = <GraphEdgeCollection edgeCollection={connectionCollection} selected={selectedEdges} edgeEvents={{onPointerDownCapture: edgePointerDownCapture}}/>;
 
     return <>
         <div id="deselect-zone" style={{position: "absolute",width: "100vw", height: "100vh"}} onPointerDown={handleSpaceClick}></div>
@@ -438,39 +456,23 @@ export default function GraphSpaceComponent({children = undefined}: {children?: 
                 <PointerFollower id="pointer-follower"/>
                 {children}
             </div>
-            <ContextToolbar selectedEdges={selectedEdges} selectedNodes={selectedNodes} selectedPreviews={selectedPreviews}/>
+            <ContextToolbar selectedEdges={selectedEdges} selectedNodes={selectedNodes} selectedPreviews={selectedPreviews} handleDelete={handleDelete}/>
         </selectedNodesContext.Provider>
         </selectedIOContext.Provider>
     </>
 }
 
-const ContextToolbar = ({selectedNodes, selectedPreviews, selectedEdges} : {selectedNodes: GUID[], selectedPreviews: GUID[], selectedEdges: ConnectionInfo[]}) => {
+const ContextToolbar = ({selectedNodes, selectedPreviews, selectedEdges, handleDelete} : {selectedNodes: GUID[], selectedPreviews: GUID[], selectedEdges: ConnectionInfo[], handleDelete: ()=>void}) => {
     const nodeStore = useContext(nodeStoreContext);
 
     const previewStore = useContext(previewStoreContext);
     const openedPreviews = previewStore.getPreviews();
-    const connectionContext = useContext(connectionStoreContext)
+    // const connectionContext = useContext(connectionStoreContext);
+    // const persistentStore = useContext(persistenceContext);
     
-    const nodesWithPreview = Array.from(openedPreviews.keys());
-
-    // const selectedWithoutPreview = selectedNodes.filter(guid => nodesWithPreview.includes(guid) === false)
-    // const selectedWithPreview = selectedNodes.filter(guid => nodesWithPreview.includes(guid) === true)
-
-    const handleDelete = () => {
-        selectedPreviews.forEach(guid => {
-            previewStore.removePreviewStore(guid)
-        })
-
-        selectedEdges.forEach(connection => {
-            connectionContext.disconnectNodes(connection.connectionDefinition);
-        })
-        
-        selectedNodes.forEach(guid => {
-            previewStore.removePreviewStore(guid);
-            nodeStore.removeTransform(guid);
-        });
-    }
-
+    // const nodesWithPreview = Array.from(openedPreviews.keys());
+    const selectedSource = selectedNodes.length === 1 && nodeStore.getNode(selectedNodes[0])().value.isSource;
+    
     const handleOpenPreview = () => {
             selectedNodes.forEach(guid => {
                 if(!previewStore.getPreviewStore(guid)){
@@ -489,10 +491,31 @@ const ContextToolbar = ({selectedNodes, selectedPreviews, selectedEdges} : {sele
         })
     }
 
+    const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            nodeStore.updateParam(selectedNodes[0], {image: event.target?.result as string})
+        }
+
+        reader.readAsDataURL(file);
+    }
+
+    const form = selectedSource ? <Form style={{display: "none"}}>
+    <Form.Group className="mb-3">
+        <Form.Label>Choose an image</Form.Label>
+        <Form.Control id={"preview_chooser" + selectedNodes[0]} type="file" accept=".png,.jpg,.bmp,.jpeg" onChange={handleImageChange} />
+    </Form.Group> 
+    </Form> : <></>
+
     return <div className="nodeContextMenu">
         {selectedNodes.length + selectedEdges.length + selectedPreviews.length > 0 && <Button title="delete selected" key={"delete"} onClick={handleDelete}><FontAwesomeIcon icon={faTrash} /></Button>}
         {selectedNodes.length > 0 && <Button title="open previews for selected" key={"open-preview"} onClick={handleOpenPreview}><FontAwesomeIcon icon={faEye} /></Button>}
         {selectedNodes.length > 0 && <Button title="open visualizations for selected" key={"open-visualization"} onClick={handleOpenVisualization}><FontAwesomeIcon icon={faComment} /></Button>}
+        {selectedSource && form}
+        {selectedSource && <Button title="choose image" onClick={() => document.getElementById("preview_chooser" + selectedNodes[0])?.click()}><FontAwesomeIcon icon={faImagePortrait}/></Button>}
+
     </div>
 }
 
@@ -520,7 +543,7 @@ const NodeCollection = ({selected, dragging, ioEvents, nodeCollection, nodeEvent
 }
 
 
-const GraphEdgeCollection = ({selected, edgeCollection, edgeEvents} : {selected: ConnectionInfo[], edgeCollection: ConnectionInfo[], edgeEvents : {onPointerDownCapture?: (e:React.PointerEvent, info: ConnectionInfo)=>void}}) => {
+const GraphEdgeCollection = ({selected, edgeCollection, edgeEvents} : {selected: ConnectionInfo[], edgeCollection: ConnectionInfo[], edgeEvents : {onPointerDownCapture?: (e:React.PointerEvent, info: ConnectionInfo)=>void}}) => {    
     return <>
     {edgeCollection.map((connection, i) => {
         return <NewEdge handlesId={{

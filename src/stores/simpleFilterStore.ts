@@ -133,7 +133,7 @@ class simpleFilterStore {
         return transformWatch
     }
 
-    public updateParams(id:GUID,params: KVParams): void{
+    public async updateParams(id:GUID,params: KVParams): Promise<void>{
         this.engine.getNode(id)?.updateParams(params);
         this.emitChange(id);
     }

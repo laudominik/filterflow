@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React, { useEffect, useReducer } from "react"
 import {ReactNode, useContext, useState, useSyncExternalStore} from "react";
 import {GUID} from "../../engine/engine";
 import {Button, Card, Collapse} from "react-bootstrap";
@@ -57,9 +57,12 @@ const GraphNode: React.FC<NodeProps> = ({children,
     //const inputSize = useSyncExternalStore(nodeContext.subscribeNode(guid), node.value.getInputSize.bind(node.val))
     const [open, setOpen] = useState(node.value.getExpanded());
 
+    
     useEffect(()=>{
         setOpen(node.value.expanded);
     },[node])
+
+
 
     const handleOpenClick = (e: React.MouseEvent) => {
         e.preventDefault()
@@ -88,7 +91,7 @@ const GraphNode: React.FC<NodeProps> = ({children,
     return <div className={"draggable transformNode " + className} id={`node-${guid}`} key={guid} style={{left: node.value.getPos().x, top: node.value.getPos().y, transform: "translate(-50%, -50%)"}}>
         {inputs}
         <div role="button" className="graphNode" onPointerDown={(e)=>{nodeEvents?.onPointerDown?.(e, node.value, guid)}} onPointerMove={(e)=>{nodeEvents?.onPointerMove?.(e, node.value, guid)}} onPointerUp={(e)=>{nodeEvents?.onPointerUp?.(e, node.value, guid)}} onPointerDownCapture={e => nodeEvents?.onPointerDownCapture?.(e, node.value, guid)}>
-            <Card className="transformCard" style={style}>
+            <Card className="transformCard" style={{backgroundColor: `color-mix(in srgb, var(--background-color) 40%, ${node.value.getColor()} 60%)`}}>
                 <Card.Header className="cardHeader">
                     {/* {`${node.value.getName()} : ${node.value.meta.id}`} */}
                     {node.value.getName()}

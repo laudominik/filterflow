@@ -89,7 +89,7 @@ export namespace ImageStore {
         if (!canRemoveImage(hash, storeName)) return
 
         if(await opfsAvailable()){
-            removeOpfs(hash)
+            await removeOpfs(hash)
         } else {
             warningNoOPFSSupport()
         }
@@ -99,11 +99,12 @@ export namespace ImageStore {
     export async function get(hash: ImageId): Promise<string | undefined> {
         let result : string|undefined = undefined
         if(await opfsAvailable()){
+            console.log('hash' + hash)
             result = await loadOpfs(hash)
+           
         } else {
             warningNoOPFSSupport()
         }
-        // console.log(result)
         return result ?? undefined
     }
 

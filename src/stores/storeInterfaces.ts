@@ -87,4 +87,6 @@ export interface IPreviewStore{
 export interface IPersistentStore {
     history_rollback(): void
     history_redo(): void
+    transaction_start(): void
+    transaction_commit(): void
 }

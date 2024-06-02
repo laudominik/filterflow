@@ -116,6 +116,7 @@ onKeyDown={e => e.stopPropagation()} type="file" accept=".png,.jpg,.bmp,.jpeg" o
         </Form.Group>
     </Form>
 
+
 const img = <div className="imageContainer"><div className="centeredImage"><canvas ref={canvasRef} /></div></div>
 
     return <>

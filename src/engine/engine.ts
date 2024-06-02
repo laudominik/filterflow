@@ -109,6 +109,14 @@ export class Engine extends EventTarget implements IEngine<Transform>{
         this.startUpdate();
     }
 
+    public flush(): void {
+        // this.transactionStart();
+        // this.nodes.forEach(node => this.removeNode(node.meta.id))
+        // this.batchState.response.node.removed = Array.from(this.batchState.updates.requested.values())
+        // this.flushUpdate()
+        // this.transactionCommit();
+    }
+
     public _dispatch_update(id: GUID) {
         let updates = this.batchState.updates
         if (!updates.started.has(id)) { // update can only be dispatched once
@@ -158,6 +166,9 @@ export class Engine extends EventTarget implements IEngine<Transform>{
                     this._direct_update(node.meta.id);
                 }
             })
+
+            // if(this.batchState.updates.started.size == 0) this.startUpdate();
+            // return
         }
         // we got deadlock in update but all updates ended
         if(!this.isBatchUpdateDone()){ // for some reason all updates finished and not all required nodes updated
@@ -228,10 +239,11 @@ export class Engine extends EventTarget implements IEngine<Transform>{
         }
         console.log("here!!")
         // if found add to pending
-        transform.updateParams(params);
-        transform.hash = crypto.randomUUID();
-        this.requestUpdate(transform.meta.id);
-        this.startUpdate();
+        transform.updateParams(params).then(()=>{
+            transform.hash = crypto.randomUUID();
+            this.requestUpdate(transform.meta.id);
+            this.startUpdate();
+        });
     }
     public _addNode(node: Transform) {
         const guid = node.meta.id;
@@ -262,7 +274,7 @@ export class Engine extends EventTarget implements IEngine<Transform>{
         node!.disconnect(); // this will not trigger update, only request them
         // this.nodes.delete(guid);
         this.batchState.response.node.removed.push(guid);
-        this.source_nodes = this.source_nodes.filter((v) => v != guid);
+        this.requestUpdate(guid)
         this.startUpdate();
     }
 
@@ -322,7 +334,10 @@ export class Engine extends EventTarget implements IEngine<Transform>{
         this.markAsUpdated(event.detail.nodeId)
         // }
         // TODO: temporary
-        this.getNode(event.detail.nodeId)!.hash = crypto.randomUUID();
+        let node = this.getNode(event.detail.nodeId)
+        if(node){
+            node.hash= crypto.randomUUID();
+        }
 
         if (this.batchState.updates.started.size == this.batchState.updates.done.size) {
             // Desired state all required nodes updated

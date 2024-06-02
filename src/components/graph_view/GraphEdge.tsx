@@ -40,8 +40,8 @@ export function Edge({pos0, pos1, onPointerDownCapture, style, marker = true, cl
             {/* from https://webgl2fundamentals.org/webgl/lessons/resources/webgl-state-diagram.html#no-help */}
             <marker id={arrowMarkUUID} viewBox="0 0 10 10" refX="3" refY="5" markerWidth="6" markerHeight="6" orient="auto" fill={style ? style.stroke : "hsl(260, 100%, 80%)"}><path d={`M 0 0 L ${arrowHead[0]} ${arrowHead[1] / 2} L 0 ${arrowHead[1]} z`}></path></marker>
             <linearGradient id="myGradient" gradientTransform="rotate(90)">
-                <stop offset="5%" stop-color="hsl(260, 100%, 80%)" />
-                <stop offset="95%" stop-color="hsl(270, 100%, 70%)" />
+                <stop offset="5%" stopColor="hsl(260, 100%, 80%)" />
+                <stop offset="95%" stopColor="hsl(270, 100%, 70%)" />
             </linearGradient>
         
         </defs>
@@ -93,12 +93,13 @@ export function NewEdge({handlesId:{src, dst}, observables: {deep, shallow}, sty
     const deps = deepEls.concat(shallowEls);
     const depsId = deep.concat(shallow)
 
+    useEffect(()=>{forceUpdate()}, [])
     // we increase complexity here (basicaly we create our little react here), to get a perfect position update; and element deptendent component mounting
     useEffect(() => {
         const observer = new MutationObserver(() => {forceUpdate()});
         const observeObjects = () => {
             deep.forEach(el => {
-                observer.observe(document.getElementById(el)!, {attributes: true, subtree: true, attributeFilter: ['style']})
+                observer.observe(document.getElementById(el)!, {attributes: true, subtree: true, attributeFilter: ['style', 'width', 'height']})
             })
             shallow.forEach(el => {
                 observer.observe(document.getElementById(el)!, {attributes: true, subtree: false, attributeFilter: ['style']})

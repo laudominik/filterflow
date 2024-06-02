@@ -186,6 +186,7 @@ export class NotebookStore {
         const name = this.stores[ix][0];
         this.stores = this.stores.slice(0, ix).concat(this.stores.slice(ix + 1))
         this.persistence.delete("store_" + name);
+        this.selected.engine.flush();
 
         // delete all images associated with that notebook & also it's image list
         const images = ImageStore.getImageList(name)

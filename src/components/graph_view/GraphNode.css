@@ -58,14 +58,17 @@
 
 .selectedNode .transformCard{
     outline: solid 3px blue;
-    transition-duration: 0.2s;
 }
 
 .transformCard {
-    width: 400px;
     outline: solid 3px transparent;
+    width: 400px;
 
     -webkit-box-shadow: 2px 15px 24px -14px black;
     -moz-box-shadow: 2px 15px 24px -14px black;
     box-shadow: 2px 15px 24px -14px black;
+}
+
+.transformCard:has(div.imageContainer){
+    width: fit-content;
 }

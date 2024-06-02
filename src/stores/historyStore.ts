@@ -5,6 +5,12 @@ import { IPersistentStore } from "./storeInterfaces";
 
 @jsonObject
 export class HistoryStore extends GraphFilterStore implements IPersistentStore{
+    transaction_start(): void {
+        this.engine.transactionStart();
+    }
+    transaction_commit(): void {
+        this.engine.transactionCommit(false);
+    }
     // TODO: this about saving to max depth
     history: ExternalEngineResponse[] = [];
     future: ExternalEngineResponse[] = [];
