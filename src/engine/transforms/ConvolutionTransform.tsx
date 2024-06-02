@@ -52,13 +52,12 @@ const linearConvolutionShader = `
 @jsonObject
 class ConvolutionTransform extends Transform {
     
-    image?:string
     kernel: Array<Array<number>>
     fragment: string;
     
     
     constructor(name?: string, fragmentShader?: string) {
-        super(name ?? 'Custom kernel', '#E6F4E2');
+        super(name ?? 'Custom kernel', '#00FF00');
 
         this.kernel = Array(3).fill(0).map(() => new Array(3).fill(0));
         this.params = {...this.params, "kernel" : this.kernel};

@@ -1,0 +1,34 @@
+
+.commandPaletteModal{
+    top: 20vh;
+}
+.commandPaletteList{
+    display: flex;
+    flex-direction: column;
+
+    max-height: 20vh;
+    overflow-y: scroll;
+    padding: 2px;
+}
+
+.commandPaletteList button{
+    text-align: left;
+}
+
+
+.commandDiv{
+    display: flex;
+    justify-content: space-between;
+}
+
+.commandBindingKey{
+    color: var(--secondary-background-color);
+    background: var(--secondary-color);
+    border-radius: 5px;
+    text-align: center;
+
+    padding: 1px 4px;
+}
+.commandBindingPlus{
+    padding: 0 1px;
+}

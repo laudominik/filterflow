@@ -1,9 +1,5 @@
 import { useState, useContext, useSyncExternalStore, useEffect } from 'react'
-import { faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {Button, FormSelect} from 'react-bootstrap';
-import { FilterStoreContext } from '../../stores/simpleFilterStore';
-import ConvolutionTransform from '../../engine/transforms/ConvolutionTransform';
+import {FormSelect} from 'react-bootstrap';
 import {GUID} from "../../engine/iengine";
 import { nodeStoreContext } from '../../stores/context';
 
@@ -47,7 +43,7 @@ export default function KernelComponent({guid}: {guid: GUID}){
     return <div className="grid">
         <label>
             Select Kernel Size:
-            <FormSelect value={kernelN} onChange={(e) => handleKernelChange(parseInt(e.target.value, 10))}>
+            <FormSelect value={kernelN} onChange={(e) => handleKernelChange(parseInt(e.target.value, 10))} onPointerDown={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}>
                 <option value={2}>2</option>
                 <option value={3}>3</option>
                 <option value={4}>4</option>
@@ -58,6 +54,8 @@ export default function KernelComponent({guid}: {guid: GUID}){
                     className="form-control"
                     value={kernelWeight}
                     onChange={(e) => handleWeightChange(e.target.value)}
+                    onPointerDown={e=>e.stopPropagation()}
+                    onKeyDown={e=>e.stopPropagation()}
             />
         </label>
         <div className="container mt-3">
@@ -73,6 +71,8 @@ export default function KernelComponent({guid}: {guid: GUID}){
                                     value={gridValues[rowIndex][colIndex]}
                                     onChange={(e) => handleInputChange(rowIndex, colIndex, e.target.value)}
                                     style={colIndex == Math.ceil(kernelN/2) - 1 && rowIndex == Math.ceil(kernelN/2) - 1 ? {borderColor: "yellow", borderWidth: 5} : {}}
+                                    onPointerDown={e => e.stopPropagation()}
+                                    onKeyDown={e => e.stopPropagation()}
                                 />
                             </div>
                         ))}

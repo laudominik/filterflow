@@ -1,0 +1,13 @@
+.SheetDialogKey{
+    color: var(--secondary-background-color);
+    background: var(--secondary-color);
+    border-radius: 5px;
+    text-align: center;
+
+    padding: 1px 4px;
+
+}
+
+.KeyBindings{
+    text-align: right;
+}

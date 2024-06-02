@@ -30,11 +30,15 @@ export default function MorphoLogicComponent({guid}: {guid: GUID}){
             <input type="number" className="form-control" 
                 value={kernelSize[0]} 
                 onChange={(e) => handleKernelChange([parseInt(e.target.value),kernelSize[1]])}
+                onPointerDown={e => e.stopPropagation()}
+                onKeyDown={e => e.stopPropagation()}
             />
             x
             <input type="number" className="form-control" 
                 value={kernelSize[1]} 
                 onChange={(e) => handleKernelChange([kernelSize[0], parseInt(e.target.value)])}
+                onPointerDown={e => e.stopPropagation()}
+                onKeyDown={e => e.stopPropagation()}
             />
         </label>
 

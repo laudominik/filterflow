@@ -4,7 +4,13 @@ import { ExternalEngineResponse } from "../engine/engine";
 
 @jsonObject
 export class TopStore extends HistoryStore{
+    hash: string
     saveCallback?: (store: TopStore) => void;
+
+    constructor(){
+        super()
+        this.hash = crypto.randomUUID();
+    }
 
     _handleEngineInfo(event: ExternalEngineResponse): void {
         super._handleEngineInfo(event);

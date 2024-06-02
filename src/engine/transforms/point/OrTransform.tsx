@@ -6,8 +6,6 @@ import { BitwiseTransform } from "./BitwiseTransform";
 
 @jsonObject
 export class OrTransform extends BitwiseTransform {
-    image?:string
-
 // OR = min( v1+v2, 1 )
     constructor() {
         super('OR', true,    `

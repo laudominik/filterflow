@@ -20,7 +20,7 @@ abstract class ChannelExtractionTransform extends PointTransform {
         this.params = {...this.params, "argument" : 1};
     }
 }
-
+@jsonObject
 export class RChannelExtractionTransform extends ChannelExtractionTransform {
     constructor(){
         super("R channel", `
@@ -29,6 +29,7 @@ export class RChannelExtractionTransform extends ChannelExtractionTransform {
     }
 }
 
+@jsonObject
 export class GChannelExtractionTransform extends ChannelExtractionTransform {
     constructor(){
         super("G channel", `
@@ -37,6 +38,7 @@ export class GChannelExtractionTransform extends ChannelExtractionTransform {
     }
 }
 
+@jsonObject
 export class BChannelExtractionTransform extends ChannelExtractionTransform {
     constructor(){
         super("B channel", `

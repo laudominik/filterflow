@@ -5,8 +5,6 @@ import { BitwiseTransform } from "./BitwiseTransform";
 
 @jsonObject
 export class XorTransform extends BitwiseTransform {
-    image?:string
-
     // XOR = v1*(1-v2) +v2*(1-v1)
     constructor() {
         super('XOR', true,    `

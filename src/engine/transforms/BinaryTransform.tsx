@@ -1,7 +1,7 @@
 import "reflect-metadata"
-import { jsonObject } from "typedjson";
+import {jsonObject} from "typedjson";
 import Transform from "../Transform";
-import { GUID } from "../iengine";
+import {GUID} from "../iengine";
 
 const vs = `
 attribute vec2 a_position;
@@ -55,71 +55,71 @@ abstract class BinaryTransform extends Transform {
     }
 
     async _apply(input: Array<OffscreenCanvas>): Promise<OffscreenCanvas> {
-            this.canvas.width = input.reduce((prev, el, _) => prev < el.width ? el.width : prev, 0);
-            this.canvas.height = input.reduce((prev, el, _) => prev < el.height ? el.height : prev, 0);;
+        this.canvas.width = input.reduce((prev, el, _) => prev < el.width ? el.width : prev, 0);
+        this.canvas.height = input.reduce((prev, el, _) => prev < el.height ? el.height : prev, 0);;
 
-            const gl = this.gl
-            gl.viewport(0,0, this.canvas.width, this.canvas.height);
+        const gl = this.gl
+        gl.viewport(0, 0, this.canvas.width, this.canvas.height);
 
-            const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
-                gl.shaderSource(vertexShader, vs);
-                gl.compileShader(vertexShader);
+        const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
+        gl.shaderSource(vertexShader, vs);
+        gl.compileShader(vertexShader);
 
-            const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)!;
-                gl.shaderSource(fragmentShader, this.fragment_shader);
-                gl.compileShader(fragmentShader);
+        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)!;
+        gl.shaderSource(fragmentShader, this.fragment_shader);
+        gl.compileShader(fragmentShader);
 
-            const program = gl.createProgram()!;
-                gl.attachShader(program, vertexShader);
-                gl.attachShader(program, fragmentShader);
-                gl.linkProgram(program);
-                gl.useProgram(program);
+        const program = gl.createProgram()!;
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+        gl.useProgram(program);
 
-            const positionBuffer = gl.createBuffer()!;
-                gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-                    -1,    -1, 
-                    1,     -1, 
-                    -1,    1,
-                    1,     1
-                ]), gl.STATIC_DRAW);
+        const positionBuffer = gl.createBuffer()!;
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+            -1, -1,
+            1, -1,
+            -1, 1,
+            1, 1
+        ]), gl.STATIC_DRAW);
 
-            const texture0loc = gl.getUniformLocation(program, "u_image0");
-                gl.uniform1i(texture0loc, 0);
-            const texture1loc = gl.getUniformLocation(program, "u_image1");
-                gl.uniform1i(texture1loc, 1);
-                     
-            const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
-                gl.enableVertexAttribArray(positionAttributeLocation);
-                gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);  
-            
-            const texture0 = gl.createTexture();
-                gl.activeTexture(gl.TEXTURE0);
-                gl.bindTexture(gl.TEXTURE_2D, texture0);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, input[0]);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-            const texture1 = gl.createTexture();
-                gl.activeTexture(gl.TEXTURE1);
-                gl.bindTexture(gl.TEXTURE_2D, texture1);
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, input[1]);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        const texture0loc = gl.getUniformLocation(program, "u_image0");
+        gl.uniform1i(texture0loc, 0);
+        const texture1loc = gl.getUniformLocation(program, "u_image1");
+        gl.uniform1i(texture1loc, 1);
 
-  
-            gl.clearColor(0, 0, 0, 0);
-            gl.clear(gl.COLOR_BUFFER_BIT);
-            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-        
-            gl.deleteShader(vertexShader);
-            gl.deleteShader(fragmentShader);
-            gl.deleteProgram(program);
-            gl.deleteBuffer(positionBuffer);
-            gl.deleteTexture(texture0);
+        const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
+        gl.enableVertexAttribArray(positionAttributeLocation);
+        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
 
-            return this.canvas;
+        const texture0 = gl.createTexture();
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture0);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, input[0]);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        const texture1 = gl.createTexture();
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, texture1);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, input[1]);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+        gl.deleteShader(vertexShader);
+        gl.deleteShader(fragmentShader);
+        gl.deleteProgram(program);
+        gl.deleteBuffer(positionBuffer);
+        gl.deleteTexture(texture0);
+
+        return this.canvas;
     }
 }
 

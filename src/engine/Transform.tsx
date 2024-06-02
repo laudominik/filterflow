@@ -1,8 +1,8 @@
-import { ReactElement, ReactNode } from 'react'
-import { AnyT, jsonMapMember, jsonMember, jsonObject } from 'typedjson';
-import { node } from './node';
+import {ReactElement, ReactNode} from 'react'
+import {AnyT, jsonMapMember, jsonMember, jsonObject} from 'typedjson';
+import {node} from './node';
 
-type CanvasPosition = [number,number]; 
+type CanvasPosition = [number, number];
 type CanvasSelection = {start: CanvasPosition, size: CanvasPosition, center: CanvasPosition}
 type GUID = string;
 export interface KVParams {
@@ -16,7 +16,7 @@ class point {
     @jsonMember(Number)
     public y: number = 0
 
-    constructor(x: number, y: number){
+    constructor(x: number, y: number) {
         this.x = x
         this.y = y
     }
@@ -32,7 +32,7 @@ abstract class Transform extends node<Transform> {
     color: string;
     @jsonMember(String)
     name: string;
-    @jsonMember(String)
+    // @jsonMember(String)
     image?: string;
     @jsonMember(Boolean)
     edited: boolean;
@@ -44,44 +44,48 @@ abstract class Transform extends node<Transform> {
     params: KVParams;
     @jsonMember(String)
     hash: GUID;
+    isSource: boolean
     canvas: OffscreenCanvas;
     gl: WebGLRenderingContext;
-    
-    constructor(name: string, color: string, inputs?: number){
-        super({id:crypto.randomUUID(),inputs: inputs ?? 1,outputs:1});
+
+    constructor(name: string, color: string, inputs?: number) {
+        super({id: crypto.randomUUID(), inputs: inputs ?? 1, outputs: 1});
         this.color = color;
         this.name = name;
         this.params = {};
         this.enabled = true;
-        this.expanded = false;
+        this.expanded = true;
         this.edited = true;
-        this.canvas = new OffscreenCanvas(1,1);
+        this.canvas = new OffscreenCanvas(1, 1);
         this.gl = this.canvas.getContext("webgl", {preserveDrawingBuffer: true})!;
         this.hash = crypto.randomUUID();
         this.pos = new point(0, 0)
         this.prevPos = new point(0, 0)
+        this.isSource = false;
     }
 
     public async _update_node(): Promise<boolean> {
         // based on input connections perform calculations
-        let inputs = []; 
+        let inputs = [];
+
         for (let i = 0; i < this.meta.input_size; i++) {
             const input = this.inputs.get(i);
-            if (input){
+            if (input) {
                 const node = this.engine.getNode(input[0]);
-                if (node && node.valid){
+                if (node && node.valid) {
                     inputs.push(node.canvas);
-                }else{
+                } else {
                     inputs.push(undefined);
                 }
-            }else{
+            } else {
                 inputs.push(undefined);
             }
-            
+
         }
         try {
             return await this.apply(inputs) != undefined;
         } catch (error) {
+            console.error(error)
             console.error("apply function failed for Transform");
             return false;
         }
@@ -89,17 +93,21 @@ abstract class Transform extends node<Transform> {
     }
 
     abstract paramView(guid: GUID): ReactElement;
-    
+
     visualizationView(guid: GUID) {
         return <></>
     };
 
+    public getInputSize() {
+        return this.meta.input_size
+    }
+
     // TODO add meta to promise (about color)
-    async apply(input:Array<OffscreenCanvas | undefined>): Promise<OffscreenCanvas|undefined>{
-        if(!this.enabled){
+    async apply(input: Array<OffscreenCanvas | undefined>): Promise<OffscreenCanvas | undefined> {
+        if (!this.enabled) {
             return input[0];
         }
-        if(!input.length || input.includes(undefined)) {
+        if (!input.length || input.includes(undefined)) {
             return undefined
             // this.dispatch_update();
         }
@@ -111,7 +119,7 @@ abstract class Transform extends node<Transform> {
         return ret;
     }
 
-    async _apply(input:Array<OffscreenCanvas>): Promise<OffscreenCanvas> {
+    async _apply(input: Array<OffscreenCanvas>): Promise<OffscreenCanvas> {
         return input[0];
     }
 
@@ -124,21 +132,21 @@ abstract class Transform extends node<Transform> {
         return positon
     }
 
-    public getPixels(position: [number, number], size: [number, number], result?: Uint8Array): Uint8Array{
+    public getPixels(position: [number, number], size: [number, number], result?: Uint8Array): Uint8Array {
         const arrayLength = 4 * size[0] * size[1] // 4 for RGBA bits
-        if(!result || result.length < arrayLength)
+        if (!result || result.length < arrayLength)
             result = new Uint8Array(arrayLength)
 
         this.gl.readPixels(position[0], position[1], size[0], size[1], this.gl.RGBA, this.gl.UNSIGNED_BYTE, result);
         return result
     }
 
-    public fromPositionToSelection(position: [number, number]): CanvasSelection{
-        return {start: position, size:[1,1], center: position}
+    public fromPositionToSelection(position: [number, number]): CanvasSelection {
+        return {start: position, size: [1, 1], center: position}
     }
 
     public fromPositionToSourceSelection(position: [number, number]): CanvasSelection {
-        return {start: position, size: [1,1], center: position}
+        return {start: position, size: [1, 1], center: position}
     }
 
     public getImageString(): string {
@@ -153,23 +161,23 @@ abstract class Transform extends node<Transform> {
         return this.gl
     }
 
-    public getHash(): GUID{
+    public getHash(): GUID {
         return this.hash
     }
 
-    public getPos(): {x: number, y: number}{
+    public getPos(): {x: number, y: number} {
         return this.pos
     }
 
-    public getPreviewPos(): {x: number, y: number}{
+    public getPreviewPos(): {x: number, y: number} {
         return this.prevPos;
     }
 
-    public setPos(pos: {x: number, y: number}){
+    public setPos(pos: {x: number, y: number}) {
         this.pos = new point(pos.x, pos.y)
     }
 
-    public setPreviewPos(pos: {x: number, y: number}){
+    public setPreviewPos(pos: {x: number, y: number}) {
         this.prevPos = new point(pos.x, pos.y);
     }
 
@@ -177,33 +185,33 @@ abstract class Transform extends node<Transform> {
         this.image = image;
     }
 
-    setEnabled(enabled: boolean){
+    setEnabled(enabled: boolean) {
         this.enabled = enabled
     }
 
-    getEnabled(){
+    getEnabled() {
         return this.enabled
     }
 
-    setExpanded(expanded: boolean){
+    setExpanded(expanded: boolean) {
         this.expanded = expanded
     }
 
-    getExpanded(){
+    getExpanded() {
         return this.expanded
     }
 
-    updateParams(params: KVParams): void {
-        this.params = {...this.params,...params};
-       
-        if (this.edited == false && Object.keys(params).length != 0){
-            this.name =  `${this.name}[edited]`
+    async updateParams(params: KVParams): Promise<void> {
+        this.params = {...this.params, ...params};
+
+        if (this.edited == false && Object.keys(params).length != 0) {
+            this.name = `${this.name}[edited]`
             this.edited = true;
         }
         this.hash = crypto.randomUUID();
     }
 
-    getParams() : KVParams {
+    getParams(): KVParams {
         return this.params;
     }
 

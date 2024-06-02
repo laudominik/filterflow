@@ -1,8 +1,8 @@
 import 'reflect-metadata'
-import { useState, useEffect, StrictMode, useContext, useSyncExternalStore } from 'react';
-import { Button, Tab } from 'react-bootstrap';
-import { faList } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {useState, useEffect, StrictMode, useContext, useSyncExternalStore} from 'react';
+import {Button, Tab} from 'react-bootstrap';
+import {faList} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 import BrandNavBar from './components/brand_nav_bar/BrandNavBar'
 import PreviewContainer from './components/preview_container/PreviewContainer';
 import TransformPipeline from './components/transform_pipeline/TransformPipeline';
@@ -11,8 +11,10 @@ import SplitPane from "./components/SplitPane";
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import GraphView from './components/graph_view/GraphView';
-import { connectionStoreContext as ConnectionStoreContext, nodeStoreContext as NodeStoreContext, notebookStoreContext as NotebookStoreContext, previewStoreContext as PreviewStoreContext } from './stores/context';
-import { useKeybinds } from './util/commands';
+import {connectionStoreContext as ConnectionStoreContext, nodeStoreContext as NodeStoreContext, notebookStoreContext as NotebookStoreContext, previewStoreContext as PreviewStoreContext,persistenceContext as PersistenceContext} from './stores/context';
+import {useCommand, useKeybinds} from './util/commands';
+import ShortcutSheet from './components/commands/ShotcutSheet';
+import { CommandPalette } from './components/search/CommandPalette';
 
 export default function App() {
   const notebookStore = useContext(NotebookStoreContext);
@@ -61,24 +63,35 @@ export default function App() {
       borderRadius: '50%',
       backgroundColor: 'rgba(0,0,0, 0.5)'
     }}>
-      <FontAwesomeIcon icon={faList} onClick={() => { setExpanded(true) }} />
+      <FontAwesomeIcon icon={faList} onClick={() => {setExpanded(true)}} />
     </Button>
   )
-  
+
+  // TODO: move down into separate compontent
+  const [cpVis, setCpVis] = useState(false);
+
+  useCommand({
+    name: "force reload",
+    callback: ()=>{window.localStorage.clear(); window.location.reload()}
+  })
+
   const view = <GraphView />
   //const view = modeGraph ? <GraphView /> : <>{expanded ? <></> : expandButton} {splitPane}</>
   // TODO: get selected notebook
   return (
     <StrictMode>
       <NodeStoreContext.Provider value={graphStore}>
-          <ConnectionStoreContext.Provider value={graphStore}>
-            <PreviewStoreContext.Provider value={graphStore}>
-                <div className="App">
-                  <BrandNavBar />
-                  {view}
-                </div>
-            </PreviewStoreContext.Provider>
-          </ConnectionStoreContext.Provider>
+        <ConnectionStoreContext.Provider value={graphStore}>
+          <PreviewStoreContext.Provider value={graphStore}>
+            <PersistenceContext.Provider value={graphStore}>
+              <div className="App">
+                <BrandNavBar />
+                <CommandPalette show={cpVis} setShow={setCpVis}/>
+                {view}
+              </div>
+            </PersistenceContext.Provider>
+          </PreviewStoreContext.Provider>
+        </ConnectionStoreContext.Provider>
       </NodeStoreContext.Provider>
     </StrictMode >
   );

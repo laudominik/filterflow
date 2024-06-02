@@ -1,21 +1,20 @@
 import { ChangeEvent, useContext, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { GUID } from "../../engine/engine";
-import { Card, CardBody, CardHeader, CardTitle, Form } from "react-bootstrap";
+import { Form } from "react-bootstrap";
 import "../preview_container/Preview.css"
 import "./GraphNode.css"
-import GraphNode, { IOFunctionType } from "./GraphNode";
+import GraphNode, { GraphNodeEvents } from "./GraphNode";
 import { nodeStoreContext } from "../../stores/context";
 
 
 type ColorMask = [boolean, boolean, boolean];
 
-export default function ImportGraphNode({ guid, style, onBodyClick, ioFunction }: { guid: GUID, style: React.CSSProperties, onBodyClick?: (e : React.MouseEvent)=>void, ioFunction?: IOFunctionType }){    
+export default function ImportGraphNode({ guid, style, ioEvents, nodeEvents }: { guid: GUID, style: React.CSSProperties} & GraphNodeEvents){    
     const nodeContext = useContext(nodeStoreContext);    
     const node = useSyncExternalStore(nodeContext.subscribeNode(guid), nodeContext.getNode(guid));
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     const isValid = useSyncExternalStore(nodeContext.subscribeNode(guid), () => nodeContext.getNode(guid)().value.valid)
-
     const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) {
@@ -123,7 +122,7 @@ export default function ImportGraphNode({ guid, style, onBodyClick, ioFunction }
 
     const img = <div className="imageContainer"><div className="centeredImage"><canvas ref={canvasRef} /></div></div>
     
-    return <GraphNode guid={guid} onBodyClick={onBodyClick} style={style} ioFunction={ioFunction}>
+    return <GraphNode guid={guid} nodeEvents={nodeEvents} ioEvents={ioEvents} style={style}>
             {isValid ? img : form}
         </GraphNode>
     

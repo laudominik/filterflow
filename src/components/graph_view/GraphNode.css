@@ -16,8 +16,8 @@
     border-width: 5%;
     border-style: double;
     background-color: #ccc;
-    width: 0.5vw;
-    height: 0.5vw;
+    width: 3.0vw;
+    height: 3.0vw;
     border-radius: 50%;
     margin: 0 5% 0 5%;
 }
@@ -25,13 +25,50 @@
 .circle-top {
     top: -5px;
     border-color: #f00;
+
+}
+
+.connected-circle.circle-top{
+    background-color: whitesmoke;
+
 }
 
 .circle-bottom {
-    bottom: -5px; 
+    bottom: -5px;
     border-color: #0f0;
+}
+
+.non-selectable-circle{
+    cursor: none;
+    border-width: 2%;
+    border-color: gray;
+    pointer-events: none;
+}
+
+.connected-circle{
+    pointer-events: none;
+    cursor: none;
+    width: 2.0em;
+    height: 2.0em;
 }
 
 .image-boundaries {
     height: 30vh;
+}
+
+.selectedNode .transformCard{
+    outline: solid 3px blue;
+}
+
+.transformCard {
+    outline: solid 3px transparent;
+    width: 400px;
+
+    -webkit-box-shadow: 2px 15px 24px -14px black;
+    -moz-box-shadow: 2px 15px 24px -14px black;
+    box-shadow: 2px 15px 24px -14px black;
+}
+
+.transformCard:has(div.imageContainer){
+    width: fit-content;
 }

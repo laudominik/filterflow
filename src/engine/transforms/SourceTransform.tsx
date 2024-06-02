@@ -1,29 +1,39 @@
 import 'reflect-metadata'
 
-import { ReactNode } from "react";
+import {ReactNode} from "react";
 import Transform from "../Transform";
-import { jsonObject } from "typedjson";
+import {jsonMember, jsonObject} from "typedjson";
+import {ImageStore} from '../../stores/imageStore';
+import ImportComponent from '../../components/transforms/ImportComponent';
+import { GUID } from '../iengine';
 
 @jsonObject
-export default class SourceTransform extends Transform{
+export default class SourceTransform extends Transform {
+    @jsonMember(String)
+    imageId: string
 
 
-    constructor(){
-        super("source","#FFFFFF", 0);
+    constructor(name: string = "source") {
+        super(name, "#FFFFFF", 0);
+
+        // todo: load image blob from store
+        this.imageId = "";
+        this.isSource = true;
+
     }
 
     public could_update(): boolean {
-        return this.params["image"]
+        return this.image != undefined || this.imageId != ""
     }
 
     async apply(input: Array<OffscreenCanvas | undefined>): Promise<OffscreenCanvas | undefined> {
-        // for the source node we ignore inputs
-
-        // TODO: For serialization purposes
-        // create canvas there if not exist and image string is set
-        if(!this.params["image"]) return undefined;
 
         if (!this.valid){
+            if (this.imageId != "" && !this.image) {
+                this.image = await ImageStore.get(this.imageId)
+            }
+
+            if (!this.image) return undefined;
             await this.loadImage();
         }
 
@@ -31,12 +41,18 @@ export default class SourceTransform extends Transform{
     }
 
     async setImageString(imageString: string) {
-        this.params["image"] = imageString
+        if (this.image) {
+            await ImageStore.remove(this.imageId)
+        }
+        this.image = imageString
+        this.imageId = await ImageStore.add(imageString)
+
         await this.loadImage()
     }
 
-    async loadImage(){
-        if(!this.params["image"]) return
+    async loadImage() {
+        if (!this.image) return
+        console.log("loadImage")
 
         const image = new Image()
         const loadImage = async (img: HTMLImageElement) => {
@@ -46,13 +62,13 @@ export default class SourceTransform extends Transform{
                 };
             });
         };
-        image.src = this.params["image"];
+        image.src = this.image;
         await loadImage(image);
-        
+
         this.canvas.width = image.width;
         this.canvas.height = image.height;
         this.drawImage(image)
-
+        this.valid = true;
         this.hash = crypto.randomUUID();
         this.engine.requestUpdate(this.meta.id);
     }
@@ -79,68 +95,74 @@ export default class SourceTransform extends Transform{
                 }
             `;
 
-            this.canvas.width = input.width;
-            this.canvas.height = input.height;
+        this.canvas.width = input.width;
+        this.canvas.height = input.height;
 
-            const gl = this.gl
-            gl.viewport(0,0, this.canvas.width, this.canvas.height);
+        const gl = this.gl
+        gl.viewport(0, 0, this.canvas.width, this.canvas.height);
 
-            const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
-                gl.shaderSource(vertexShader, vertexShaderSource);
-                gl.compileShader(vertexShader);
+        const vertexShader = gl.createShader(gl.VERTEX_SHADER)!;
+        gl.shaderSource(vertexShader, vertexShaderSource);
+        gl.compileShader(vertexShader);
 
-            const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)!;
-                gl.shaderSource(fragmentShader, fragmentShaderSource);
-                gl.compileShader(fragmentShader);
+        const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER)!;
+        gl.shaderSource(fragmentShader, fragmentShaderSource);
+        gl.compileShader(fragmentShader);
 
-            const program = gl.createProgram()!;
-                gl.attachShader(program, vertexShader);
-                gl.attachShader(program, fragmentShader);
-                gl.linkProgram(program);
-                gl.useProgram(program);
+        const program = gl.createProgram()!;
+        gl.attachShader(program, vertexShader);
+        gl.attachShader(program, fragmentShader);
+        gl.linkProgram(program);
+        gl.useProgram(program);
 
-            const positionBuffer = gl.createBuffer()!;
-                gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-                gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
-                    -1,    -1, 
-                    1,     -1, 
-                    -1,    1,
-                    1,     1
-                ]), gl.STATIC_DRAW);
-            
-            const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
-                gl.enableVertexAttribArray(positionAttributeLocation);
-                gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);  
-            
-            const texture = gl.createTexture();
-                gl.bindTexture(gl.TEXTURE_2D, texture);
+        const positionBuffer = gl.createBuffer()!;
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+            -1, -1,
+            1, -1,
+            -1, 1,
+            1, 1
+        ]), gl.STATIC_DRAW);
 
-                gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, input);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        
-            gl.clearColor(0, 0, 0, 0);
-            gl.clear(gl.COLOR_BUFFER_BIT);
-            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-        
-            gl.deleteShader(vertexShader);
-            gl.deleteShader(fragmentShader);
-            gl.deleteProgram(program);
-            gl.deleteBuffer(positionBuffer);
-            gl.deleteTexture(texture);
+        const positionAttributeLocation = gl.getAttribLocation(program, 'a_position');
+        gl.enableVertexAttribArray(positionAttributeLocation);
+        gl.vertexAttribPointer(positionAttributeLocation, 2, gl.FLOAT, false, 0, 0);
+
+        const texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, input);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+        gl.deleteShader(vertexShader);
+        gl.deleteShader(fragmentShader);
+        gl.deleteProgram(program);
+        gl.deleteBuffer(positionBuffer);
+        gl.deleteTexture(texture);
     }
 
-    updateParams(params: { [key: string]: any; }): void {
-        if (params["image"]){
-            this.setImageString(params["image"])
+    async updateParams(params: {[key: string]: any;}): Promise<void> {
+        if (params["image"]) {
+            await this.setImageString(params["image"])
+            // todo: save image blob to store
         }
     }
-    paramView() {
-        return <></>
+    paramView(guid: GUID) {
+        return <ImportComponent guid={guid}></ImportComponent>
     }
 
     visualizationView(guid: string) {
         return <></>
+    }
+
+    public onDelete(): void {
+        if (!this.imageId) return;
+        ImageStore.remove(this.imageId)
     }
 }

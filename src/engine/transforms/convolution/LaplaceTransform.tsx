@@ -5,7 +5,6 @@ import ConvolutionTransform from "../ConvolutionTransform";
 @jsonObject
 class LaplaceTransform extends ConvolutionTransform {
 
-    image?:string
     constructor(conn8: boolean) {
 
         super('Laplace');

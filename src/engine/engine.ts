@@ -1,9 +1,9 @@
-import { jsonArrayMember, jsonMapMember, jsonMember, jsonObject } from "typedjson";
-import Transform, { KVParams } from "./Transform";
+import {jsonArrayMember, jsonMapMember, jsonMember, jsonObject} from "typedjson";
+import Transform, {KVParams} from "./Transform";
 import mapToTransform, {knownTypes} from "./TransformDeclarations";
-import { connect, disconnect } from './node';
-import { NodeResponse } from './nodeResponse';
-import { IEngine } from "./iengine";
+import {connect, disconnect} from './node';
+import {NodeResponse} from './nodeResponse';
+import {IEngine} from "./iengine";
 
 export type GUID = string;
 // TODO: add mechanism to detect locked state (count if any process is executing)
@@ -27,193 +27,275 @@ export class Engine extends EventTarget implements IEngine<Transform>{
     internal: EventTarget // i'm not sure if this is sequence stable for now batches
     // engine should call node in async
     // this is only for async return (ensure that some msg is always send, otherwise batching in this implementation will break) 
-    
+
     inTransaction: boolean = false;
 
     batchState: {
-       response: ExternalEngineResponse,
-       startedUpdates: Set<GUID>,
-       pendingUpdates: Set<GUID>, // basicly open updates, that wait for return
-       doneUpdates: Set<GUID>,
-       tick: number,
-       concurent_updates: number;
+        response: ExternalEngineResponse,
+        updates:{
+            requested: Set<GUID>
+            dispatched: Set<GUID> // elements that need to update (updates that are dependent on this are included after update)
+            started: Set<GUID> // element that started update
+            done: Set<GUID> // elements that finished update
+        }
+        tick: number,
+        update_lvl: number
     }
 
+    protected isBatchUpdateDone(): boolean {
+        let updates = this.batchState.updates;
+        return updates.started.size == updates.done.size && // all started has ended updates
+        updates.dispatched.size == 0  &&//all updates that were pending are done
+        updates.requested.size == 0 // are required updates are done
+    }
 
     @jsonMapMember(String, Transform)
-    nodes: Map<GUID,Transform>
+    nodes: Map<GUID, Transform>
 
     @jsonArrayMember(String)
     source_nodes: GUID[]
 
-    constructor(){
+    constructor() {
         super()
         this.internal = new EventTarget();
         this.batchState = {
-            tick:1,
+            tick: 1,
             response: new ExternalEngineResponse(),
-            startedUpdates: new Set(),
-            pendingUpdates: new Set(),
-            doneUpdates: new Set(),
-            concurent_updates: 0
+            updates:{
+                dispatched: new Set(),
+                requested: new Set(),
+                started: new Set(),
+                done: new Set(),
+            },
+            update_lvl: 0
         }
         this.nodes = new Map()
         this.source_nodes = []
-        this.internal.addEventListener("info",this.handleInternalInfo.bind(this) as any)
-        this.internal.addEventListener("connection_remove",this.handleInternalConnectionsRemove.bind(this) as any)
+        this.internal.addEventListener("info", this.handleInternalInfo.bind(this) as any)
+        this.internal.addEventListener("connection_remove", this.handleInternalConnectionsRemove.bind(this) as any)
     }
 
-    public requestUpdate(node:GUID): void{
-        this.batchState.pendingUpdates.add(node);
+    public requestUpdate(node: GUID): void {
+        this.batchState.updates.requested.add(node);
     }
-    protected transactionStart(): void{
+    public markForUpdate(node: GUID): void {
+        this.batchState.updates.dispatched.add(node);
+    }
+
+    public markAsStarted(node: GUID): void {
+        this.batchState.updates.started.add(node);
+    }
+
+    public markAsUpdated(node: GUID): void {
+        this.batchState.updates.done.add(node);
+        this.batchState.updates.requested.delete(node);
+        this.batchState.updates.dispatched.delete(node);
+    }
+
+    public unmark(node: GUID): void {
+        this.batchState.updates.dispatched.delete(node);
+        this.batchState.updates.done.delete(node);
+        this.batchState.updates.started.delete(node);
+        this.batchState.updates.requested.delete(node);
+    }
+
+    public transactionStart(): void {
         this.inTransaction = true;
     }
 
-    protected transactionCommit(): void{
+    public transactionCommit(historic: boolean = false): void {
         this.inTransaction = false;
+        this.batchState.response.isHistoryUpdate = historic;
         this.startUpdate();
     }
 
-    public _dispatch_update(id: GUID){
-        if(!this.batchState.startedUpdates.has(id)){
-            this.batchState.pendingUpdates.add(id);
+    public flush(): void {
+        // this.transactionStart();
+        // this.nodes.forEach(node => this.removeNode(node.meta.id))
+        // this.batchState.response.node.removed = Array.from(this.batchState.updates.requested.values())
+        // this.flushUpdate()
+        // this.transactionCommit();
+    }
+
+    public _dispatch_update(id: GUID) {
+        let updates = this.batchState.updates
+        if (!updates.started.has(id)) { // update can only be dispatched once
+            // updates.dispatched.add(id); // my parent updated this one need too
+            this.markForUpdate(id)
             const node = this.getNode(id)
-            if(node){
-                if(node.dispatch_update(this.batchState.tick)){
-                    this.batchState.startedUpdates.add(id);
-                    this.batchState.concurent_updates += 1;
+            if (node && (!this.batchState.updates.started.has(id) || this.batchState.update_lvl > 1)) {
+                if (node.dispatch_update(this.batchState.tick)) {
+                    // dispatch triggered normal update
+                    this.markAsStarted(id)
                 }
-            }else{
-                this.batchState.pendingUpdates.delete(id);
-                console.error(`Node: ${id} not exist`)
+            } else {
+                debugger // this should not exist
+                if (!node) {
+                    this.unmark(id)
+                    console.error(`Node: ${id} not exist`)
+                }else{
+                    console.error(`Node: ${id} already updated`)
+                }
             }
-            
+
         }
     }
-    public _direct_update(id: GUID){
-        if(!this.batchState.startedUpdates.has(id)){
-            this.batchState.startedUpdates.add(id);
-            this.batchState.pendingUpdates.add(id);
-            this.batchState.concurent_updates += 1;
-            this.getNode(id)!.update_node();
+    public _direct_update(id: GUID) {
+        let updates = this.batchState.updates
+        if (!updates.started.has(id)) {
+            this.markAsStarted(id)            
+            let node = this.getNode(id)
+            if(node){
+                node.update_node();
+            }else{
+                debugger
+                this.unmark(id)
+            }
+        }else{
+            debugger
+            console.log("Direct update called more than once")
         }
     }
 
-    public async startUpdate(): Promise<void>{
+    public async startUpdate(): Promise<void> {
         if (this.inTransaction) return;
-        this.source_nodes.forEach((id) =>{
-            this._direct_update(id);
-        })
-        if (this.batchState.concurent_updates == 0){
-            console.log("dispatching pending (no source)")
-            this.deadLockForceUpdate();
+        if(this.batchState.update_lvl == 0){ // no update before
+            this.batchState.update_lvl = 1
+            this.nodes.forEach(node => {
+                if (node.inputs.size == 0){
+                    this._direct_update(node.meta.id);
+                }
+            })
+
+            // if(this.batchState.updates.started.size == 0) this.startUpdate();
+            // return
         }
-        if(this.batchState.concurent_updates == 0){
-            console.log("Empty update");
-            this.flushUpdate();
+        // we got deadlock in update but all updates ended
+        if(!this.isBatchUpdateDone()){ // for some reason all updates finished and not all required nodes updated
+            // we try to start updates by pending 
+            if(this.batchState.update_lvl == 1){ // no update
+                this.batchState.update_lvl =2
+                console.log("dispatching pending (no source)")
+                this.deadLockForceUpdate();
+                return
+            }
+            // falback for empty should never be triggered
+            if(this.batchState.update_lvl = 2){
+                this.batchState.update_lvl =3
+                console.log("Empty update");
+                this.flushUpdate();
+                return
+            }
         }
     }
 
-    public async startUpdateAll(): Promise<void>{
-        this.nodes.forEach((node) =>{
-            if (node.inputs.size != 0) return;
-            this._direct_update(node.meta.id);
-        })
-        if (this.batchState.concurent_updates == 0){
-            console.log("dispatching pending (no source)")
-            this.deadLockForceUpdate();
-        }
-        if(this.batchState.concurent_updates == 0){
-            console.log("Empty update");
-            this.flushUpdate();
-        }
+    public async startUpdateAll(): Promise<void> {
+        this.nodes.forEach(v => this.requestUpdate(v.meta.id))
+        this.startUpdate()
     }
 
-    private flushUpdate():void{
+    private flushUpdate(): void {
         // save deleted nodes state 
         this.batchState.response.node.removed_nodes = [...this.batchState.response.node.removed.map(v => this.getNode(v)!)]
-        this.dispatchEvent(new CustomEvent<ExternalEngineResponse>("update",{detail:this.batchState.response}))
+        this.dispatchEvent(new CustomEvent<ExternalEngineResponse>("update", {detail: this.batchState.response}))
         // clean detached nodes
-        this.batchState.response.node.removed.forEach(v => this.nodes.delete(v));
+        this.batchState.response.node.removed_nodes.forEach(n => n.onDelete());
+        if(this.batchState.response.node.removed.length){
+            debugger
+            console.log("ENGINE FLUSH: DELETE");
+            
+            this.batchState.response.node.removed.forEach(v => this.nodes.delete(v));
+        }
+
         const tick = this.batchState.tick + 1;
         this.batchState = {
-            startedUpdates: new Set(),
-            doneUpdates: new Set(),
-            pendingUpdates: new Set(),
+            updates:{
+                done: new Set(),
+                started: new Set(),
+                dispatched: new Set(),
+                requested: new Set(),
+            },
             response: new ExternalEngineResponse(),
             tick: tick,
-            concurent_updates: 0
+            update_lvl: 0
         }
     }
 
-    private deadLockForceUpdate(): void{
-        this.batchState.pendingUpdates.forEach(v =>{
+    private deadLockForceUpdate(): void {
+        this.batchState.updates.dispatched.forEach(v => {
+            if (this.batchState.updates.started.has(v)) return;
             this._direct_update(v);
         })
     }
 
-    public updateNodeParams(node:GUID,params:KVParams): void{
+    public updateNodeParams(node: GUID, params: KVParams): void {
         const transform = this.nodes.get(node)
-        if (transform === undefined){
+        if (transform === undefined) {
             // TODO think about some error handling
             return
         }
-        for (const key in params){
-            this.batchState.response.node.updated_params.push({node_id:node,key,old: transform.params[key],new: params[key]})
+        for (const key in params) {
+            this.batchState.response.node.updated_params.push({node_id: node, key, old: transform.params[key], new: params[key]})
         }
+        console.log("here!!")
         // if found add to pending
-        transform.updateParams(params);
-        transform.hash = crypto.randomUUID();
-        this.requestUpdate(transform.meta.id);
-        this.startUpdate();
+        transform.updateParams(params).then(()=>{
+            transform.hash = crypto.randomUUID();
+            this.requestUpdate(transform.meta.id);
+            this.startUpdate();
+        });
     }
-    public _addNode(node: Transform){
+    public _addNode(node: Transform) {
         const guid = node.meta.id;
-        if (node.meta.input_size == 0){
+        if (node.meta.input_size == 0) {
             this.source_nodes.push(guid)
         }
         node.engine = this;
-        this.nodes.set(guid,node)
+        this.nodes.set(guid, node)
         this.batchState.response.node.added.push(guid);
         this.requestUpdate(guid);
-        this.startUpdate(); 
+        this.startUpdate();
     }
 
-    public addNode(transformation: string, params: any): GUID{
+    public addNode(transformation: string, params: any): GUID {
         const node = mapToTransform(transformation)!
-        if(params.position){
+        if (params.position) {
             node.setPos(params.position);
         }
-        if(params.previewPosition){
+        if (params.previewPosition) {
             node.setPreviewPos(params.previewPosition);
         }
         this._addNode(node);
         return node.meta.id;
     }
 
-    public removeNode(guid:GUID){
+    public removeNode(guid: GUID) {
         let node = this.getNode(guid);
-        node?.disconnect(); // this will not trigger update, only request them
+        node!.disconnect(); // this will not trigger update, only request them
         // this.nodes.delete(guid);
         this.batchState.response.node.removed.push(guid);
-        this.source_nodes = this.source_nodes.filter((v) => v!= guid);
+        this.requestUpdate(guid)
         this.startUpdate();
     }
 
-    public connectNodes(source:GUID,destination:GUID,source_handle: number,destination_handle:number): boolean{
-        let ok = connect(this.nodes.get(source)!,source_handle,this.nodes.get(destination)!,destination_handle)
-        if (ok){
-            this.batchState.response.connection.added.push([[source,source_handle],[destination,destination_handle]]);
+    public connectNodes(source: GUID, destination: GUID, source_handle: number, destination_handle: number): boolean {
+        console.log(`ENGINE: Before Connect  \n${this.nodes.get(source)?.String()}\n${this.nodes.get(destination)?.String()}`);
+        
+        let ok = connect(this.nodes.get(source)!, source_handle, this.nodes.get(destination)!, destination_handle)
+        console.log(`ENGINE: After Connect  \n${this.nodes.get(source)?.String()}\n${this.nodes.get(destination)?.String()}`);
+        if (ok) {
+            this.batchState.response.connection.added.push([[source, source_handle], [destination, destination_handle]]);
             this.startUpdate();
         }
         return ok;
     }
 
-    public disconnectNodes(source:GUID,destination:GUID,source_handle: number,destination_handle:number): boolean{
-        let ok = disconnect(this.nodes.get(source)!,source_handle,this.nodes.get(destination)!,destination_handle)
-        if (ok){
-            this.batchState.response.connection.removed.push([[source,source_handle],[destination,destination_handle]]);
+    public disconnectNodes(source: GUID, destination: GUID, source_handle: number, destination_handle: number): boolean {
+        console.log(`ENGINE: Before Disconnect  \n${this.nodes.get(source)?.String()}\n${this.nodes.get(destination)?.String()}`);
+        let ok = disconnect(this.nodes.get(source)!, source_handle, this.nodes.get(destination)!, destination_handle)
+        console.log(`ENGINE: After Disconnect  \n${this.nodes.get(source)?.String()}\n${this.nodes.get(destination)?.String()}`);
+        if (ok) {
+            this.batchState.response.connection.removed.push([[source, source_handle], [destination, destination_handle]]);
             this.startUpdate();
         } else {
             console.log("didn't delete it")
@@ -221,57 +303,57 @@ export class Engine extends EventTarget implements IEngine<Transform>{
         return ok;
     }
 
-    public getNode(node:GUID): Transform | undefined {
+    public getNode(node: GUID): Transform | undefined {
         return this.nodes.get(node)
     }
 
-    public update_all(){
+    public update_all() {
         this.flushUpdate();
         this.startUpdateAll();
     }
 
     private handleInternalInfo(event: CustomEvent<NodeResponse>) {
-        
-        if (event.detail.status == "updated"){
+
+        if (event.detail.status == "updated") {
             const msg = event.detail;
-            msg.requestUpdates.forEach((id) =>{
+            msg.requestUpdates.forEach((id) => {
                 this._dispatch_update(id);
             })
             this.batchState.response.node.updated.push(msg.nodeId);
-        }else if (event.detail.status == "error"){
+        } else if (event.detail.status == "error") {
             const msg = event.detail;
-            msg.invalidateChildrens.forEach((id) =>{
+            msg.invalidateChildrens.forEach((id) => {
                 this._dispatch_update(id);
             })
             this.batchState.response.node.errors.push(event.detail.nodeId);
 
-        }else{
+        } else {
             console.log("undefined msg type");
         }
-        if (!this.batchState.doneUpdates.has(event.detail.nodeId)){
-            this.batchState.doneUpdates.add(event.detail.nodeId);
-            this.batchState.concurent_updates-=1;
-        }
+        // if (!this.batchState.updates.done.has(event.detail.nodeId)) {
+        this.markAsUpdated(event.detail.nodeId)
+        // }
         // TODO: temporary
-        this.getNode(event.detail.nodeId)!.hash = crypto.randomUUID();
+        let node = this.getNode(event.detail.nodeId)
+        if(node){
+            node.hash= crypto.randomUUID();
+        }
 
-        if(this.batchState.concurent_updates == 0){
-
-            
+        if (this.batchState.updates.started.size == this.batchState.updates.done.size) {
             // Desired state all required nodes updated
-            if (this.batchState.startedUpdates.size == this.batchState.doneUpdates.size && this.batchState.doneUpdates.size === this.batchState.pendingUpdates.size){
+            if (this.isBatchUpdateDone()) {
                 this.flushUpdate();
                 console.log("batch reset"); // TODO: Remove this later
                 return;
-            }else{ // no update is running (deadlock)
+            } else { // no update is running (deadlock)
                 // TODO: detect if deadlock is caused by loop or disconnected graph part
                 console.log("batch deadlock");
-                this.deadLockForceUpdate();
+                this.startUpdate();
             }
         }
     }
-    
-    private handleInternalConnectionsRemove(event: CustomEvent<[[GUID,number],[GUID,number]]>){
+
+    private handleInternalConnectionsRemove(event: CustomEvent<[[GUID, number], [GUID, number]]>) {
         this.batchState.response.connection.removed.push(event.detail);
         // kick node to recalculate state update in child node
         // this.batchState.pendingUpdates.add(event.detail[1][0]);
@@ -281,41 +363,41 @@ export class Engine extends EventTarget implements IEngine<Transform>{
         // dispatch will trigger when all child nodes will update ~1s
         // this.dispatchEvent(new CustomEvent<ExternalEngineResponse>("update",{detail:this.batchState.response}))
     }
-
-    private handleInternalConnectionsAdd(event: CustomEvent<[[GUID,number],[GUID,number]]>){
+    // TODO: WTF is this
+    private handleInternalConnectionsAdd(event: CustomEvent<[[GUID, number], [GUID, number]]>) {
         this.batchState.response.connection.added.push(event.detail);
         // kick node to recalculate state update in child node
-        this.batchState.pendingUpdates.add(event.detail[1][0]);
+        this.requestUpdate(event.detail[1][0]);
         this.getNode(event.detail[1][0])?.dispatch_update(this.batchState.tick);
         // dispatch will trigger when all child nodes will update ~1s
         // this.dispatchEvent(new CustomEvent<ExternalEngineResponse>("update",{detail:this.batchState.response}))
     }
 
-    public fixSerialization():void{
+    public fixSerialization(): void {
         this.nodes.forEach(n => n.engine = this);
         this.update_all();
     }
 }
 
 // this will be send to parent element to inform that some element changed
-export class ExternalEngineResponse{
-    isHistoryUpdate: boolean = false; 
-    node :{
+export class ExternalEngineResponse {
+    isHistoryUpdate: boolean = false;
+    node: {
         updated: GUID[] // all nodes that finished update successfully
         errors: GUID[]   // all nodes that returned error
         added: GUID[]
         removed: GUID[]
         removed_nodes: Transform[];
-        updated_params: {node_id: GUID,key: string,old: any,new: any}[]
+        updated_params: {node_id: GUID, key: string, old: any, new: any}[]
     }
 
-    connection : {
-        added: [[GUID,number],[GUID,number]][];
-        removed: [[GUID,number],[GUID,number]][]
+    connection: {
+        added: [[GUID, number], [GUID, number]][];
+        removed: [[GUID, number], [GUID, number]][]
     }
-    constructor(){
+    constructor() {
         this.node = {
-            added : [],
+            added: [],
             errors: [],
             removed: [],
             updated: [],

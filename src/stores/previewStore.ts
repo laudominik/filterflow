@@ -38,11 +38,14 @@ export abstract class PreviewStores extends BaseFilterStore implements IPreviewS
         return this.previewStores.get(name);
     }
     addPreviewStore(name: string,inputs: GUID[],output: GUID): void {
-        this.previewStores.set(name, new PreviewStore(inputs,output));
+        this.previewStores = new Map(this.previewStores.set(name, new PreviewStore(inputs,output)));
         this.emitChangePreviews()
     }
     removePreviewStore(name: string): void {
-        if(this.previewStores.delete(name)) this.emitChangePreviews()
+        if(this.previewStores.delete(name)){
+            this.previewStores = new Map(this.previewStores);
+            this.emitChangePreviews()
+        } 
     }
 
 }

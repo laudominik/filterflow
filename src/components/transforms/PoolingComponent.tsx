@@ -35,7 +35,7 @@ export default function PoolingComponent({guid}: {guid: GUID}){
                 Select pooling size:
             </label>
 
-            <FormSelect value={poolingSize} onChange={(e) => handleSizeChange(parseInt(e.target.value, 10))}>
+            <FormSelect value={poolingSize} onChange={(e) => handleSizeChange(parseInt(e.target.value, 10))} onPointerDown={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}>
                 <option value={2}>2</option>
                 <option value={3}>3</option>
                 <option value={4}>4</option>
@@ -45,7 +45,7 @@ export default function PoolingComponent({guid}: {guid: GUID}){
             <label>
                 Select pooling stride:
             </label>
-            <FormSelect value={poolingStep} onChange={(e) => handleStepChange(parseInt(e.target.value, 10))}>
+            <FormSelect value={poolingStep} onChange={(e) => handleStepChange(parseInt(e.target.value, 10))} onPointerDown={e => e.stopPropagation()} onKeyDown={e => e.stopPropagation()}>
                 <option value={1}>1</option>
                 <option value={2}>2</option>
                 <option value={3}>3</option>

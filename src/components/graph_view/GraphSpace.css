@@ -7,9 +7,11 @@
 
 
 .graphView {
-    width: 100%;
-    height: calc(100% - var(--navbar-height));   
-    position: relative;
+    width: 100vw;
+    height: 100vh;   
+    position: absolute;
+    top: 0;
+    left: 0;
 }
 
 .graphViewGrid{
@@ -105,11 +107,40 @@
     overflow-y: scroll;
     max-height: 200px;
     border: 1px solid black;
+    position: relative;
+    background-color: var(--background-color);
 }
 
 /* #region Arrow*/
 #arrows{
     width: 100%;
     height: 100%;
+
 }
+
+.nodeConnection > line.hiddenEdge,.nodeConnection > line.visibleEdge{
+    cursor: pointer;
+    pointer-events: visible;
+}
+
+.nodeConnection > line.hiddenEdge:hover + line.visibleEdge, .nodeConnection > line.visibleEdge:hover{
+    filter: contrast(60%) drop-shadow(0 0 1px black);
+}
+
+svg.arrows.selectedEdge marker, .arrows.selectedEdge > line.visibleEdge{
+    
+    stroke: hsl(270, 100%, 50%) !important;
+    fill: hsl(270, 100%, 50%) !important;
+}
+
+
+
 /* #endregion */
+
+.transformCard{
+    cursor: grab;
+}
+
+.dragging .transformCard{
+    cursor: grabbing;
+}

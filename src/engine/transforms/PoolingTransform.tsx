@@ -18,7 +18,7 @@ class PoolingTransform extends Transform {
     poolingStep: number;
     
     constructor(name?: string, injectedFunction?: string, initialPixelValue?: string) {
-        super(name ?? 'Pooling', '#E2E7F4');
+        super(name ?? 'Pooling', '#0000FF');
         this.poolingSize = 3;
         this.poolingStep = 3;
         this.params = {...this.params, "pooling_size" : this.poolingSize, "pooling_step": this.poolingStep };

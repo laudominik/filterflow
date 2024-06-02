@@ -13,16 +13,23 @@ interface ICommand{
     description?: string
     binding?: KeyBinding
     callback : CommandHandler
+    hidden?: boolean,
+    guid: string
 }
 
 // based on https://n1ghtmare.github.io/2022-01-14/implement-a-keyboard-shortcuts-handler-in-typescript/
 class CommandRegistry {
     private commands: Map<string, ICommand> = new Map();
+    private commandsList : ICommand[] = [];
+    private commandsListeners: CallableFunction[] = [];
     private bindingsTree: HotKeyNode = {children: new Map()};
     private buffer : KeyboardEventKey[] = [];
 
     keydownListener(e : KeyboardEvent) {
-        if(e.repeat) return;
+        if(e.repeat) {
+            e.preventDefault();
+            return;
+        };
         if(e.target instanceof HTMLInputElement) return;
         
         this.buffer = [...this.buffer, e.key]
@@ -57,7 +64,7 @@ class CommandRegistry {
         if (!command.binding) return;
 
         let currentNode : HotKeyNode | undefined = this.bindingsTree;
-        command.binding.sort().forEach(key => {
+        [...command.binding].sort().forEach(key => {
             if(!currentNode?.children?.get(key)){
                 const node : HotKeyNode = {children: new Map()}
                 currentNode?.children.set(key, node);
@@ -73,7 +80,7 @@ class CommandRegistry {
         if(!command.binding) return;
         let currentNode = this.bindingsTree;
         const chain: HotKeyNode[] = [];
-        for (const key of command.binding.sort()){
+        for (const key of [...command.binding].sort()){
             const {children} = currentNode;
             if(!children) return;
 
@@ -103,7 +110,9 @@ class CommandRegistry {
     
     register(command : ICommand){
         const uuid = crypto.randomUUID();
+        command.guid = uuid;
         this.commands.set(uuid, command);
+        this.commandsList = [...this.commandsList, command];
         this.bind(command);
         return uuid;
     }
@@ -113,11 +122,23 @@ class CommandRegistry {
         if(!command) return;
 
         this.unbind(command)
+        this.commandsList = this.commandsList.filter(v => v != this.commands.get(uuid))
         this.commands.delete(uuid);
     }
 
-    getCommands() : Map<string, ICommand> {
-        return this.commands;
+    getCommands() : Array<ICommand> {
+        return this.commandsList;
+    }
+
+    subscribeCommands(listener: CallableFunction) {
+        this.commandsListeners = [...this.commandsListeners, listener];
+        return () => {
+            this.commandsListeners = this.commandsListeners.filter(l => l != listener);
+        }
+    } 
+
+    emmitChangeCommands(){
+        this.commandsListeners.forEach(v => v());
     }
 }
 
@@ -147,7 +168,7 @@ useCommand({
     dependencies: [highlightedGUID]
 })
  */
-export function useCommand(command: {name: string, description?: string, binding?: KeyBinding, callback: CallableFunction, dependencies?: DependencyList}) {
+export function useCommand(command: {name: string, description?: string, hidden?: boolean, binding?: KeyBinding, callback: CallableFunction, dependencies?: DependencyList}) {
     // based on https://github.com/JohannesKlauss/react-hotkeys-hook/blob/main/src/useHotkeys.ts
     const deps = command.dependencies;
     const memoizedCallback = useCallback(command.callback, deps ?? [])
@@ -160,7 +181,7 @@ export function useCommand(command: {name: string, description?: string, binding
     }
     
     useEffect(() => {
-        const cmd : ICommand = {binding: command.binding, name: command.name, callback: callbackRef}
+        const cmd : ICommand = {binding: command.binding, name: command.name, callback: callbackRef, hidden: command.hidden, description: command.description, guid: ""} //guid is automaticly filled by `register`
         const uuid = commandRegistry.register(cmd)
         return () => {commandRegistry.unregister(uuid);}
     }, []);

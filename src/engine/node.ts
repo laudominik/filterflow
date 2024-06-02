@@ -28,7 +28,6 @@ export function connect<T extends node<T>>(source: T, source_nr: number, destina
 
 export function disconnect<T extends node<T>>(source: T, source_nr: number, destination: T, destination_nr: number) {
     if (source.meta.output_size <= source_nr || destination.meta.input_size <= destination_nr) return false;
-
     const src_output = source.connected_to_outputs.get(source_nr) || [];
     const dst_input = destination.inputs.get(destination_nr);
     if (dst_input === undefined) {
@@ -59,6 +58,8 @@ export function disconnect<T extends node<T>>(source: T, source_nr: number, dest
 export type NodeInit<T extends node<T>> = {
     id: string, inputs: number, outputs: number, engine?: IEngine<T>
 }
+
+export type IOType = "input"|"output";
 
 @jsonObject
 export abstract class node<T extends node<T>>{
@@ -95,6 +96,9 @@ export abstract class node<T extends node<T>>{
         }
     }
 
+    public onDelete() {
+
+    }
 
     public disconnect() {
         this.inputs.forEach(([parent, parent_nr], key) => {
@@ -212,6 +216,22 @@ export abstract class node<T extends node<T>>{
         }
 
         console.log(`UPDATE: error for ${this.meta.id}`)
+        console.log(this.engine)
+        // debugger
         this.engine.internal.dispatchEvent(new CustomEvent<NodeResponse>("info", {detail: msg}))
+    }
+
+    public String(): String{
+        let inputs = ""
+        this.inputs.forEach(v => inputs+= `${v[0]} ${v[1]}`)
+        
+        let outputs = ""
+        this.connected_to_outputs.forEach(v => v.forEach(p => outputs+= `${v[0]}->${p[0]} ${p[1]}`))
+        return`
+        ${this.meta.id}
+        Connections:
+            Inputs: ${inputs}
+            Outputs: ${outputs}
+        `
     }
 }
