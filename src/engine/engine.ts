@@ -109,14 +109,6 @@ export class Engine extends EventTarget implements IEngine<Transform>{
         this.startUpdate();
     }
 
-    public flush(): void {
-        // this.transactionStart();
-        // this.nodes.forEach(node => this.removeNode(node.meta.id))
-        // this.batchState.response.node.removed = Array.from(this.batchState.updates.requested.values())
-        // this.flushUpdate()
-        // this.transactionCommit();
-    }
-
     public _dispatch_update(id: GUID) {
         let updates = this.batchState.updates
         if (!updates.started.has(id)) { // update can only be dispatched once
@@ -238,6 +230,25 @@ export class Engine extends EventTarget implements IEngine<Transform>{
             this.batchState.response.node.updated_params.push({node_id: node, key, old: transform.params[key], new: params[key]})
         }
         console.log("here!!")
+        if (Object.keys(params).length == 0) {
+            transform.hash = crypto.randomUUID();
+            this.dispatchEvent(new CustomEvent<ExternalEngineResponse>("update", {detail: {
+                connection: {
+                    added: [],
+                    removed: [],
+                },
+                isHistoryUpdate: false,
+                node: {
+                    added: [],
+                    errors: [],
+                    updated: [node],
+                    removed: [],
+                    removed_nodes: [],
+                    updated_params: [],
+                }
+            }}))
+            return
+        }
         // if found add to pending
         transform.updateParams(params).then(()=>{
             transform.hash = crypto.randomUUID();
