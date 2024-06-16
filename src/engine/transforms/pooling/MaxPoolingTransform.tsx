@@ -3,8 +3,8 @@ import Transform from "../../Transform";
 import PoolingTransform from "../PoolingTransform";
 import PoolingVisualizationComponent from "../../../components/visualizations/PoolingVisualizationComponent";
 
-@jsonObject
-class MaxPoolingTransform extends PoolingTransform {
+@jsonObject({name:"MaxPoolingTransform"})
+ class MaxPoolingTransform extends PoolingTransform {
 
     constructor() {
         super('Max pooling', 

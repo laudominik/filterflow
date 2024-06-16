@@ -20,7 +20,7 @@ export type GUID = string;
 
 
 // Engine sends events to parent element (logic decupling)
-@jsonObject({knownTypes: Array.from(knownTypes())})
+@jsonObject({name:"Engine",knownTypes: Array.from(knownTypes())})
 export class Engine extends EventTarget implements IEngine<Transform>{
     // internal is comunication from graph components to graph components, with information collection by engine
     // this enable better batching of updates

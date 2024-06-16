@@ -46,7 +46,7 @@ const linearConvolutionShader = `
             `;
 
 
-@jsonObject
+@jsonObject({name:"MorphologicTransform"})
 class MorphologicTransform extends Transform {
 
     image?:string

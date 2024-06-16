@@ -33,7 +33,7 @@ void main() {
 }
 `
 
-@jsonObject
+@jsonObject({name:"TernaryTransform"})
 abstract class TernaryTransform extends Transform {
     
     fragment_shader: string

@@ -61,7 +61,7 @@ export type NodeInit<T extends node<T>> = {
 
 export type IOType = "input"|"output";
 
-@jsonObject
+@jsonObject({name:"node"})
 export abstract class node<T extends node<T>>{
     valid: boolean = false; // not included in json to reset state
     @jsonMember(AnyT)

@@ -3,8 +3,8 @@ import Transform from "../../Transform";
 import PoolingTransform from "../PoolingTransform";
 import PoolingVisualizationComponent from "../../../components/visualizations/PoolingVisualizationComponent";
 
-@jsonObject
-class AvgPoolingTransform extends PoolingTransform {
+@jsonObject({name:"AvgPoolingTransform"})
+ class AvgPoolingTransform extends PoolingTransform {
 
     constructor() {
         super('Average pooling', 

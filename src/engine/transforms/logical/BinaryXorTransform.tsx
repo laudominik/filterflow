@@ -24,7 +24,7 @@ void main() {
 }
 `
 
-@jsonObject
+@jsonObject({name:"BinaryXorTransform"})
 export default class BinaryXorTransform extends BinaryTransform {
     constructor(){
         super("binary xor", fs);

@@ -3,7 +3,7 @@ import "reflect-metadata"
 import { jsonObject } from "typedjson";
 import PointTransform from "../PointTransform";
 
-@jsonObject
+@jsonObject({name:"GrayscaleTransform"})
 export class GrayscaleTransform extends PointTransform {
     image?:string
     constructor() {

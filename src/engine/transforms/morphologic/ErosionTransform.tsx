@@ -2,7 +2,7 @@ import { jsonObject } from "typedjson";
 import MorphologicTransform from "../MorphologicTransform";
 
 
-@jsonObject
+@jsonObject({name:"ErosionTransform"})
 export default class ErosionTransform extends MorphologicTransform {
 
     constructor(){

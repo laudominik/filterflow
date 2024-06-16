@@ -49,7 +49,7 @@ const linearConvolutionShader = `
             `;
 
 
-@jsonObject
+@jsonObject({name:"ConvolutionTransform"})
 class ConvolutionTransform extends Transform {
     
     kernel: Array<Array<number>>

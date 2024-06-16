@@ -21,7 +21,7 @@ void main() {
 }
 `
 
-@jsonObject
+@jsonObject({name:"BinarySubstractTransform"})
 export default class BinarySubstractTransform extends BinaryTransform {
     constructor() {
         super("binary substract", fs);

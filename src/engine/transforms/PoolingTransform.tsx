@@ -9,7 +9,7 @@ import { CanvasSelection } from "../../stores/simpleFilterStore";
 import PoolingVisualizationComponent from "../../components/visualizations/PoolingVisualizationComponent";
 
 
-@jsonObject
+@jsonObject({name:"PoolingTransform"})
 class PoolingTransform extends Transform {
 
     image?:string

@@ -4,7 +4,7 @@ import { jsonObject } from "typedjson";
 import { BitwiseTransform } from "./BitwiseTransform";
 
 
-@jsonObject
+@jsonObject({name:"OrTransform"})
 export class OrTransform extends BitwiseTransform {
 // OR = min( v1+v2, 1 )
     constructor() {

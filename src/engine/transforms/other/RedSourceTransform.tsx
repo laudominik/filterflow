@@ -4,7 +4,7 @@ import SourceTransform from '../SourceTransform';
 import PredefinedSourceTransform from '../PredefinedSourceTransform';
 
 
-@jsonObject
+@jsonObject({name:"RedSourceTransform"})
 export default class RedSourceTransform extends PredefinedSourceTransform {
     @jsonMember(Number)
     seed: Number

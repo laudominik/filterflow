@@ -2,7 +2,7 @@ import { jsonObject } from "typedjson";
 import { HistoryStore } from "./historyStore";
 import { ExternalEngineResponse } from "../engine/engine";
 
-@jsonObject
+@jsonObject({name:"TopStore"})
 export class TopStore extends HistoryStore{
     hash: string
     saveCallback?: (store: TopStore) => void;

@@ -49,8 +49,8 @@ void main() {
 }
 `
 
-@jsonObject
-class SkeletonizationTransform extends Transform {
+@jsonObject({name:"SkeletonizationTransform"})
+ class SkeletonizationTransform extends Transform {
     fragment_shader: string
     ero: ErosionTransform
     dil: DilatationTransform

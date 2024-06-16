@@ -9,7 +9,7 @@ export interface KVParams {
     [key: string]: any
 }
 
-@jsonObject
+@jsonObject({name:"point"})
 class point {
     @jsonMember(Number)
     public x: number = 0
@@ -22,7 +22,7 @@ class point {
     }
 }
 
-@jsonObject
+@jsonObject({name:"Transform"})
 abstract class Transform extends node<Transform> {
     @jsonMember(point)
     pos: point

@@ -3,7 +3,7 @@ import "reflect-metadata"
 import { jsonObject } from "typedjson";
 import { BitwiseTransform } from "./BitwiseTransform";
 
-@jsonObject
+@jsonObject({name:"XorTransform"})
 export class XorTransform extends BitwiseTransform {
     // XOR = v1*(1-v2) +v2*(1-v1)
     constructor() {

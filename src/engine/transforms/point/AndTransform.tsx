@@ -3,7 +3,7 @@ import "reflect-metadata"
 import { jsonObject } from "typedjson";
 import { BitwiseTransform } from "./BitwiseTransform";
 
-@jsonObject
+@jsonObject({name:"AndTransform"})
 export class AndTransform extends BitwiseTransform {
 
     // AND = v1 * v2

@@ -2,7 +2,7 @@ import "reflect-metadata"
 import { jsonObject } from "typedjson";
 import ConvolutionTransform from "../ConvolutionTransform";
 
-@jsonObject
+@jsonObject({name:"LaplaceTransform"})
 class LaplaceTransform extends ConvolutionTransform {
 
     constructor(conn8: boolean) {
@@ -21,7 +21,7 @@ class LaplaceTransform extends ConvolutionTransform {
     }
 }
 
-@jsonObject
+@jsonObject({name:"Conn4LaplaceTransform"})
 export class Conn4LaplaceTransform extends LaplaceTransform {
 
     constructor() {
@@ -29,7 +29,7 @@ export class Conn4LaplaceTransform extends LaplaceTransform {
     }
 }
 
-@jsonObject
+@jsonObject({name:"Conn8LaplaceTransform"})
 export class Conn8LaplaceTransform extends LaplaceTransform {
 
     constructor() {

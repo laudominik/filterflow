@@ -3,8 +3,8 @@ import Transform from "../../Transform";
 import PoolingTransform from "../PoolingTransform";
 import PoolingVisualizationComponent from "../../../components/visualizations/PoolingVisualizationComponent";
 
-@jsonObject
-class MinPoolingTransform extends PoolingTransform {
+@jsonObject({name:"MinPoolingTransform"})
+ class MinPoolingTransform extends PoolingTransform {
 
     constructor() {
         super('Min pooling', 

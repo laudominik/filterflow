@@ -3,7 +3,7 @@ import "reflect-metadata"
 import { jsonArrayMember, jsonMember, jsonObject } from "typedjson";
 import PointTransform from "../PointTransform";
 
-@jsonObject
+@jsonObject({name:"ToYCbCrTransform"})
 export class ToYCbCrTransform extends PointTransform {
     image?:string
     constructor() {
@@ -28,7 +28,7 @@ export class ToYCbCrTransform extends PointTransform {
     }
 }
 
-@jsonObject
+@jsonObject({name:"FromYCbCrTransform"})
 export class FromYCbCrTransform extends PointTransform {
     image?:string
     constructor() {

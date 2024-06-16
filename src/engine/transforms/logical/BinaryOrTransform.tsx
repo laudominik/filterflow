@@ -20,7 +20,7 @@ void main() {
 }
 `
 
-@jsonObject
+@jsonObject({name:"BinaryOrTransform"})
 export default class BinaryOrTransform extends BinaryTransform {
     constructor(){
         super("binary or", fs);

@@ -3,7 +3,7 @@ import { ExternalEngineResponse } from "../engine/engine";
 import { GraphFilterStore } from "./graphFilterStore";
 import { IPersistentStore } from "./storeInterfaces";
 
-@jsonObject
+@jsonObject({name:"HistoryStore"})
 export class HistoryStore extends GraphFilterStore implements IPersistentStore{
     transaction_start(): void {
         this.engine.transactionStart();

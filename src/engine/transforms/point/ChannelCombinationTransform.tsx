@@ -34,8 +34,8 @@ void main() {
 }
 `
 
-@jsonObject
-class ChannelCombinationTransform extends TernaryTransform {
+@jsonObject({name:"ChannelCombinationTransform"})
+ class ChannelCombinationTransform extends TernaryTransform {
     constructor() {
         super("Channel combination", fs);
     }
