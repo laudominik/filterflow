@@ -6,7 +6,7 @@ import Transform from "../engine/Transform";
 import { Engine } from "../engine/engine";
 import { AnyT, jsonMapMember, jsonMember, jsonObject } from "typedjson";
 
-@jsonObject
+@jsonObject({name:"PreviewStores"})
 export abstract class PreviewStores extends BaseFilterStore implements IPreviewStores{
     
     @jsonMapMember(String,() => PreviewStore)
@@ -50,7 +50,7 @@ export abstract class PreviewStores extends BaseFilterStore implements IPreviewS
 
 }
 
-@jsonObject
+@jsonObject({name:"PreviewStore"})
 export class PreviewStore implements IPreviewStore{
     @jsonMember(AnyT)
     context: {

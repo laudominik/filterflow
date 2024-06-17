@@ -8,7 +8,7 @@ import {Engine} from "../engine/engine";
 
 type MarkedListener = CallableFunction & {id: GUID}
 
-@jsonObject
+@jsonObject({name:"BaseFilterStore"})
 export abstract class BaseFilterStore implements INodeStore {
     @jsonMember(() => Engine)
     engine: Engine

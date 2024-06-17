@@ -7,7 +7,7 @@ import { GUID } from '../iengine';
 const customWidth = 256
 const customHeight = 256
 
-@jsonObject
+@jsonObject({name:"PredefinedSourceTransform"})
 export default abstract class PredefinedSourceTransform extends SourceTransform {
     created: boolean
     fragment?: string

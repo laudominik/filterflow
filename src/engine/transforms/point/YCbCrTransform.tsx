@@ -3,7 +3,7 @@ import "reflect-metadata"
 import { jsonArrayMember, jsonMember, jsonObject } from "typedjson";
 import PointTransform from "../PointTransform";
 
-@jsonObject
+@jsonObject({name:"ToYCbCrTransform"})
 export class ToYCbCrTransform extends PointTransform {
     image?:string
     constructor() {
@@ -26,9 +26,13 @@ export class ToYCbCrTransform extends PointTransform {
         `)
         this.params = {...this.params, "argument" : 1};
     }
+
+    public infoView(): string | null {
+        return "Changes RGB color scheme to YCbCr and for the next image sets R=Y, G=Cb, B=Cr"
+    }
 }
 
-@jsonObject
+@jsonObject({name:"FromYCbCrTransform"})
 export class FromYCbCrTransform extends PointTransform {
     image?:string
     constructor() {
@@ -54,5 +58,9 @@ export class FromYCbCrTransform extends PointTransform {
         }
         `)
         this.params = {...this.params, "argument" : 1};
+    }
+
+    public infoView(): string | null {
+        return "Changes YCbCr color scheme to RGB assuming R=Y, G=Cb, B=Cr"
     }
 }

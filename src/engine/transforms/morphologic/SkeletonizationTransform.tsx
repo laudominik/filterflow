@@ -49,8 +49,8 @@ void main() {
 }
 `
 
-@jsonObject
-class SkeletonizationTransform extends Transform {
+@jsonObject({name:"SkeletonizationTransform"})
+ class SkeletonizationTransform extends Transform {
     fragment_shader: string
     ero: ErosionTransform
     dil: DilatationTransform
@@ -68,10 +68,11 @@ class SkeletonizationTransform extends Transform {
         return <></>
     }
 
+    public infoView(): string | null {
+        return "simplified skeleton using this algorithm: https://gist.github.com/jsheedy/3913ab49d344fac4d02bcc887ba4277d"
+    }
+
     paramView(guid: GUID) {
-        /*
-         *  tbd: how could we split the view logic here and keep it nice and tidy
-         */
         return <></>
     }
 

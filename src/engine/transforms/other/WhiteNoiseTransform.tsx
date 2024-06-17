@@ -4,7 +4,7 @@ import SourceTransform from '../SourceTransform';
 import PredefinedSourceTransform from '../PredefinedSourceTransform';
 
 
-@jsonObject
+@jsonObject({name:"WhiteNoiseTransform"})
 export default class WhiteNoiseTransform extends PredefinedSourceTransform {
     @jsonMember(Number)
     seed: Number

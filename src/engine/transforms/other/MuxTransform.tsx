@@ -3,7 +3,7 @@ import Transform from "../../Transform";
 import {jsonObject} from "typedjson";
 import MuxComponent from "../../../components/transforms/MuxComponent";
 
-@jsonObject
+@jsonObject({name:"MuxTransform"})
 export default class MuxTransform extends Transform {
     constructor(name?: string) {
         super("Mux", '#FF0000');
@@ -19,6 +19,10 @@ export default class MuxTransform extends Transform {
 
     paramView(guid: string): ReactElement<any, string | JSXElementConstructor<any>> {
         return <MuxComponent guid={guid} />
+    }
+
+    public infoView(): string | null {
+        return "passes forward selected input"
     }
 
     async apply(input: Array<OffscreenCanvas | undefined>): Promise<OffscreenCanvas | undefined> {

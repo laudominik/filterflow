@@ -3,7 +3,7 @@ import "reflect-metadata"
 import { jsonObject } from "typedjson";
 import PointTransform from "../PointTransform";
 
-@jsonObject
+@jsonObject({name:"BrightnessTransform"})
 export class BrightnessTransform extends PointTransform {
     constructor() {
         super('Brightness', true,    `

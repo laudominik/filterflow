@@ -24,7 +24,7 @@ void main() {
 }
 `
 
-@jsonObject
+@jsonObject({name:"BinaryXorTransform"})
 export default class BinaryXorTransform extends BinaryTransform {
     constructor(){
         super("binary xor", fs);
@@ -32,6 +32,10 @@ export default class BinaryXorTransform extends BinaryTransform {
 
     paramView(guid: string): ReactElement<any, string | JSXElementConstructor<any>> {
         return <>No params to specify</>
+    }
+
+    public infoView(): string | null {
+        return "For each channel of the two images performs the following operation: color1 * (255.0 - color2) + color2 * (255.0 - color1)"
     }
 
 }

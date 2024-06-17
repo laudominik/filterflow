@@ -5,7 +5,7 @@ import PointTransform from "../PointTransform";
 import { GUID } from "../../engine";
 import TresholdVisualizationComponent from "../../../components/visualizations/TresholdVisualizationComponent";
 
-@jsonObject
+@jsonObject({name:"ThresholdTransform"})
 export class ThresholdTransform extends PointTransform {
     constructor() {
         super('Threshold', true,    `

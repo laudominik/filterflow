@@ -1,7 +1,7 @@
 import { jsonObject } from "typedjson";
 import PointTransform from "../PointTransform";
 
-@jsonObject
+@jsonObject({name:"ChannelExtractionTransform"})
 abstract class ChannelExtractionTransform extends PointTransform {
     constructor(name: string = "Channel extraction", extractionShader: string) {
         super(name, false,    `
@@ -19,8 +19,12 @@ abstract class ChannelExtractionTransform extends PointTransform {
         `)
         this.params = {...this.params, "argument" : 1};
     }
+
+    public infoView(): string | null {
+        return "extracts given channel from image"
+    }
 }
-@jsonObject
+@jsonObject({name:"RChannelExtractionTransform"})
 export class RChannelExtractionTransform extends ChannelExtractionTransform {
     constructor(){
         super("R channel", `
@@ -29,7 +33,7 @@ export class RChannelExtractionTransform extends ChannelExtractionTransform {
     }
 }
 
-@jsonObject
+@jsonObject({name:"GChannelExtractionTransform"})
 export class GChannelExtractionTransform extends ChannelExtractionTransform {
     constructor(){
         super("G channel", `
@@ -38,7 +42,7 @@ export class GChannelExtractionTransform extends ChannelExtractionTransform {
     }
 }
 
-@jsonObject
+@jsonObject({name:"BChannelExtractionTransform"})
 export class BChannelExtractionTransform extends ChannelExtractionTransform {
     constructor(){
         super("B channel", `

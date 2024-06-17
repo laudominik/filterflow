@@ -3,7 +3,7 @@ import {jsonObject, jsonMember} from 'typedjson';
 import PredefinedSourceTransform from '../PredefinedSourceTransform';
 
 
-@jsonObject
+@jsonObject({name:"PerlinNoiseTransform"})
 export default class PerlinNoiseTransform extends PredefinedSourceTransform {
     @jsonMember(Number)
     seed: Number

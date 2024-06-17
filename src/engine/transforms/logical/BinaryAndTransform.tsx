@@ -20,7 +20,7 @@ void main() {
 }
 `
 
-@jsonObject
+@jsonObject({name:"BinaryAndTransform"})
 export default class BinaryAndTransform extends BinaryTransform {
     constructor(){
         super("binary and", fs);
@@ -28,6 +28,10 @@ export default class BinaryAndTransform extends BinaryTransform {
 
     paramView(guid: string): ReactElement<any, string | JSXElementConstructor<any>> {
         return <>No params to specify</>
+    }
+
+    public infoView(): string | null {
+        return "For each channel of the two images performs the following operation: color1 * color2"
     }
 
 }

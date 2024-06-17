@@ -7,7 +7,7 @@ import {ImageStore} from '../../stores/imageStore';
 import ImportComponent from '../../components/transforms/ImportComponent';
 import { GUID } from '../iengine';
 
-@jsonObject
+@jsonObject({name:"SourceTransform"})
 export default class SourceTransform extends Transform {
     @jsonMember(String)
     imageId: string

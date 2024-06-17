@@ -30,7 +30,7 @@ void main() {
 }
 `
 
-@jsonObject
+@jsonObject({name:"BinaryTransform"})
 abstract class BinaryTransform extends Transform {
     fragment_shader: string
     constructor(name: string = "Binary transform", shader?: string) {

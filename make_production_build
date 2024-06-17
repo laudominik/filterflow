@@ -1,0 +1,8 @@
+VERSION=1_0
+DIRECTORY="filterflow_${VERSION}" 
+
+mkdir -p $DIRECTORY
+yarn install
+yarn build
+cp -R build $DIRECTORY  
+cp run $DIRECTORY

@@ -20,7 +20,7 @@ export type GUID = string;
 
 
 // Engine sends events to parent element (logic decupling)
-@jsonObject({knownTypes: Array.from(knownTypes())})
+@jsonObject({name:"Engine",knownTypes: Array.from(knownTypes())})
 export class Engine extends EventTarget implements IEngine<Transform>{
     // internal is comunication from graph components to graph components, with information collection by engine
     // this enable better batching of updates
@@ -107,14 +107,6 @@ export class Engine extends EventTarget implements IEngine<Transform>{
         this.inTransaction = false;
         this.batchState.response.isHistoryUpdate = historic;
         this.startUpdate();
-    }
-
-    public flush(): void {
-        // this.transactionStart();
-        // this.nodes.forEach(node => this.removeNode(node.meta.id))
-        // this.batchState.response.node.removed = Array.from(this.batchState.updates.requested.values())
-        // this.flushUpdate()
-        // this.transactionCommit();
     }
 
     public _dispatch_update(id: GUID) {
@@ -237,7 +229,25 @@ export class Engine extends EventTarget implements IEngine<Transform>{
         for (const key in params) {
             this.batchState.response.node.updated_params.push({node_id: node, key, old: transform.params[key], new: params[key]})
         }
-        console.log("here!!")
+        if (Object.keys(params).length == 0) {
+            transform.hash = crypto.randomUUID();
+            this.dispatchEvent(new CustomEvent<ExternalEngineResponse>("update", {detail: {
+                connection: {
+                    added: [],
+                    removed: [],
+                },
+                isHistoryUpdate: false,
+                node: {
+                    added: [],
+                    errors: [],
+                    updated: [node],
+                    removed: [],
+                    removed_nodes: [],
+                    updated_params: [],
+                }
+            }}))
+            return
+        }
         // if found add to pending
         transform.updateParams(params).then(()=>{
             transform.hash = crypto.randomUUID();

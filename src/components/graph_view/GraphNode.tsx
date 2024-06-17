@@ -2,7 +2,7 @@ import React, { useEffect, useReducer } from "react"
 import {ReactNode, useContext, useState, useSyncExternalStore} from "react";
 import {GUID} from "../../engine/engine";
 import {Button, Card, Collapse} from "react-bootstrap";
-import {faChevronDown, faChevronUp} from "@fortawesome/free-solid-svg-icons";
+import {faChevronDown, faChevronUp, faInfoCircle} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 
 import './GraphNode.css';
@@ -95,6 +95,8 @@ const GraphNode: React.FC<NodeProps> = ({children,
                 <Card.Header className="cardHeader">
                     {/* {`${node.value.getName()} : ${node.value.meta.id}`} */}
                     {node.value.getName()}
+                    <div>
+                        <TransformationInfo guid={guid}/>
                         <Button
                             className='border-0 bg-transparent'
                             aria-expanded={open}
@@ -102,6 +104,7 @@ const GraphNode: React.FC<NodeProps> = ({children,
                         >
                             <FontAwesomeIcon className="iconInCard" icon={open ? faChevronDown : faChevronUp} />
                         </Button>
+                    </div>
                 </Card.Header>
                 <Collapse in={open} timeout={0}
                     onExited={() => connectionContext.forceConnectionsRefresh()}
@@ -115,5 +118,23 @@ const GraphNode: React.FC<NodeProps> = ({children,
         {outputs()}
     </div>
 };
+
+function TransformationInfo({guid} : {guid: GUID}){
+    const nodeContext = useContext(nodeStoreContext)
+    const node = useSyncExternalStore(nodeContext.subscribeNode(guid), nodeContext.getNode(guid));
+    const info = node.value.infoView();
+
+    const [hover, setHover] = useState(false)
+
+    return node.value.expanded && info ? (
+        <div className="info-container" style={{display: "inline"}}>
+        <FontAwesomeIcon className="iconInCard" icon={faInfoCircle} 
+            onMouseEnter={() => setHover(true)}
+            onMouseLeave={() => setHover(false)}
+        />  
+        {hover ? <div className="info-tooltip-text">{info}</div>  : <></>}
+        </div>
+    ) : <></>
+}
 
 export default GraphNode;

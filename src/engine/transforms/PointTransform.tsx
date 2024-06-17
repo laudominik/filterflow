@@ -4,7 +4,7 @@ import PointComponent from "../../components/transforms/PointComponent";
 import Transform from "../Transform";
 import { GUID } from "../engine";
 
-@jsonObject
+@jsonObject({name:"PointTransform"})
 class PointTransform extends Transform {
 
 

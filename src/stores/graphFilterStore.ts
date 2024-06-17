@@ -6,7 +6,7 @@ import Transform from "../engine/Transform";
 import {IEngine} from "../engine/iengine"
 import {knownTypes} from "../engine/TransformDeclarations";
 
-@jsonObject
+@jsonObject({name:"GraphFilterStore"})
 export abstract class GraphFilterStore extends PreviewStores implements IConnectionStore {
 
     connectionsListener: CallableFunction[]

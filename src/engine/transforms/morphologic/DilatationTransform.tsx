@@ -2,7 +2,7 @@ import { jsonObject } from "typedjson";
 import MorphologicTransform from "../MorphologicTransform";
 
 
-@jsonObject
+@jsonObject({name:"DilatationTransform"})
 export default class DilatationTransform extends MorphologicTransform {
 
     constructor(){

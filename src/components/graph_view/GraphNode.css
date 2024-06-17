@@ -72,3 +72,23 @@
 .transformCard:has(div.imageContainer){
     width: fit-content;
 }
+
+.info-tooltip-text {
+    visibility: visible;
+    width: 400px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    border-radius: 5px;
+    padding: 5px 0;
+    position: absolute;
+    left: 200px;
+    z-index: 1;
+    margin-left: -60px;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.info-container:hover .info-tooltip-text {
+    opacity: 1;
+}
