@@ -5,7 +5,7 @@ import SplitPane from '../../SplitPane';
 import { FilterStoreContext } from '../../../stores/simpleFilterStore';
 
 import "./AddTransformModal.css"
-import { getLinear, getLogical, getMorphologic, getPoint, getPooling } from '../../../engine/TransformDeclarations';
+import { getBinary, getLinear, getLogical, getMorphologic, getPoint, getPooling } from '../../../engine/TransformDeclarations';
 
 export default function AddTransformModal() {
   const [show, setShow] = useState(false);
@@ -14,6 +14,7 @@ export default function AddTransformModal() {
     LinearTransforms(), 
     PoolingTransforms(),
     LogicalTransforms(),
+    BinaryTransforms(),
     PointTransforms(),
     MorphologicTransforms()
   ];
@@ -100,6 +101,10 @@ function PoolingTransforms(){
 
 function LogicalTransforms(){
   return TransformsType("Bitwise", "black", "#E2F0F4", getLogical());
+}
+
+function BinaryTransforms(){
+  return TransformsType("Bitwise", "black", "#E2F0F4", getBinary());
 }
 
 function PointTransforms(){

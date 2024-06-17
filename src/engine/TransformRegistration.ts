@@ -10,6 +10,7 @@ import BinaryXorTransform from "./transforms/logical/BinaryXorTransform"
 import DilatationTransform from "./transforms/morphologic/DilatationTransform"
 import ErosionTransform from "./transforms/morphologic/ErosionTransform"
 import SkeletonizationTransform from "./transforms/morphologic/SkeletonizationTransform"
+import AdditionTransform from "./transforms/binary/AddTransform"
 import MuxTransform from "./transforms/other/MuxTransform"
 import PerlinNoiseTransform from "./transforms/other/PerlinNoiseTransform"
 import RedSourceTransform from "./transforms/other/RedSourceTransform"
@@ -26,6 +27,8 @@ import {ToYCbCrTransform, FromYCbCrTransform} from "./transforms/point/YCbCrTran
 import AvgPoolingTransform from "./transforms/pooling/AvgPoolingTransform"
 import MaxPoolingTransform from "./transforms/pooling/MaxPoolingTransform"
 import MinPoolingTransform from "./transforms/pooling/MinPoolingTransform"
+import MultiplyTransform from "./transforms/binary/MultiplyTransform"
+import SubtractionTransform from "./transforms/binary/SubTransform"
 
 let init = false;
 
@@ -50,7 +53,9 @@ export default function declareOps() {
         .declareLogical("binary and", BinaryAndTransform)
         .declareLogical("binary or", BinaryOrTransform)
         .declareLogical("binary xor", BinaryXorTransform)
-        .declareLogical("binary substract", BinarySubstractTransform)
+        .declareBinary("addition", AdditionTransform)
+        .declareBinary("multiply", MultiplyTransform)
+        .declareBinary("subtraction", SubtractionTransform)
         .declarePoint("brightness", BrightnessTransform)
         .declarePoint("threshold", ThresholdTransform)
         .declarePoint("grayscale", GrayscaleTransform)

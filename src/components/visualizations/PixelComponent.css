@@ -23,3 +23,20 @@
     position: relative;
 
 }
+
+.bitwiseValue {
+    display: inline-block;
+    width: min-content;
+    text-align: center;
+    border: 1px solid gray;
+    border-collapse: collapse;
+    width: 3ch;
+    margin: 0 0.5ch;
+}
+
+.bitwiseComment{
+    display: inline-block;
+    text-align: center;
+    width: 3ch;
+    margin: 0 0.5ch;
+}

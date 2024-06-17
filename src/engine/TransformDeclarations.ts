@@ -18,6 +18,10 @@ export function getLogical(){
     return registry.getOfType("logical")!
 }
 
+export function getBinary(){
+    return registry.getOfType("binary")!
+}
+
 export function getPoint(){
     return registry.getOfType("point")!
 }

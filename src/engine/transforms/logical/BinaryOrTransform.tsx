@@ -1,6 +1,7 @@
 import { ReactElement, JSXElementConstructor } from "react";
 import BinaryTransform from "../BinaryTransform"
 import { jsonObject } from "typedjson";
+import BitwiseVisualizationComponent from "../../../components/visualizations/BitwiseVisualizationComponent";
 
 
 const fs = `
@@ -11,12 +12,45 @@ uniform sampler2D u_image1;
 
 uniform float u_arg;
 
+int OR_8(int n1, int n2){
+
+    float v1 = float(n1);
+    float v2 = float(n2);
+    
+    int byteVal = 1;
+    int result = 0;
+    
+    for(int i = 0; i < 8; i++){
+        bool keepGoing = v1>0.0 || v2 > 0.0;
+        if(keepGoing){
+            
+            bool addOn = mod(v1, 2.0) > 0.0 || mod(v2, 2.0) > 0.0;
+            
+            if(addOn){
+                result += byteVal;
+            }
+            
+            v1 = floor(v1 / 2.0);
+            v2 = floor(v2 / 2.0);
+            
+            byteVal *= 2;
+        } else {
+            return result;
+        }
+    }
+    return result;	
+}
+
 void main() {
     vec2 pixelCoords = v_texCoord ;
     vec3 col0 = texture2D(u_image0, pixelCoords).rgb;
     vec3 col1 = texture2D(u_image1, pixelCoords).rgb;
 
-    gl_FragColor = vec4(col0.x + col1.x, col0.y + col1.y, col0.z + col1.z, 1.0);
+    float x = float(OR_8(int(floor(col0.x * 255.0)), int(floor(col1.x * 255.0))))/255.0;
+    float y = float(OR_8(int(floor(col0.y * 255.0)), int(floor(col1.y * 255.0))))/255.0;
+    float z = float(OR_8(int(floor(col0.z * 255.0)), int(floor(col1.z * 255.0))))/255.0;
+
+    gl_FragColor = vec4(x,y,z, 1.0);
 }
 `
 
@@ -30,7 +64,11 @@ export default class BinaryOrTransform extends BinaryTransform {
         return <>No params to specify</>
     }
 
+    visualizationView(guid: string): JSX.Element {
+        return <BitwiseVisualizationComponent guid={guid} operantName="or"/>
+    }
+
     public infoView(): string | null {
-        return "For each channel of the two images performs the following operation: color1 + color2"
+        return "For each channel, performs bitwise: logical or operation (color1 | color2)"
     }
 }

@@ -1,4 +1,4 @@
-VERSION=1_0
+VERSION=1_1
 DIRECTORY="filterflow_${VERSION}" 
 
 mkdir -p $DIRECTORY

@@ -24,6 +24,7 @@ export default class TransformRegistry {
             ["linear", []],
             ["pooling", []],
             ["logical", []],
+            ["binary", []],
             ["point", []],
             ["morphologic", []],
             ["other", []]
@@ -64,6 +65,10 @@ export default class TransformRegistry {
 
     declareLogical(name: string, transform: new () => Transform) {
         return this.declare("logical", name, transform)
+    }
+
+    declareBinary(name: string, transform: new () => Transform) {
+        return this.declare("binary", name, transform)
     }
 
     declarePoint(name: string, transform: new () => Transform) {
