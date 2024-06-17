@@ -1,4 +1,4 @@
-import "reflect-metadata"
+
 import {jsonObject} from "typedjson";
 import Transform from "../Transform";
 import {GUID} from "../iengine";

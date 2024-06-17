@@ -1,4 +1,4 @@
-import "reflect-metadata"
+
 import { jsonObject } from "typedjson";
 import ConvolutionTransform from "../ConvolutionTransform";
 

@@ -1,4 +1,4 @@
-import "reflect-metadata"
+
 import { jsonObject } from "typedjson";
 import PointComponent from "../../components/transforms/PointComponent";
 import Transform from "../Transform";

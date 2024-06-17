@@ -1,5 +1,5 @@
 
-import "reflect-metadata"
+
 import { jsonObject } from "typedjson";
 import Transform, { KVParams } from "../Transform";
 import { ReactNode } from "react";

@@ -6,6 +6,19 @@ import LSHandler from "../persistence/lshandler";
 import DebugHandler from "../persistence/debughandler";
 import {ImageStore} from "./imageStore";
 
+const resolver = nameof
+
+function nameof(fn: Function & {name?: string}) {
+    if (fn.prototype?.__typedJsonJsonObjectMetadataInformation__?.name){
+        return fn.prototype.__typedJsonJsonObjectMetadataInformation__.name
+    }
+    if (typeof fn.name as string | undefined === 'string') {
+        console.log(fn.name)
+        return fn.name;
+    }
+    return 'undefined';
+}
+
 export class NotebookStore {
     stores: Array<[string, TopStore]>
     selectedIx: number
@@ -29,7 +42,7 @@ export class NotebookStore {
             const list = JSON.parse(cache) as string[];
             list.forEach(name => {
                 const cache = this.persistence.read("store_" + name);
-                const store = new TypedJSON(TopStore, {knownTypes: Array.from(knownTypes())}).parse(cache)!;
+                const store = new TypedJSON(TopStore, {knownTypes: Array.from(knownTypes()),nameResolver: resolver }).parse(cache)!;
                 if (store) {
                     this.bindSave(store);
                     store.fixSerialization();
@@ -59,7 +72,7 @@ export class NotebookStore {
         if (record.length) {
             console.log("Store saved")
             const name = record[0][0];
-            const serializer = new TypedJSON(TopStore, {knownTypes: Array.from(knownTypes())});
+            const serializer = new TypedJSON(TopStore, {knownTypes: Array.from(knownTypes()),nameResolver: resolver});
             const body = serializer.stringify(store);
             this.persistence.write("store_" + name, body);
         } else {
@@ -128,7 +141,7 @@ export class NotebookStore {
 
     // This is a litle funky, call it from UI only. It should be fine as long a user is slow.
     public saveNotebook() {
-        const serializer = new TypedJSON(TopStore, {knownTypes: Array.from(knownTypes())});
+        const serializer = new TypedJSON(TopStore, {knownTypes: Array.from(knownTypes()),nameResolver: resolver});
         const body = serializer.stringify(this.selected);
         return body;
     }
@@ -136,7 +149,7 @@ export class NotebookStore {
     public loadNotebook(name: string, body: string) {
         name = this.availableName(name);
         this.persistence.write("store_" + name, body);
-        let json = new TypedJSON(TopStore, {knownTypes: Array.from(knownTypes())});
+        let json = new TypedJSON(TopStore, {knownTypes: Array.from(knownTypes()),nameResolver: resolver});
         this.selected = json.parse(body)!;
         this.bindSave(this.selected);
         this.stores.push([name, this.selected])

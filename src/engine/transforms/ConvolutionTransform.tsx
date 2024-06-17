@@ -1,4 +1,4 @@
-import "reflect-metadata"
+
 import { jsonObject } from "typedjson";
 import KernelComponent from "../../components/transforms/KernelComponent";
 import Transform, { KVParams } from "../Transform";

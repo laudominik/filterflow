@@ -1,5 +1,5 @@
 
-import "reflect-metadata"
+
 import { jsonObject } from "typedjson";
 import { BitwiseTransform } from "./BitwiseTransform";
 

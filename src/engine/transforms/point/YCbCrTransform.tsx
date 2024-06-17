@@ -1,5 +1,5 @@
 
-import "reflect-metadata"
+
 import { jsonArrayMember, jsonMember, jsonObject } from "typedjson";
 import PointTransform from "../PointTransform";
 

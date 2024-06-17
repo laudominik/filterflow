@@ -1,5 +1,3 @@
-import 'reflect-metadata'
-
 import {ReactNode} from "react";
 import Transform from "../Transform";
 import {jsonMember, jsonObject} from "typedjson";

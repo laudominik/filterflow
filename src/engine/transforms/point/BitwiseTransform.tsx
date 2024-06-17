@@ -1,4 +1,4 @@
-import "reflect-metadata"
+
 import { jsonObject } from "typedjson";
 import PointTransform from "../PointTransform";
 
