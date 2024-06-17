@@ -21,6 +21,10 @@ export default class MuxTransform extends Transform {
         return <MuxComponent guid={guid} />
     }
 
+    public infoView(): string | null {
+        return "passes forward selected input"
+    }
+
     async apply(input: Array<OffscreenCanvas | undefined>): Promise<OffscreenCanvas | undefined> {
         this.selected = this.params["selected"];
         if (!input.length || input[this.selected] === undefined) {

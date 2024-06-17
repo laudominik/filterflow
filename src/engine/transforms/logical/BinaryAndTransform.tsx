@@ -30,4 +30,8 @@ export default class BinaryAndTransform extends BinaryTransform {
         return <>No params to specify</>
     }
 
+    public infoView(): string | null {
+        return "For each channel of the two images performs the following operation: color1 * color2"
+    }
+
 }

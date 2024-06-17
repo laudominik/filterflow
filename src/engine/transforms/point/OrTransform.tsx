@@ -18,13 +18,20 @@ export class OrTransform extends BitwiseTransform {
         void main() {
             vec2 pixelCoords = v_texCoord ;
             vec3 col = texture2D(u_image, pixelCoords).rgb;
-            col.r = col.r + u_arg - col.r * u_arg;
-            col.g = col.g + u_arg - col.g * u_arg;
-            col.b = col.b + u_arg - col.b * u_arg;
+
+            float n_arg = u_arg / 255.0;
+
+            col.r = col.r + n_arg;
+            col.g = col.g + n_arg;
+            col.b = col.b + n_arg;
 
             gl_FragColor = vec4(col, 1.0);
         }
         `)
         this.params = {...this.params, "argument" : 1};
+    }
+
+    public infoView(): string | null {
+        return "for each channel performs the following operation: pixel_value + argument"
     }
 }

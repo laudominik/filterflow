@@ -94,6 +94,9 @@ abstract class Transform extends node<Transform> {
 
     public abstract paramView(guid: GUID): ReactElement;
 
+    public infoView(): string | null {
+        return null;
+    }
     visualizationView(guid: GUID) {
         return <></>
     };

@@ -34,4 +34,8 @@ export default class BinaryXorTransform extends BinaryTransform {
         return <>No params to specify</>
     }
 
+    public infoView(): string | null {
+        return "For each channel of the two images performs the following operation: color1 * (255.0 - color2) + color2 * (255.0 - color1)"
+    }
+
 }

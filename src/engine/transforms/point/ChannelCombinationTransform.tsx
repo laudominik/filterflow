@@ -40,6 +40,10 @@ void main() {
         super("Channel combination", fs);
     }
 
+    public infoView(): string | null {
+        return "first param takes R channel of the image and passes it as R channel, second param does the same for G channel and third the same for B"
+    }
+
     paramView(guid: string): ReactElement {
         return <>no parameters to specify</>
     }

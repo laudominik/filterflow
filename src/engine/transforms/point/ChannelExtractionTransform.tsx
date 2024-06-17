@@ -19,6 +19,10 @@ abstract class ChannelExtractionTransform extends PointTransform {
         `)
         this.params = {...this.params, "argument" : 1};
     }
+
+    public infoView(): string | null {
+        return "extracts given channel from image"
+    }
 }
 @jsonObject({name:"RChannelExtractionTransform"})
 export class RChannelExtractionTransform extends ChannelExtractionTransform {

@@ -26,6 +26,10 @@ export class ToYCbCrTransform extends PointTransform {
         `)
         this.params = {...this.params, "argument" : 1};
     }
+
+    public infoView(): string | null {
+        return "Changes RGB color scheme to YCbCr and for the next image sets R=Y, G=Cb, B=Cr"
+    }
 }
 
 @jsonObject({name:"FromYCbCrTransform"})
@@ -54,5 +58,9 @@ export class FromYCbCrTransform extends PointTransform {
         }
         `)
         this.params = {...this.params, "argument" : 1};
+    }
+
+    public infoView(): string | null {
+        return "Changes YCbCr color scheme to RGB assuming R=Y, G=Cb, B=Cr"
     }
 }
