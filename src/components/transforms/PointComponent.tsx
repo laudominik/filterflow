@@ -30,6 +30,8 @@ export default function PointComponent({guid, parametrized}: {guid: GUID, parame
                                         onChange={(e) => handleInputChange(e.target.value)}
                                         onPointerDown={e => e.stopPropagation()}
                                         onKeyDown={e => e.stopPropagation()}
+                                        min={0.0}
+                                        max={255.0}
                                     />
             </label>
         </div>

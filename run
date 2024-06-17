@@ -1,2 +1,21 @@
 #!/bin/sh
 
+BUILDPATH=build
+PORT=4000
+CERTIFICATE="example.crt"
+KEY="example.key"
+
+# for dev 
+# openssl req -newkey rsa:4096 \                                         
+#             -x509 \
+#             -sha256 \
+#             -days 3650 \
+#             -nodes \
+#             -out example.crt \
+#             -keyout example.key
+
+# the only dependency
+npm i -g serve
+
+# run server
+serve -s $BUILDPATH -l $PORT --ssl-cert $CERTIFICATE --ssl-key $KEY
