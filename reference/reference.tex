@@ -1,0 +1,257 @@
+\documentclass{article}
+
+% Language setting
+% Replace `english' with e.g. `spanish' to change the document language
+\usepackage[english]{babel}
+\usepackage{mathtools}
+\usepackage{amssymb}
+
+% Replace `letterpaper' with `a4paper' for UK/EU standard size
+\usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry}
+\usepackage{listings}
+
+\DeclarePairedDelimiter\ceil{\lceil}{\rceil}
+\DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
+
+% Useful packages
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\title{FilterFlow - transformation reference}
+\author{Dominik Lau, Łukasz Głazik, Tadeusz Brzeski}
+
+\begin{document}
+\maketitle
+\subsubsection*{Nomenclature}
+$In_i$ - $i$-th input of a transformation \\
+$Out$ - ouput of a transformation \\
+$I(x,y)$ - image's $I$ pixel value with coordinates $x, y$; $I(x,y) \in [0, 255]^3$, $I(x,y) = (r, g, b)^T$ \\
+$K$ - kernel (for convolutions) \\
+$size(K)$ - kernel size \\
+$K(i, j)$ - kernel value with coordinates $(i, j)$, where $i,j\in 0..size(K)-1$ \\
+$\oplus$ - XOR 
+\section{Source}
+\subsection{Source}
+User-uploaded source
+\subsection{Red}
+Only red color i.e.
+\begin{gather*}
+    Out(x,y) = (1, 0, 0)^T
+\end{gather*}
+Image size is $512 \times 512$
+\subsection{White noise}
+White noise as output with a random seed. Image size is $512 \times 512$. Pattern changes on refresh.
+\subsection{perlin noise}
+Perlin noise as output with 5 octaves, persistence 0.5 and a random seed \cite{perlin}. Image size is $512 \times 512$. Pattern changes on refresh.
+\section{Linear}
+\subsection{Custom kernel}
+A convolution with user-defined kernel. Available kernel sizes 2, 3 and 4.
+Let $N = size(K)$. The convolution does the following
+\begin{gather*}
+    Out(x, y) = \sum_{i=0}^{N-1}\sum_{j=0}^{N-1} I(x + i - \floor*{N/2}, y + j - \floor*{N/2}) * K(i,j)
+\end{gather*}
+The pixel we take neighborhood for is determined by the above equation and it's the top left pixel for kernel size 2, middlemost for kernel size 3 and pixel with coordinates corresponding to $K(1,1)$.
+\subsection{4-connected Laplace}
+4-connected Laplace is like Custom kernel with kernel
+\begin{gather*}
+    K = \begin{bmatrix} 
+    0 & 1 & 0 \\ 
+    1 & -4 & 1 \\ 
+    0 & 1 & 0
+    \end{bmatrix}
+\end{gather*}
+\subsection{8-connected Laplace}
+8-connected Laplace is like Custom kernel with kernel
+\begin{gather*}
+    K = \begin{bmatrix} 
+    1 & 1 & 1 \\ 
+    1 & -8 & 1 \\ 
+    1 & 1 & 1
+    \end{bmatrix}
+\end{gather*}
+\subsection{Gaussian}
+Gaussian is like Custom kernel with kernel
+\begin{gather*}
+    K = \begin{bmatrix} 
+    0.0625 & 0.125 & 0.0625 \\ 
+    0.125 & 0.25 & 0.125 \\ 
+    0.0625 & 0.125 & 0.0625
+    \end{bmatrix}
+\end{gather*}
+\subsection{Sobel X}
+Sobel X is like Custom kernel with kernel
+\begin{gather*}
+    K = \begin{bmatrix} 
+    1 & 0 & 0 \\ 
+    -2 & 0 & 0 \\ 
+    1 & 0 & 0
+    \end{bmatrix}
+\end{gather*}
+\subsection{Sobel Y}
+Sobel Y is like Custom kernel with kernel
+\begin{gather*}
+    K = \begin{bmatrix} 
+    1 & -2 & 1 \\ 
+    0 & 0 & 0 \\ 
+    0 & 0 & 0
+    \end{bmatrix}
+\end{gather*}
+\section{Pooling}
+Pooling takes a block of pixels of size $N \times N$ and 
+calculates reduction functions on it. Then it moves $step$ pixels in one direction. The step value is (called stride) also customizable.
+For instance, if the pooling size is $3$ and step is $4$ it is going to apply a reduction function on a block of size $3 \times 3$ and move 4 pixels to the next block of size $3 \times 3$. Each pooling changes the size of the output image
+\begin{gather*}
+    Out.width =\floor*{\frac{In.width -1}{stride + 1}}\\
+    Out.height = \floor*{\frac{In.height -1}{stride + 1}}\\
+\end{gather*}
+Available strides: 1, 2, 3, 4. Available pooling sizes: 2, 3, 4.
+\begin{gather*}
+\end{gather*}
+Let $N=$ pooling size. The pooling operation expressed mathematically
+\begin{gather*}
+    out(x,y) = \odot_{i=0..N-1} \odot_{i=0..N-1} I(x + i - \floor*{N/2}, y + j - \floor*{N/2})
+\end{gather*}
+where $\odot$ is the reduction function i.e. $\odot: \mathbb{R}^N \longrightarrow \mathbb{R}$
+\subsection{Max pooling}
+It is a pooling operation with $\odot = max$
+\subsection{Min pooling}
+It is a pooling operation with $\odot = min$
+\subsection{Avg pooling}
+It is a pooling operation with $\odot = average$
+\section{Logical}
+\subsection{And}
+For a given argument $p$
+\begin{gather*}
+    Out(x,y) = p \land In(x, y)
+\end{gather*}
+\subsection{Or}
+For a given argument $p$
+\begin{gather*}
+    Out(x,y) = p \lor In(x, y)
+\end{gather*}
+\subsection{Xor}
+For a given argument $p$
+\begin{gather*}
+    Out(x,y) = p \oplus In(x, y)
+\end{gather*}
+\subsection{Binary And}
+Binary as in two arguments.
+\begin{gather*}
+    Out(x, y) = In_1(x, y) \land In_2(x,y)
+\end{gather*}
+\subsection{Binary Or}
+\begin{gather*}
+    Out(x, y) = In_1(x, y) \lor In_2(x,y)
+\end{gather*}
+\subsection{Binary Xor}
+\begin{gather*}
+    Out(x, y) = In_1(x, y) \oplus In_2(x,y)
+\end{gather*}
+\section{Binary}
+\subsection{Addition}
+\begin{gather*}
+    Out(x, y) = In_1(x, y) + In_2(x,y)
+\end{gather*}
+\subsection{Multiply}
+\begin{gather*}
+    Out(x, y) = In_1(x, y) * In_2(x,y)
+\end{gather*}
+\subsection{Substraction}
+\begin{gather*}
+    Out(x, y) = In_1(x, y) - In_2(x,y)
+\end{gather*}
+\section{Point}
+\subsection{Brightness}
+For a given argument $p$
+\begin{gather*}
+    Out(x,y) = pIn(x,y)
+\end{gather*}
+\subsection{Threshold}
+For a given argument $p$
+\begin{gather*}
+    \begin{cases}
+        Out(x,y) = 255 \text{      for $I(x,y) > p$} \\
+        Out(x,y) = 0   \text{      for $I(x,y) \le p$}
+    \end{cases}
+\end{gather*}
+\subsection{Grayscale}
+\begin{gather*}
+    Out(x,y) = In(x,y).r * 0.299 + In(x,y).g * 0.587 + In(x,y).b * 0.114;
+\end{gather*}
+\subsection{To YCbCr}
+\begin{gather*}
+    Out(x,y) = \begin{bmatrix} 
+    0.299 & 0.587 & 0.114 \\ 
+    -0.169 & -0.331 & 0.5 \\ 
+    0.5 & -0.419 & -0.081
+    \end{bmatrix} In(x,y) + (0, 127.5, 127.5)^T
+\end{gather*}
+\subsection{From YCbCr}
+\begin{gather*}
+    Out(x,y) = \begin{bmatrix} 
+    1 & 0 & 1.4 \\ 
+    1 & -0.343 & -0.711 \\ 
+    1 & 1.765 & 0
+    \end{bmatrix} (In(x,y) - (0, 127.5, 127.5)^T)
+\end{gather*}
+\subsection{R channel}
+\begin{gather*}
+    Out(x,y) = (In(x,y).r, 0, 0)^T
+\end{gather*}
+\subsection{G channel}
+\begin{gather*}
+    Out(x,y) = (0, In(x,y).g, 0)^T
+\end{gather*}
+\subsection{B channel}
+\begin{gather*}
+    Out(x,y) = (0, 0, In(x,y).b)^T
+\end{gather*}
+\subsection{Channel combination}
+This transformation combines three images, it takes r channel of the first one, g channel of the second one and b channel of the third one and sets them as output channels
+\begin{gather*}
+    Out(x,y) = (In_1(x,y).r, In_2(x,y).g, In_3(x,y).b)^T
+\end{gather*}
+\section{Morphologic}
+\subsection{Erosion}
+For each neighborhood of pixels (that means for a kernel of $size(K) = N$) it performs a reduction together with logical and 
+\begin{gather*}
+    Out(x,y).r = \bigwedge_{i=0..N-1} \bigwedge_{j=0..N-1}{In(x+i,y+j).r > t} \\
+    Out(x,y).g= \bigwedge_{i=0..N-1} \bigwedge_{j=0..N-1}{In(x+i,y+j).g > t} \\
+    Out(x,y).b = \bigwedge_{i=0..N-1} \bigwedge_{j=0..N-1}{In(x+i,y+j).b > t}
+\end{gather*}
+where $t=0.5$.
+\subsection{Dilatation}
+For each neighborhood of pixels (that means for a kernel of $size(K) = N$) it performs a reduction together with logical and 
+\begin{gather*}
+    Out(x,y).r = \bigvee_{i=0..N-1} \bigvee_{j=0..N-1}{In(x+i,y+j).r > t} \\
+    Out(x,y).g= \bigvee_{i=0..N-1} \bigvee_{j=0..N-1}{In(x+i,y+j).g > t} \\
+    Out(x,y).b = \bigvee_{i=0..N-1} \bigvee_{j=0..N-1}{In(x+i,y+j).b > t}
+\end{gather*}
+where $t=0.5$.
+\subsection{Skeletonization}
+The image is skeletonized using the simplified algorithm\cite{skel}. Only 2 iterations (due to time complexity and us wanting to keep it real-time). Pseudocode of one iteration:
+\begin{lstlisting}
+    eroded = erodsion(img) 
+    temp = dilation(eroded)
+    temp = img - temp
+    skel = bitwise_or(skel, temp)
+    img = eroded
+\end{lstlisting}
+\section{Other}
+\subsection{Mux}
+A transformation that passes selected input forward. Let $i$ be the selected image index, then
+\begin{gather*}
+    Out(x,y) = In_i(x,y)
+\end{gather*}
+
+\bibliographystyle{plain}            
+\begin{thebibliography}{3}                     
+\bibitem{perlin}
+https://adrianb.io/2014/08/09/perlinnoise.html
+\bibitem{skel}
+https://gist.github.com/jsheedy/3913ab49d344fac4d02bcc887ba4277d
+\end{thebibliography}
+
+\end{document}
+
