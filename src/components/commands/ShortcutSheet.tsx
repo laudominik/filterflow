@@ -33,9 +33,8 @@ export default function ShortcutSheet({show, setShow}: {show: boolean, setShow: 
                     return <tr key={v.name}>
                         <td className="KeyBindings">
                             {
-                                v.binding?.map(v => <span key={v} className="SheetDialogKey">{v}</span>)
+                                v.binding?.map(v => <kbd key={v}>{v}</kbd>)
                             }
-
                         </td>
                         <td></td>
                         <td>{v.name}</td>

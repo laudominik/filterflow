@@ -13,7 +13,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import GraphView from './components/graph_view/GraphView';
 import {connectionStoreContext as ConnectionStoreContext, nodeStoreContext as NodeStoreContext, notebookStoreContext as NotebookStoreContext, previewStoreContext as PreviewStoreContext,persistenceContext as PersistenceContext} from './stores/context';
 import {useCommand, useKeybinds} from './util/commands';
-import ShortcutSheet from './components/commands/ShotcutSheet';
+import ShortcutSheet from './components/commands/ShortcutSheet';
 import { CommandPalette } from './components/search/CommandPalette';
 
 export default function App() {
